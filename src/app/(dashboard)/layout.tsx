@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-
-
-import Navigation from "@/components/navigation";
-
-
+import DashboardNav from "@/components/dashboard-nav";
 
 export const metadata: Metadata = {
   title: "Tender Hub | Dashboard",
@@ -16,8 +12,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="antialiased py-8 pt-24">
-      <Navigation />
+    <section className="antialiased py-8">
+      <DashboardNav />
       <section >
         {children}
       </section>

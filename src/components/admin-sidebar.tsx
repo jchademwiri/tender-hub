@@ -4,6 +4,7 @@ import * as React from "react"
 import {
   BookOpen,
   Command,
+  Home,
   Map,
   Settings2,
 } from "lucide-react"
@@ -26,6 +27,11 @@ const data = {
     avatar: "/avatars/admin.jpg",
   },
   navMain: [
+    {
+      title: "Back to Site",
+      url: "/",
+      icon: Home,
+    },
     {
       title: "Dashboard",
       url: "/admin",

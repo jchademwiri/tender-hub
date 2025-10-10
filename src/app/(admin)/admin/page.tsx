@@ -45,14 +45,6 @@ export default async function AdminDashboard() {
             <p className="text-2xl">{publisherCount.count}</p>
           </div>
         </div>
-        <nav className="space-y-2">
-          <Link href="/admin/publishers" className="block px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
-            Manage Publishers
-          </Link>
-          <Link href="/admin/provinces" className="block px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
-            Manage Provinces
-          </Link>
-        </nav>
       </div>
     </>
   );
