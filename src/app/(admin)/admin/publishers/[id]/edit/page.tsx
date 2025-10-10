@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { publishers, provinces } from '@/db/schema';
+import { publishers, provinces, Publisher } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import PublisherForm from '@/components/PublisherForm';
 import { notFound } from 'next/navigation';
@@ -11,17 +11,9 @@ interface PageProps {
 
 export default async function EditPublisher({ params }: PageProps) {
   const [publisher] = await db
-    .select({
-      id: publishers.id,
-      name: publishers.name,
-      website: publishers.website,
-      province_id: publishers.province_id,
-      createdAt: publishers.createdAt,
-      province: provinces,
-    })
+    .select()
     .from(publishers)
-    .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-    .where(eq(publishers.id, params.id));
+    .where(eq(publishers.id, params.id)) as Publisher[];
 
   if (!publisher) notFound();
 

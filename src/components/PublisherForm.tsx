@@ -4,7 +4,7 @@ import { useActionState } from 'react';
 import { Publisher, Province } from '@/db/schema';
 
 interface PublisherFormProps {
-  publisher?: Publisher & { province?: Province | null };
+  publisher?: Publisher;
   provinces: Province[];
   action: (prevState: any, formData: FormData) => Promise<any>;
 }
