@@ -46,7 +46,8 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="text-center py-16 bg-muted/50 rounded-lg max-w-5xl mx-auto">
+      <section className="bg-muted/50">
+      <div className="text-center py-16 rounded-lg max-w-5xl mx-auto" >    
         <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
         <p className="text-lg text-muted-foreground mb-8">
           Join thousands of users discovering tender opportunities across South Africa.
@@ -54,6 +55,7 @@ export default function Home() {
         <Link href="/publishers" className="px-8 py-4 bg-primary text-primary-foreground rounded-lg text-lg hover:bg-primary/90 transition-colors cursor-pointer">
           Explore Publishers
         </Link>
+          </div>
       </section>
        
     </div>
