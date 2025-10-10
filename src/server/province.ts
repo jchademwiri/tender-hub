@@ -7,7 +7,15 @@ import { redirect } from 'next/navigation';
 
 export async function deleteProvince(formData: FormData) {
   const id = formData.get('id') as string;
-  await db.delete(provinces).where(eq(provinces.id, id));
+  
+  try {
+    await db.delete(provinces).where(eq(provinces.id, id));
+  } catch (error) {
+    console.error('Failed to delete province:', error);
+    throw error;
+  }
+  
+  redirect('/admin/provinces');
 }
 
 export async function createProvince(prevState: any, formData: FormData) {
@@ -17,10 +25,13 @@ export async function createProvince(prevState: any, formData: FormData) {
 
   try {
     await db.insert(provinces).values({ name, code, description });
-    redirect('/admin/provinces');
   } catch (error) {
+    console.error('Failed to create province:', error);
     return { error: 'Failed to create province' };
   }
+  
+  // Redirect OUTSIDE the try-catch
+  redirect('/admin/provinces');
 }
 
 export async function updateProvince(prevState: any, formData: FormData) {
@@ -30,9 +41,14 @@ export async function updateProvince(prevState: any, formData: FormData) {
   const description = formData.get('description') as string;
 
   try {
-    await db.update(provinces).set({ name, code, description }).where(eq(provinces.id, id));
-    redirect('/admin/provinces');
+    await db.update(provinces)
+      .set({ name, code, description })
+      .where(eq(provinces.id, id));
   } catch (error) {
+    console.error('Failed to update province:', error);
     return { error: 'Failed to update province' };
   }
+  
+  // Redirect OUTSIDE the try-catch
+  redirect('/admin/provinces');
 }

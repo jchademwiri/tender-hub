@@ -21,11 +21,11 @@ export default async function AdminDashboard() {
         </div>
       </div>
       <nav className="space-y-2">
-        <Link href="/admin/provinces" className="block px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
-          Manage Provinces
-        </Link>
         <Link href="/admin/publishers" className="block px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
           Manage Publishers
+        </Link>
+        <Link href="/admin/provinces" className="block px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
+          Manage Provinces
         </Link>
       </nav>
     </div>
