@@ -28,8 +28,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <nav className="bg-card border-b border-border p-4">
-          <div className="container mx-auto flex justify-between">
+        <nav className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-md border-b border-border/50 p-4 z-50">
+          <div className="max-w-5xl mx-auto flex justify-between">
             <Link href="/" className="text-xl font-bold text-foreground">Tender Hub</Link>
             <div className="space-x-4">
               <Link href="/publishers" className="text-foreground hover:text-primary">Publishers</Link>
@@ -38,7 +38,9 @@ export default function RootLayout({
             </div>
           </div>
         </nav>
-        {children}
+        <main className="max-w-5xl mx-auto px-4 py-8 pt-24">
+          {children}
+        </main>
       </body>
     </html>
   );
