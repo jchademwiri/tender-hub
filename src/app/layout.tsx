@@ -28,13 +28,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <nav className="bg-gray-800 text-white p-4">
+        <nav className="bg-card border-b border-border p-4">
           <div className="container mx-auto flex justify-between">
-            <Link href="/" className="text-xl font-bold">Tender Hub</Link>
+            <Link href="/" className="text-xl font-bold text-foreground">Tender Hub</Link>
             <div className="space-x-4">
-              <Link href="/publishers" className="hover:underline">Publishers</Link>
-              <Link href="/dashboard" className="hover:underline">Dashboard</Link>
-              <Link href="/admin" className="hover:underline">Admin</Link>
+              <Link href="/publishers" className="text-foreground hover:text-primary">Publishers</Link>
+              <Link href="/dashboard" className="text-foreground hover:text-primary">Dashboard</Link>
+              <Link href="/admin" className="text-foreground hover:text-primary">Admin</Link>
             </div>
           </div>
         </nav>

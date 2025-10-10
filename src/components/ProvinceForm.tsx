@@ -21,7 +21,7 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
           type="text"
           defaultValue={province?.name || ''}
           required
-          className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          className="mt-1 block w-full border border-input bg-background rounded px-3 py-2"
         />
       </div>
       <div>
@@ -32,7 +32,7 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
           type="text"
           defaultValue={province?.code || ''}
           required
-          className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          className="mt-1 block w-full border border-input bg-background rounded px-3 py-2"
         />
       </div>
       <div>
@@ -41,11 +41,11 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
           id="description"
           name="description"
           defaultValue={province?.description || ''}
-          className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          className="mt-1 block w-full border border-input bg-background rounded px-3 py-2"
         />
       </div>
       {province && <input type="hidden" name="id" value={province.id} />}
-      <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
+      <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded">
         {province ? 'Update' : 'Create'} Province
       </button>
       {state?.error && <p className="text-red-500">{state.error}</p>}

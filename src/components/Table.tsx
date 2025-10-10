@@ -14,26 +14,26 @@ interface TableProps<T> {
 
 export default function Table<T>({ data, columns, actions }: TableProps<T>) {
   return (
-    <table className="min-w-full bg-white border border-gray-300">
+    <table className="min-w-full bg-card border border-border">
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col.key as string} className="py-2 px-4 border-b">
+            <th key={col.key as string} className="py-2 px-4 border-b border-border">
               {col.header}
             </th>
           ))}
-          {actions && <th className="py-2 px-4 border-b">Actions</th>}
+          {actions && <th className="py-2 px-4 border-b border-border">Actions</th>}
         </tr>
       </thead>
       <tbody>
         {data.map((item, index) => (
           <tr key={index}>
             {columns.map((col) => (
-              <td key={col.key as string} className="py-2 px-4 border-b">
+              <td key={col.key as string} className="py-2 px-4 border-b border-border">
                 {col.render ? col.render(item[col.key], item) : String(item[col.key])}
               </td>
             ))}
-            {actions && <td className="py-2 px-4 border-b">{actions(item)}</td>}
+            {actions && <td className="py-2 px-4 border-b border-border">{actions(item)}</td>}
           </tr>
         ))}
       </tbody>

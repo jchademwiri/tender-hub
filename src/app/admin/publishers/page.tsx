@@ -26,7 +26,7 @@ export default async function PublishersPage() {
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Publishers</h1>
-      <Link href="/admin/publishers/create" className="mb-4 inline-block px-4 py-2 bg-blue-500 text-white rounded">
+      <Link href="/admin/publishers/create" className="mb-4 inline-block px-4 py-2 bg-primary text-primary-foreground rounded">
         Add Publisher
       </Link>
       <Table
@@ -39,10 +39,10 @@ export default async function PublishersPage() {
         ]}
         actions={(item: any) => (
           <div className="space-x-2">
-            <Link href={`/admin/publishers/${item.id}`} className="text-blue-500">View</Link>
-            <Link href={`/admin/publishers/${item.id}/edit`} className="text-green-500">Edit</Link>
+            <Link href={`/admin/publishers/${item.id}`} className="text-primary">View</Link>
+            <Link href={`/admin/publishers/${item.id}/edit`} className="text-primary">Edit</Link>
             <form action={deletePublisher.bind(null, item.id)} className="inline">
-              <button type="submit" className="text-red-500">Delete</button>
+              <button type="submit" className="text-destructive">Delete</button>
             </form>
           </div>
         )}

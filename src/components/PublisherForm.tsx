@@ -22,7 +22,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
           type="text"
           defaultValue={publisher?.name || ''}
           required
-          className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          className="mt-1 block w-full border border-input bg-background rounded px-3 py-2"
         />
       </div>
       <div>
@@ -32,7 +32,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
           name="website"
           type="url"
           defaultValue={publisher?.website || ''}
-          className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          className="mt-1 block w-full border border-input bg-background rounded px-3 py-2"
         />
       </div>
       <div>
@@ -42,7 +42,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
           name="province_id"
           defaultValue={publisher?.province_id || ''}
           required
-          className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          className="mt-1 block w-full border border-input bg-background rounded px-3 py-2"
         >
           <option value="">Select Province</option>
           {provinces.map((prov) => (
@@ -53,7 +53,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
         </select>
       </div>
       {publisher && <input type="hidden" name="id" value={publisher.id} />}
-      <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
+      <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded">
         {publisher ? 'Update' : 'Create'} Publisher
       </button>
       {state?.error && <p className="text-red-500">{state.error}</p>}
