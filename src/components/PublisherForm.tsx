@@ -53,7 +53,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
         </select>
       </div>
       {publisher && <input type="hidden" name="id" value={publisher.id} />}
-      <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded">
+      <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
         {publisher ? 'Update' : 'Create'} Publisher
       </button>
       {state?.error && <p className="text-red-500">{state.error}</p>}

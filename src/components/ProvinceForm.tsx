@@ -45,7 +45,7 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
         />
       </div>
       {province && <input type="hidden" name="id" value={province.id} />}
-      <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded">
+      <button type="submit" className="px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
         {province ? 'Update' : 'Create'} Province
       </button>
       {state?.error && <p className="text-red-500">{state.error}</p>}

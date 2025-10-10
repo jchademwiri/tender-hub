@@ -30,7 +30,7 @@ export default async function PublishersPage() {
         actions={() => null} // No actions for users
       />
       <div className="mt-6">
-        <Link href="/" className="px-4 py-2 bg-secondary text-secondary-foreground rounded">
+        <Link href="/" className="px-4 py-2 bg-secondary text-secondary-foreground rounded cursor-pointer">
           Back to Home
         </Link>
       </div>

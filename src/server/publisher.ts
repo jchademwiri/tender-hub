@@ -5,7 +5,8 @@ import { publishers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 
-export async function deletePublisher(id: string) {
+export async function deletePublisher(formData: FormData) {
+  const id = formData.get('id') as string;
   await db.delete(publishers).where(eq(publishers.id, id));
 }
 

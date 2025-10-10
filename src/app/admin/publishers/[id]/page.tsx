@@ -34,15 +34,16 @@ export default async function PublisherView({ params }: PageProps) {
         <p><strong>Created At:</strong> {new Date(publisher.createdAt).toLocaleDateString()}</p>
       </div>
       <div className="mt-6 space-x-4">
-        <Link href={`/admin/publishers/${publisher.id}/edit`} className="px-4 py-2 bg-primary text-primary-foreground rounded">
+        <Link href={`/admin/publishers/${publisher.id}/edit`} className="px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
           Edit
         </Link>
-        <form action={deletePublisher.bind(null, publisher.id)} className="inline">
-          <button type="submit" className="px-4 py-2 bg-destructive text-destructive-foreground rounded">
+        <form action={deletePublisher} className="inline">
+          <input type="hidden" name="id" value={publisher.id} />
+          <button type="submit" className="px-4 py-2 bg-destructive text-destructive-foreground rounded cursor-pointer">
             Delete
           </button>
         </form>
-        <Link href="/admin/publishers" className="px-4 py-2 bg-secondary text-secondary-foreground rounded">
+        <Link href="/admin/publishers" className="px-4 py-2 bg-secondary text-secondary-foreground rounded cursor-pointer">
           Back to List
         </Link>
       </div>

@@ -47,10 +47,10 @@ export default async function Dashboard() {
         </ul>
       </div>
       <div className="space-x-4">
-        <Link href="/publishers" className="px-4 py-2 bg-primary text-primary-foreground rounded">
+        <Link href="/publishers" className="px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
           Browse Publishers
         </Link>
-        <Link href="/" className="px-4 py-2 bg-secondary text-secondary-foreground rounded">
+        <Link href="/" className="px-4 py-2 bg-secondary text-secondary-foreground rounded cursor-pointer">
           Back to Home
         </Link>
       </div>

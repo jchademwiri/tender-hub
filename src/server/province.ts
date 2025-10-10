@@ -5,7 +5,8 @@ import { provinces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 
-export async function deleteProvince(id: string) {
+export async function deleteProvince(formData: FormData) {
+  const id = formData.get('id') as string;
   await db.delete(provinces).where(eq(provinces.id, id));
 }
 

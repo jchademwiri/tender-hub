@@ -11,10 +11,10 @@ export default function Home() {
           Find opportunities, manage your dashboard, and stay updated with the latest tenders.
         </p>
         <div className="flex gap-4 justify-center">
-          <Link href="/publishers" className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+          <Link href="/publishers" className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
             Browse Publishers
           </Link>
-          <Link href="/dashboard" className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors">
+          <Link href="/dashboard" className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer">
             My Dashboard
           </Link>
         </div>
@@ -51,7 +51,7 @@ export default function Home() {
         <p className="text-lg text-muted-foreground mb-8">
           Join thousands of users discovering tender opportunities across South Africa.
         </p>
-        <Link href="/publishers" className="px-8 py-4 bg-primary text-primary-foreground rounded-lg text-lg hover:bg-primary/90 transition-colors">
+        <Link href="/publishers" className="px-8 py-4 bg-primary text-primary-foreground rounded-lg text-lg hover:bg-primary/90 transition-colors cursor-pointer">
           Explore Publishers
         </Link>
       </section>
