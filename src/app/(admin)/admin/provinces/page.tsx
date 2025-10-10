@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { Plus, Eye, Pencil, Trash2 } from "lucide-react"
 
 export default async function ProvincesPage() {
   const data = await db.select().from(provinces);
@@ -36,10 +38,14 @@ export default async function ProvincesPage() {
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <h1 className="text-3xl font-bold mb-6">Provinces</h1>
-        <Link href="/admin/provinces/create" className="mb-4 inline-block px-4 py-2 bg-primary text-primary-foreground rounded cursor-pointer">
-          Add Province
-        </Link>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Provinces</h1>
+          <Button asChild>
+            <Link href="/admin/provinces/create">
+              <Plus /> Add Province
+            </Link>
+          </Button>
+        </div>
         <Table
           data={data}
           columns={[
@@ -49,12 +55,22 @@ export default async function ProvincesPage() {
             { key: 'createdAt', header: 'Created At', render: (value) => new Date(value).toLocaleDateString() },
           ]}
           actions={(item: Province) => (
-            <div className="space-x-2">
-              <Link href={`/admin/provinces/${item.id}`} className="text-primary cursor-pointer">View</Link>
-              <Link href={`/admin/provinces/${item.id}/edit`} className="text-primary cursor-pointer">Edit</Link>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/admin/provinces/${item.id}`}>
+                  <Eye /> View
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/admin/provinces/${item.id}/edit`}>
+                  <Pencil /> Edit
+                </Link>
+              </Button>
               <form action={deleteProvince} className="inline">
                 <input type="hidden" name="id" value={item.id} />
-                <button type="submit" className="text-destructive cursor-pointer">Delete</button>
+                <Button variant="ghost" size="sm" type="submit" className="text-destructive hover:text-destructive">
+                  <Trash2 /> Delete
+                </Button>
               </form>
             </div>
           )}
