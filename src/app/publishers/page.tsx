@@ -1,20 +1,10 @@
 import { db } from '@/db';
 import { publishers, provinces } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import Link from 'next/link';
 import Table from '@/components/Table';
 
-interface SearchParams {
-  province?: string;
-}
-
-interface PageProps {
-  searchParams: Promise<SearchParams>;
-}
-
-export default async function PublishersPage({ searchParams }: PageProps) {
-  const provinceFilter = (await searchParams).province;
-
+export default async function PublishersPage() {
   const data = await db
     .select({
       id: publishers.id,
@@ -25,10 +15,7 @@ export default async function PublishersPage({ searchParams }: PageProps) {
       provinceName: provinces.name,
     })
     .from(publishers)
-    .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-    .where(provinceFilter ? eq(provinces.name, provinceFilter) : undefined);
-
-  const provincesList = await db.select().from(provinces);
+    .leftJoin(provinces, eq(publishers.province_id, provinces.id));
 
   return (
     <div className="p-8">
