@@ -8,7 +8,7 @@ export default async function AdminDashboard() {
   const [publisherCount] = await db.select({ count: count() }).from(publishers);
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-muted p-4 rounded">

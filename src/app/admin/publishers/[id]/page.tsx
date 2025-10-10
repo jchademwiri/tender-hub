@@ -26,7 +26,7 @@ export default async function PublisherView({ params }: PageProps) {
   if (!publisher) notFound();
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">{publisher.name}</h1>
       <div className="space-y-2">
         <p><strong>Website:</strong> {publisher.website ? <a href={publisher.website} target="_blank" className="text-blue-500">{publisher.website}</a> : 'N/A'}</p>

@@ -20,7 +20,7 @@ export default async function PublishersPage() {
     .leftJoin(provinces, eq(publishers.province_id, provinces.id));
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Publishers</h1>
       <Link href="/admin/publishers/create" className="mb-4 inline-block px-4 py-2 bg-primary text-primary-foreground rounded">
         Add Publisher

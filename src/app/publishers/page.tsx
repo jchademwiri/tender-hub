@@ -18,7 +18,7 @@ export default async function PublishersPage() {
     .leftJoin(provinces, eq(publishers.province_id, provinces.id));
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Tender Publishers</h1>
       <Table
         data={data}

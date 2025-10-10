@@ -14,7 +14,7 @@ interface TableProps<T> {
 
 export default function Table<T>({ data, columns, actions }: TableProps<T>) {
   return (
-    <table className="min-w-full bg-card border border-border">
+    <table className="max-w-full bg-card border border-border">
       <thead>
         <tr>
           {columns.map((col) => (

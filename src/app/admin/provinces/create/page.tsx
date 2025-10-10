@@ -5,7 +5,7 @@ import { createProvince } from '@/server';
 
 export default function CreateProvince() {
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Create Province</h1>
       <ProvinceForm action={createProvince} />
     </div>

@@ -10,7 +10,7 @@ export default async function ProvincesPage() {
   const data = await db.select().from(provinces);
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Provinces</h1>
       <Link href="/admin/provinces/create" className="mb-4 inline-block px-4 py-2 bg-primary text-primary-foreground rounded">
         Add Province

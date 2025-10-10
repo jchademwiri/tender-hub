@@ -7,7 +7,7 @@ export default async function CreatePublisher() {
   const provincesList = await db.select().from(provinces);
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Create Publisher</h1>
       <PublisherForm provinces={provincesList} action={createPublisher} />
     </div>

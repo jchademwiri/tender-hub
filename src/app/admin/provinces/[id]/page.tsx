@@ -15,7 +15,7 @@ export default async function ProvinceView({ params }: PageProps) {
   if (!province) notFound();
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">{province.name}</h1>
       <div className="space-y-2">
         <p><strong>Code:</strong> {province.code}</p>

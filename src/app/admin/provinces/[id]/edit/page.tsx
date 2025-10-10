@@ -15,7 +15,7 @@ export default async function EditProvince({ params }: PageProps) {
   if (!province) notFound();
 
   return (
-    <div className="p-8">
+    <div className="max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Edit Province</h1>
       <ProvinceForm province={province} action={updateProvince} />
     </div>
