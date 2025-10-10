@@ -1,4 +1,12 @@
 import React from 'react';
+import {
+  Table as ShadcnTable,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface Column<T> {
   key: keyof T;
@@ -14,29 +22,29 @@ interface TableProps<T> {
 
 export default function Table<T>({ data, columns, actions }: TableProps<T>) {
   return (
-    <table className="max-w-full bg-card border border-border">
-      <thead>
-        <tr>
+    <ShadcnTable>
+      <TableHeader>
+        <TableRow>
           {columns.map((col) => (
-            <th key={col.key as string} className="py-2 px-4 border-b border-border">
+            <TableHead key={col.key as string}>
               {col.header}
-            </th>
+            </TableHead>
           ))}
-          {actions && <th className="py-2 px-4 border-b border-border">Actions</th>}
-        </tr>
-      </thead>
-      <tbody>
+          {actions && <TableHead>Actions</TableHead>}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {data.map((item, index) => (
-          <tr key={index}>
+          <TableRow key={index}>
             {columns.map((col) => (
-              <td key={col.key as string} className="py-2 px-4 border-b border-border">
+              <TableCell key={col.key as string}>
                 {col.render ? col.render(item[col.key], item) : String(item[col.key])}
-              </td>
+              </TableCell>
             ))}
-            {actions && <td className="py-2 px-4 border-b border-border">{actions(item)}</td>}
-          </tr>
+            {actions && <TableCell>{actions(item)}</TableCell>}
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </ShadcnTable>
   );
 }
