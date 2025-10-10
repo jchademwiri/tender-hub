@@ -1,5 +1,3 @@
-import { db } from '@/db';
-import { provinces } from '@/db/schema';
 import ProvinceForm from '@/components/ProvinceForm';
 import { createProvince } from '@/server';
 import {

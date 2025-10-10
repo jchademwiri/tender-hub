@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { provinces, publishers } from '@/db/schema';
+import { provinces } from '@/db/schema';
 import PublisherForm from '@/components/PublisherForm';
 import { createPublisher } from '@/server';
 import {

@@ -20,10 +20,11 @@ interface PageProps {
 }
 
 export default async function EditPublisher({ params }: PageProps) {
+  const { id } = await params;
   const [publisher] = await db
     .select()
     .from(publishers)
-    .where(eq(publishers.id, params.id)) as Publisher[];
+    .where(eq(publishers.id, id)) as Publisher[];
 
   if (!publisher) notFound();
 

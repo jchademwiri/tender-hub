@@ -20,7 +20,8 @@ interface PageProps {
 }
 
 export default async function EditProvince({ params }: PageProps) {
-  const [province] = await db.select().from(provinces).where(eq(provinces.id, params.id));
+  const { id } = await params;
+  const [province] = await db.select().from(provinces).where(eq(provinces.id, id));
 
   if (!province) notFound();
 
