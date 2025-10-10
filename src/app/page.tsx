@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="space-y-16">
       {/* Hero Section */}
-      <section className="text-center py-20">
+      <section className="text-center max-w-5xl mx-auto py-20">
         <h1 className="text-5xl font-bold mb-6">Welcome to Tender Hub</h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Discover and connect with tender publishers across all South African provinces.
@@ -21,7 +21,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16">
+      <section className="py-16 max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12">Why Choose Tender Hub?</h2>
         <div className="grid md:grid-cols-3 gap-8">
           <div className="text-center p-6 bg-card rounded-lg border">
@@ -46,7 +46,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="text-center py-16 bg-muted/50 rounded-lg">
+      <section className="text-center py-16 bg-muted/50 rounded-lg max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
         <p className="text-lg text-muted-foreground mb-8">
           Join thousands of users discovering tender opportunities across South Africa.
@@ -55,6 +55,7 @@ export default function Home() {
           Explore Publishers
         </Link>
       </section>
+       
     </div>
   );
 }

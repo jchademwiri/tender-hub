@@ -9,11 +9,11 @@ interface SearchParams {
 }
 
 interface PageProps {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }
 
 export default async function PublishersPage({ searchParams }: PageProps) {
-  const provinceFilter = searchParams.province;
+  const provinceFilter = (await searchParams).province;
 
   const data = await db
     .select({
