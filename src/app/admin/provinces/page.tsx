@@ -4,12 +4,7 @@ import { eq } from 'drizzle-orm';
 import Link from 'next/link';
 import Table from '@/components/Table';
 import { Province } from '@/db/schema';
-
-async function deleteProvince(id: string) {
-  'use server';
-  await db.delete(provinces).where(eq(provinces.id, id));
-  // Redirect or revalidate
-}
+import { deleteProvince } from '@/server';
 
 export default async function ProvincesPage() {
   const data = await db.select().from(provinces);

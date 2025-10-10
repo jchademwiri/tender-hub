@@ -4,11 +4,7 @@ import { eq } from 'drizzle-orm';
 import Link from 'next/link';
 import Table from '@/components/Table';
 import { Publisher } from '@/db/schema';
-
-async function deletePublisher(id: string) {
-  'use server';
-  await db.delete(publishers).where(eq(publishers.id, id));
-}
+import { deletePublisher } from '@/server';
 
 export default async function PublishersPage() {
   const data = await db

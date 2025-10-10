@@ -1,22 +1,7 @@
 import { db } from '@/db';
 import { provinces, publishers } from '@/db/schema';
-import { redirect } from 'next/navigation';
 import PublisherForm from '@/components/PublisherForm';
-
-async function createPublisher(prevState: any, formData: FormData) {
-  'use server';
-
-  const name = formData.get('name') as string;
-  const website = formData.get('website') as string;
-  const province_id = formData.get('province_id') as string;
-
-  try {
-    await db.insert(publishers).values({ name, website: website || null, province_id });
-    redirect('/admin/publishers');
-  } catch (error) {
-    return { error: 'Failed to create publisher' };
-  }
-}
+import { createPublisher } from '@/server';
 
 export default async function CreatePublisher() {
   const provincesList = await db.select().from(provinces);

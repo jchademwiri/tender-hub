@@ -1,25 +1,9 @@
 import { db } from '@/db';
 import { publishers, provinces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { redirect } from 'next/navigation';
 import PublisherForm from '@/components/PublisherForm';
 import { notFound } from 'next/navigation';
-
-async function updatePublisher(prevState: any, formData: FormData) {
-  'use server';
-
-  const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const website = formData.get('website') as string;
-  const province_id = formData.get('province_id') as string;
-
-  try {
-    await db.update(publishers).set({ name, website: website || null, province_id }).where(eq(publishers.id, id));
-    redirect('/admin/publishers');
-  } catch (error) {
-    return { error: 'Failed to update publisher' };
-  }
-}
+import { updatePublisher } from '@/server';
 
 interface PageProps {
   params: { id: string };

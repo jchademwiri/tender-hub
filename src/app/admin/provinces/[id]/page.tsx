@@ -3,12 +3,7 @@ import { provinces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-
-async function deleteProvince(id: string) {
-  'use server';
-  await db.delete(provinces).where(eq(provinces.id, id));
-  // Redirect to list
-}
+import { deleteProvince } from '@/server';
 
 interface PageProps {
   params: { id: string };
