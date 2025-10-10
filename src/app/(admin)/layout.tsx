@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
   title: "Tender Hub | Admin",
@@ -11,10 +13,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    
-        <section>
-          {children}
-        </section>
-     
+    <SidebarProvider>
+      <AdminSidebar />
+      <SidebarInset>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
