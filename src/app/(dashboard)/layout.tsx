@@ -12,7 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="antialiased py-20">
+    <section className="antialiased py-20 overflow-x-hidden">
       <DashboardNav />
       <section >
         {children}
