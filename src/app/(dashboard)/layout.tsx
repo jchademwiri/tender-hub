@@ -12,7 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <section className="antialiased py-8">
+    <section className="antialiased py-20">
       <DashboardNav />
       <section >
         {children}

@@ -16,7 +16,7 @@ export default async function AdminDashboard() {
   const [publisherCount] = await db.select({ count: count() }).from(publishers);
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <header className="flex h-16 shrink-0 items-center gap-2">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -33,7 +33,7 @@ export default async function AdminDashboard() {
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="flex flex-1 flex-col gap-4 p-4">
         <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="bg-muted p-4 rounded">
@@ -46,6 +46,6 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
