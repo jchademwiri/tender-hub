@@ -2,8 +2,8 @@
 import { pgTable, text, varchar, timestamp, uuid,boolean, pgEnum, } from "drizzle-orm/pg-core";
 
 
-export const role = pgEnum('role', [ 'admin', 'manager', 'user']);
-export type Role = (typeof role.enumValues)[number];
+export const role = pgEnum('role', [ 'owner','admin', 'manager', 'user']);
+
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -94,11 +94,26 @@ export const publishers = pgTable("publishers", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const invitation = pgTable("invitation", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  role: text("role"),
+  status: text("status").default("pending").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  inviterId: text("inviter_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
 /**
  * TypeScript types
  */
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
+export type Role = (typeof role.enumValues)[number];
+export type Invitation = typeof invitation.$inferSelect;
+export type NewInvitation = typeof invitation.$inferInsert;
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
 export type Verification = typeof verification.$inferSelect;

@@ -7,6 +7,7 @@ import {
   Home,
   Map,
   Settings2,
+  Users,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -36,6 +37,11 @@ const data = {
       title: "Dashboard",
       url: "/admin",
       icon: Command,
+    },
+    {
+      title: "Users",
+      url: "/admin/users",
+      icon: Users,
     },
     {
       title: "Provinces",
