@@ -7,7 +7,7 @@ export default function DashboardNav() {
   const pathname = usePathname();
 
   // Show only on dashboard and publishers paths
-  if (!pathname.startsWith('/dashboard') && pathname !== '/publishers') {
+  if (!pathname.startsWith('/dashboard') && pathname !== '/publishers' && pathname !== '/profile') {
     return null;
   }
 
@@ -18,7 +18,7 @@ export default function DashboardNav() {
         <div className="space-x-4">
           <Link href="/dashboard" className="text-foreground hover:text-primary cursor-pointer">Dashboard</Link>
           <Link href="/publishers" className="text-foreground hover:text-primary cursor-pointer">Publishers</Link>
-          <Link href="#" className="text-foreground hover:text-primary cursor-pointer">Profile</Link>
+          <Link href="/profile" className="text-foreground hover:text-primary cursor-pointer">Profile</Link>
           <Link href="#" className="text-foreground hover:text-primary cursor-pointer">Logout</Link>
         </div>
       </div>
