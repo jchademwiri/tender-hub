@@ -2,7 +2,6 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Province } from '@/db/schema';
 import {
   Form,
@@ -20,14 +19,12 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { MapPin, Hash, FileText } from 'lucide-react';
-
-const provinceSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  code: z.string().min(1, 'Code is required').max(10, 'Code must be 10 characters or less'),
-  description: z.string().optional(),
-});
-
-type ProvinceFormData = z.infer<typeof provinceSchema>;
+import {
+  provinceFormSchema,
+  type ProvinceFormData,
+  provinceDefaultValues,
+} from '@/lib/validations/province';
+import { toast } from 'sonner';
 
 interface ProvinceFormProps {
   province?: Province;
@@ -36,22 +33,35 @@ interface ProvinceFormProps {
 
 export default function ProvinceForm({ province, action }: ProvinceFormProps) {
   const form = useForm<ProvinceFormData>({
-    resolver: zodResolver(provinceSchema),
-    defaultValues: {
-      name: province?.name || '',
-      code: province?.code || '',
-      description: province?.description || '',
-    },
+    resolver: zodResolver(provinceFormSchema),
+    defaultValues: province
+      ? {
+          name: province.name,
+          code: province.code,
+          description: province.description || '',
+        }
+      : provinceDefaultValues,
   });
 
   const onSubmit = async (data: ProvinceFormData) => {
-    const formData = new FormData();
-    formData.append('name', data.name);
-    formData.append('code', data.code);
-    if (data.description) formData.append('description', data.description);
-    if (province?.id) formData.append('id', province.id);
+    try {
+      const formData = new FormData();
+      formData.append('name', data.name.trim());
+      formData.append('code', data.code.trim().toUpperCase());
+      if (data.description) formData.append('description', data.description.trim());
+      if (province?.id) formData.append('id', province.id);
 
-    await action({}, formData);
+      const result = await action({}, formData);
+      
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(province ? 'Province updated successfully' : 'Province created successfully');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -86,7 +96,11 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
                   <InputGroupAddon>
                     <Hash className="size-4" />
                   </InputGroupAddon>
-                  <InputGroupInput placeholder="Enter province code" {...field} />
+                  <InputGroupInput 
+                    placeholder="Enter province code (e.g., GP, WC)" 
+                    maxLength={3}
+                    {...field} 
+                  />
                 </InputGroup>
               </FormControl>
               <FormMessage />
@@ -98,7 +112,7 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Description (Optional)</FormLabel>
               <FormControl>
                 <InputGroup>
                   <InputGroupAddon>

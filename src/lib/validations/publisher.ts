@@ -14,7 +14,7 @@ import {
 // Base publisher schema for form data
 export const publisherFormSchema = z.object({
   name: nameSchema,
-  website: websiteSchema,
+  website: z.string().optional().or(z.literal('')),
   province_id: uuidSchema,
 });
 

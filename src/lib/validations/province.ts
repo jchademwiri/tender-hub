@@ -16,7 +16,7 @@ import {
 export const provinceFormSchema = z.object({
   name: nameSchema,
   code: provinceCodeSchema,
-  description: descriptionSchema,
+  description: z.string().optional().or(z.literal('')),
 });
 
 // Province creation schema (for server actions)
