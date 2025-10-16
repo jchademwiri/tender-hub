@@ -6,20 +6,37 @@ import { admin as adminPlugin } from "better-auth/plugins"
 import { ac, admin, manager, user, owner } from '@/lib/permissions';
 
 export const auth = betterAuth({
-    emailAndPassword: {
+  emailAndPassword: {
     enabled: true,
-   },
-    database: drizzleAdapter(db, {
-        provider: "pg", // or "mysql", "sqlite"
+  },
+  database: drizzleAdapter(db, {
+    provider: "pg", // PostgreSQL provider
+  }),
+  plugins: [
+    adminPlugin({
+      ac,
+      roles: { owner, admin, user, manager },
+      defaultRole: "user"
     }),
-      plugins: [
-         adminPlugin(
-             {ac, roles: {owner, admin, user, manager}}
-         ),
-         // TODO: Add invitation plugin to enable invitation-only signups
-         // invitation({
-         //   invitationOnly: true, // Only allow signups via invitations
-         //   // Configure email sending, expiration, etc.
-         // })
-     ]
+  ],
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
+  },
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
+  rateLimit: {
+    window: 15 * 60, // 15 minutes
+    max: 100, // Max requests per window
+  },
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL,
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  ],
 });

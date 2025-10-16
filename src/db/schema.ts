@@ -1,5 +1,5 @@
 // src/db/schema.ts
-import { pgTable, text, varchar, timestamp, uuid,boolean, pgEnum, } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, uuid, boolean, pgEnum, jsonb, integer, decimal, index } from "drizzle-orm/pg-core";
 
 
 export const role = pgEnum('role', [ 'owner','admin', 'manager', 'user']);
@@ -106,6 +106,229 @@ export const invitation = pgTable("invitation", {
 });
 
 /**
+ * Analytics Tables
+ */
+
+// Enhanced session tracking for analytics
+export const sessions = pgTable("sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"),
+  utmSource: text("utm_source"),
+  utmMedium: text("utm_medium"),
+  utmCampaign: text("utm_campaign"),
+  utmTerm: text("utm_term"),
+  utmContent: text("utm_content"),
+  deviceType: text("device_type"),
+  browser: text("browser"),
+  browserVersion: text("browser_version"),
+  os: text("os"),
+  osVersion: text("os_version"),
+  screenResolution: text("screen_resolution"),
+  timezone: text("timezone"),
+  language: text("language"),
+  country: text("country"),
+  region: text("region"),
+  city: text("city"),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  endedAt: timestamp("ended_at"),
+  duration: integer("duration"), // in seconds
+  pageViews: integer("page_views").default(0),
+  interactions: integer("interactions").default(0),
+  isBounce: boolean("is_bounce").default(false),
+  exitPage: text("exit_page"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (table) => ({
+  userIdx: index("sessions_user_idx").on(table.userId),
+  sessionIdIdx: index("sessions_session_id_idx").on(table.sessionId),
+  startedAtIdx: index("sessions_started_at_idx").on(table.startedAt),
+}));
+
+// Individual page visit records
+export const pageViews = pgTable("page_views", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: text("session_id").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  url: text("url").notNull(),
+  path: text("path").notNull(),
+  title: text("title"),
+  referrer: text("referrer"),
+  queryParams: jsonb("query_params"),
+  timeOnPage: integer("time_on_page"), // in seconds
+  scrollDepth: integer("scroll_depth"), // percentage
+  viewportWidth: integer("viewport_width"),
+  viewportHeight: integer("viewport_height"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  sessionIdx: index("page_views_session_idx").on(table.sessionId),
+  userIdx: index("page_views_user_idx").on(table.userId),
+  urlIdx: index("page_views_url_idx").on(table.url),
+  timestampIdx: index("page_views_timestamp_idx").on(table.timestamp),
+}));
+
+// Click tracking and user actions
+export const userInteractions = pgTable("user_interactions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: text("session_id").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  interactionType: text("interaction_type").notNull(), // click, scroll, form_submit, etc.
+  element: text("element"), // button, link, form, etc.
+  elementId: text("element_id"),
+  elementClass: text("element_class"),
+  elementText: text("element_text"),
+  pageUrl: text("page_url").notNull(),
+  pagePath: text("page_path").notNull(),
+  xCoordinate: integer("x_coordinate"),
+  yCoordinate: integer("y_coordinate"),
+  viewportX: integer("viewport_x"),
+  viewportY: integer("viewport_y"),
+  metadata: jsonb("metadata"), // additional context data
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  sessionIdx: index("interactions_session_idx").on(table.sessionId),
+  userIdx: index("interactions_user_idx").on(table.userId),
+  typeIdx: index("interactions_type_idx").on(table.interactionType),
+  timestampIdx: index("interactions_timestamp_idx").on(table.timestamp),
+}));
+
+// Generic event tracking system
+export const events = pgTable("events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: text("session_id"),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  eventType: text("event_type").notNull(),
+  eventName: text("event_name").notNull(),
+  properties: jsonb("properties"),
+  value: decimal("value", { precision: 15, scale: 2 }),
+  currency: text("currency"),
+  pageUrl: text("page_url"),
+  pagePath: text("page_path"),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  deviceType: text("device_type"),
+  browser: text("browser"),
+  os: text("os"),
+  country: text("country"),
+  region: text("region"),
+  city: text("city"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("events_user_idx").on(table.userId),
+  sessionIdx: index("events_session_idx").on(table.sessionId),
+  eventTypeIdx: index("events_event_type_idx").on(table.eventType),
+  eventNameIdx: index("events_event_name_idx").on(table.eventName),
+  timestampIdx: index("events_timestamp_idx").on(table.timestamp),
+}));
+
+// Pre-calculated daily metrics
+export const dailyAnalytics = pgTable("daily_analytics", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  date: timestamp("date").notNull(), // date only (no time)
+  metricType: text("metric_type").notNull(), // page_views, users, sessions, etc.
+  metricName: text("metric_name").notNull(),
+  value: decimal("value", { precision: 20, scale: 2 }).notNull(),
+  metadata: jsonb("metadata"), // dimensions, filters, etc.
+  calculatedAt: timestamp("calculated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  dateIdx: index("daily_analytics_date_idx").on(table.date),
+  metricTypeIdx: index("daily_analytics_metric_type_idx").on(table.metricType),
+  metricNameIdx: index("daily_analytics_metric_name_idx").on(table.metricName),
+  compositeIdx: index("daily_analytics_composite_idx").on(table.date, table.metricType, table.metricName),
+}));
+
+// High-performance caching for analytics queries
+export const analyticsCache = pgTable("analytics_cache", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cacheKey: text("cache_key").notNull().unique(),
+  queryHash: text("query_hash").notNull(),
+  data: jsonb("data").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  hitCount: integer("hit_count").default(0),
+  lastAccessed: timestamp("last_accessed").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  cacheKeyIdx: index("analytics_cache_key_idx").on(table.cacheKey),
+  expiresAtIdx: index("analytics_cache_expires_idx").on(table.expiresAt),
+  queryHashIdx: index("analytics_cache_query_hash_idx").on(table.queryHash),
+}));
+
+// GDPR compliance tracking
+export const userConsent = pgTable("user_consent", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  sessionId: text("session_id"),
+  consentType: text("consent_type").notNull(), // analytics, marketing, necessary
+  granted: boolean("granted").notNull(),
+  version: text("version").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("user_consent_user_idx").on(table.userId),
+  sessionIdx: index("user_consent_session_idx").on(table.sessionId),
+  consentTypeIdx: index("user_consent_type_idx").on(table.consentType),
+  grantedAtIdx: index("user_consent_granted_at_idx").on(table.grantedAt),
+}));
+
+// Data cleanup configuration
+export const retentionPolicies = pgTable("retention_policies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tableName: text("table_name").notNull(),
+  policyName: text("policy_name").notNull(),
+  retentionDays: integer("retention_days").notNull(),
+  condition: text("condition"), // SQL condition for selective deletion
+  enabled: boolean("enabled").default(true).notNull(),
+  lastRun: timestamp("last_run"),
+  nextRun: timestamp("next_run"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (table) => ({
+  tableNameIdx: index("retention_policies_table_idx").on(table.tableName),
+  enabledIdx: index("retention_policies_enabled_idx").on(table.enabled),
+  nextRunIdx: index("retention_policies_next_run_idx").on(table.nextRun),
+}));
+
+// Audit trail for analytics access
+export const analyticsAccessLog = pgTable("analytics_access_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  sessionId: text("session_id"),
+  action: text("action").notNull(), // view, export, delete, etc.
+  resource: text("resource").notNull(), // dashboard, report, data_export
+  resourceId: text("resource_id"),
+  parameters: jsonb("parameters"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  success: boolean("success").notNull(),
+  errorMessage: text("error_message"),
+  processingTime: integer("processing_time"), // in milliseconds
+  resultCount: integer("result_count"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("access_log_user_idx").on(table.userId),
+  actionIdx: index("access_log_action_idx").on(table.action),
+  resourceIdx: index("access_log_resource_idx").on(table.resource),
+  timestampIdx: index("access_log_timestamp_idx").on(table.timestamp),
+  successIdx: index("access_log_success_idx").on(table.success),
+}));
+
+/**
  * TypeScript types
  */
 
@@ -120,3 +343,23 @@ export type Verification = typeof verification.$inferSelect;
 export type Province = typeof provinces.$inferSelect;
 export type Publisher = typeof publishers.$inferSelect;
 export type NewPublisher = typeof publishers.$inferInsert;
+
+// Analytics Types
+export type AnalyticsSession = typeof sessions.$inferSelect;
+export type NewAnalyticsSession = typeof sessions.$inferInsert;
+export type PageView = typeof pageViews.$inferSelect;
+export type NewPageView = typeof pageViews.$inferInsert;
+export type UserInteraction = typeof userInteractions.$inferSelect;
+export type NewUserInteraction = typeof userInteractions.$inferInsert;
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;
+export type DailyAnalytic = typeof dailyAnalytics.$inferSelect;
+export type NewDailyAnalytic = typeof dailyAnalytics.$inferInsert;
+export type AnalyticsCache = typeof analyticsCache.$inferSelect;
+export type NewAnalyticsCache = typeof analyticsCache.$inferInsert;
+export type UserConsent = typeof userConsent.$inferSelect;
+export type NewUserConsent = typeof userConsent.$inferInsert;
+export type RetentionPolicy = typeof retentionPolicies.$inferSelect;
+export type NewRetentionPolicy = typeof retentionPolicies.$inferInsert;
+export type AnalyticsAccessLog = typeof analyticsAccessLog.$inferSelect;
+export type NewAnalyticsAccessLog = typeof analyticsAccessLog.$inferInsert;
