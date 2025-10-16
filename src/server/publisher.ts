@@ -1,10 +1,56 @@
 'use server';
 
 import { db } from '@/db';
-import { publishers } from '@/db/schema';
+import { publishers, provinces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { createAppError, logError, classifyError, getUserFriendlyMessage, retryWithBackoff } from '@/lib/error-utils';
+
+export async function getAllPublishers() {
+  try {
+    const result = await retryWithBackoff(
+      async () => {
+        return await db
+          .select({
+            id: publishers.id,
+            name: publishers.name,
+            website: publishers.website,
+            province_id: publishers.province_id,
+            createdAt: publishers.createdAt,
+            provinceName: provinces.name,
+          })
+          .from(publishers)
+          .leftJoin(provinces, eq(publishers.province_id, provinces.id))
+          .orderBy(publishers.name);
+      },
+      {
+        maxRetries: 2,
+        shouldRetry: (error) => {
+          const message = error.message.toLowerCase();
+          return message.includes('connection') || message.includes('timeout');
+        },
+        onRetry: (error, attempt) => {
+          logError(
+            createAppError(`Get all publishers retry attempt ${attempt}`, { details: { originalError: error } }),
+            'medium'
+          );
+        }
+      }
+    );
+    return result;
+  } catch (error) {
+    const appError = createAppError(
+      `Failed to fetch publishers: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      {
+        code: 'FETCH_FAILED',
+        statusCode: 500,
+        details: { originalError: error }
+      }
+    );
+    logError(appError, classifyError(appError));
+    throw appError;
+  }
+}
 
 export async function deletePublisher(formData: FormData) {
   const id = formData.get('id') as string;

@@ -87,6 +87,9 @@ export function markDailyReset(): void {
  * Save data to localStorage with error handling
  */
 export function saveToStorage(key: string, data: any): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
   try {
     localStorage.setItem(key, JSON.stringify(data));
     return true;
@@ -100,6 +103,9 @@ export function saveToStorage(key: string, data: any): boolean {
  * Get data from localStorage with error handling
  */
 export function getFromStorage<T>(key: string): T | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : null;
@@ -113,6 +119,9 @@ export function getFromStorage<T>(key: string): T | null {
  * Remove data from localStorage
  */
 export function removeFromStorage(key: string): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
   try {
     localStorage.removeItem(key);
     return true;

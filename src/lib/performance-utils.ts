@@ -54,6 +54,11 @@ const localStorageCache = new Map<string, { value: any; timestamp: number; ttl: 
  * Get cached value from localStorage with TTL support
  */
 export function getCachedLocalStorage<T>(key: string, ttl: number = 5000): T | null {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   const cached = localStorageCache.get(key);
 
   if (cached && (Date.now() - cached.timestamp) < cached.ttl) {
@@ -81,6 +86,11 @@ export function getCachedLocalStorage<T>(key: string, ttl: number = 5000): T | n
  * Set cached value to localStorage
  */
 export function setCachedLocalStorage(key: string, value: any, ttl: number = 5000): boolean {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
   try {
     localStorage.setItem(key, JSON.stringify(value));
 
