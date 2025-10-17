@@ -6,7 +6,7 @@
  * Integrates with Next.js router for seamless tracking
  */
 
-import { useEffect, useRef, Suspense } from 'react';
+import React, { useEffect, useRef, Suspense, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useVisitTrackerContext } from '@/contexts/visit-tracker-context';
 
@@ -44,9 +44,9 @@ export function VisitTracker({
   const lastUrlRef = useRef<string>('');
 
   /**
-   * Generate the current full URL for tracking
+   * Generate the current full URL for tracking (memoized for stable reference)
    */
-  const getCurrentUrl = (): string => {
+  const getCurrentUrl = useCallback((): string => {
     if (typeof window === 'undefined') {
       return pathname || '';
     }
@@ -60,7 +60,7 @@ export function VisitTracker({
     }
 
     return url.pathname + url.search;
-  };
+  }, [pathname, searchParams]);
 
   /**
    * Track the current page visit
@@ -109,7 +109,7 @@ export function VisitTracker({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [trackVisibility, enabled, isEnabled, getCurrentUrl]);
+  }, [trackVisibility, enabled, isEnabled, getCurrentUrl, performTracking]);
 
   /**
    * Handle beforeunload events
@@ -131,10 +131,10 @@ export function VisitTracker({
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [trackUnload, enabled, isEnabled, getCurrentUrl]);
+  }, [trackUnload, enabled, isEnabled, getCurrentUrl, performTracking]);
 
   /**
-   * Track page changes based on pathname
+   * Track page changes based on pathname and search params
    */
   useEffect(() => {
     if (!enabled || !isEnabled) {
@@ -156,23 +156,7 @@ export function VisitTracker({
       hasTrackedRef.current = false;
       lastUrlRef.current = url;
     }
-  }, [pathname, searchParams, enabled, isEnabled, trackOnMount, getCurrentUrl]);
-
-  /**
-   * Track when search parameters change (for dynamic pages)
-   */
-  useEffect(() => {
-    if (!enabled || !isEnabled || !searchParams) {
-      return;
-    }
-
-    const url = getCurrentUrl();
-
-    // Only track if search params actually changed and we haven't tracked this combination
-    if (url !== lastUrlRef.current) {
-      performTracking(url);
-    }
-  }, [searchParams, enabled, isEnabled, getCurrentUrl]);
+  }, [pathname, searchParams, enabled, isEnabled, trackOnMount, getCurrentUrl, performTracking]);
 
   // This component doesn't render anything
   return null;

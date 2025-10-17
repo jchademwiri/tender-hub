@@ -84,7 +84,9 @@ export async function requireAuth(redirectTo?: string) {
 export async function requireAdmin() {
   const user = await requireAuth();
 
-  if (!isAdmin()) {
+  // Await the isAdmin() call to get the actual boolean result
+  const admin = await isAdmin();
+  if (!admin) {
     redirect("/dashboard");
   }
 

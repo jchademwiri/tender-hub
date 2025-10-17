@@ -14,7 +14,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  role: text("role"),
+  role: role("role").default("user").notNull(),
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
@@ -98,10 +98,10 @@ export const provinces = pgTable("provinces", {
  */
 export const publishers = pgTable("publishers", {
     id: uuid("id").defaultRandom().primaryKey(),
-   name: text("name").notNull(),
-   website: text("website"),
-   province_id: uuid("province_id").notNull(), // FK to provinces.id
-   createdAt: timestamp("created_at").defaultNow().notNull(),
+    name: text("name").notNull(),
+    website: text("website"),
+    province_id: uuid("province_id").notNull().references(() => provinces.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   provinceIdx: index("publishers_province_idx").on(table.province_id),
 }));

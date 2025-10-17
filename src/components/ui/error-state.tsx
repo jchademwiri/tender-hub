@@ -26,11 +26,7 @@ export function ErrorState({
   variant = 'default',
 }: ErrorStateProps) {
   const handleRetry = () => {
-    if (onRetry) {
-      onRetry();
-    } else if (action?.onClick) {
-      action.onClick();
-    }
+    onRetry?.();
   };
 
   const handleHome = () => {

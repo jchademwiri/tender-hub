@@ -6,8 +6,10 @@ import { createAuthMiddleware, APIError } from "better-auth/api";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { ac, admin, manager, user, owner } from "@/lib/permissions";
-import { sendEmail } from "@/lib/email";
 import { eq, count } from "drizzle-orm";
+
+// Store deleted user data temporarily for afterDelete hook
+let deletedUserData: { role?: string | null } | null = null;
 
 export const auth = betterAuth({
   // ✅ CRITICAL FIX: Enable auth but disable public signup
@@ -19,17 +21,8 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
 
     sendResetPassword: async ({ user, url, token }, request) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Reset Your Password - Tender Hub",
-        html: `
-          <h1>Password Reset Request</h1>
-          <p>Click the link below to reset your password:</p>
-          <a href="${url}">Reset Password</a>
-          <p>This link expires in 1 hour.</p>
-          <p>If you didn't request this, please ignore this email.</p>
-        `
-      });
+      const { sendPasswordResetEmail } = await import("@/lib/email");
+      await sendPasswordResetEmail(user.email, url);
     },
 
     resetPasswordTokenExpiresIn: 3600,
@@ -45,26 +38,15 @@ export const auth = betterAuth({
       });
 
       // Notify user
-      await sendEmail({
-        to: user.email,
-        subject: "Password Changed - Tender Hub",
-        html: `Your password was recently changed. If this wasn't you, contact support immediately.`
-      });
+      const { sendPasswordChangedEmail } = await import("@/lib/email");
+      await sendPasswordChangedEmail(user.email);
     }
   },
 
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }, request) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify Your Email - Tender Hub",
-        html: `
-          <h1>Welcome to Tender Hub!</h1>
-          <p>Click the link below to verify your email:</p>
-          <a href="${url}">Verify Email</a>
-          <p>This link expires in 1 hour.</p>
-        `
-      });
+      const { sendEmailVerification } = await import("@/lib/email");
+      await sendEmailVerification(user.email, url);
     },
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
@@ -104,16 +86,8 @@ export const auth = betterAuth({
       enabled: true,
 
       sendDeleteAccountVerification: async ({ user, url, token }, request) => {
-        await sendEmail({
-          to: user.email,
-          subject: "Confirm Account Deletion - Tender Hub",
-          html: `
-            <h1>Account Deletion Request</h1>
-            <p>Click the link below to confirm account deletion:</p>
-            <a href="${url}">Confirm Deletion</a>
-            <p>This action cannot be undone.</p>
-          `
-        });
+        const { sendAccountDeletionEmail } = await import("@/lib/email");
+        await sendAccountDeletionEmail(user.email, url);
       },
 
       beforeDelete: async (user, request) => {
@@ -131,6 +105,9 @@ export const auth = betterAuth({
           }
         }
 
+        // Store user data for afterDelete hook (since user will be deleted)
+        deletedUserData = { role: fullUser[0]?.role || null };
+
         // GDPR compliance
         await db.delete(schema.sessions).where(eq(schema.sessions.userId, user.id));
         await db.delete(schema.pageViews).where(eq(schema.pageViews.userId, user.id));
@@ -140,8 +117,9 @@ export const auth = betterAuth({
       },
 
       afterDelete: async (user, request) => {
-        // Audit log
-        const fullUser = await db.select().from(schema.user).where(eq(schema.user.id, user.id)).limit(1);
+        // Audit log - use stored role from beforeDelete instead of querying deleted user
+        const deletedUserRole = deletedUserData?.role || null;
+
         await db.insert(schema.auditLog).values({
           id: crypto.randomUUID(),
           userId: "system",
@@ -149,10 +127,13 @@ export const auth = betterAuth({
           metadata: JSON.stringify({
             deletedUserId: user.id,
             email: user.email,
-            role: fullUser[0]?.role
+            role: deletedUserRole
           }),
           createdAt: new Date()
         });
+
+        // Clear the stored data after use
+        deletedUserData = null;
       }
     },
 

@@ -93,17 +93,19 @@ export default function AdminInviteUserPage() {
               Send Invitation
             </Button>
           </form>
-          {/* TODO: Add success/error message display */}
-          <div className="mt-4 p-4 bg-muted rounded">
-            <p>TODO: Implement form submission</p>
-            <p>Features needed:</p>
-            <ul className="list-disc list-inside">
-              <li>Validate email and role</li>
-              <li>Create invitation record</li>
-              <li>Send invitation email</li>
-              <li>Handle loading and error states</li>
-            </ul>
-          </div>
+          {/* TODO: Add success/error message display - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-4 bg-muted rounded">
+              <p>TODO: Implement form submission</p>
+              <p>Features needed:</p>
+              <ul className="list-disc list-inside">
+                <li>Validate email and role</li>
+                <li>Create invitation record</li>
+                <li>Send invitation email</li>
+                <li>Handle loading and error states</li>
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

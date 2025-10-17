@@ -60,13 +60,15 @@ export function useVisitTracker(): UseVisitTrackerReturn {
       const success = addVisit(normalizedUrl);
 
       if (success) {
-        // Use setTimeout to defer state updates and avoid useInsertionEffect conflicts
+        // Update state to reflect tracking
+        setIsTracking(true);
+        setLastTrackedUrl(normalizedUrl);
+        setError(null);
+
+        // Set tracking to false after a brief delay to show user feedback
         setTimeout(() => {
-          setIsTracking(true);
-          setLastTrackedUrl(normalizedUrl);
-          setError(null);
           setIsTracking(false);
-        }, 0);
+        }, 100);
       } else {
         throw new Error('Failed to track visit');
       }
@@ -74,11 +76,8 @@ export function useVisitTracker(): UseVisitTrackerReturn {
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      // Defer error state update
-      setTimeout(() => {
-        setError(errorMessage);
-        setIsTracking(false);
-      }, 0);
+      setError(errorMessage);
+      setIsTracking(false);
       console.warn('Visit tracking error:', err);
       return false;
     }
@@ -176,7 +175,7 @@ export function useVisitTracker(): UseVisitTrackerReturn {
   }, [trackCurrentPage]);
 
   /**
-   * Listen for browser navigation events
+   * Listen for browser navigation events (popstate only)
    */
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -187,23 +186,11 @@ export function useVisitTracker(): UseVisitTrackerReturn {
       trackCurrentPage();
     };
 
-    const handlePushState = () => {
-      trackCurrentPage();
-    };
-
     // Listen for browser back/forward navigation
     window.addEventListener('popstate', handlePopState);
 
-    // Listen for programmatic navigation (for SPA routers)
-    const originalPushState = history.pushState;
-    history.pushState = function(state: any, title: string, url?: string | URL | null) {
-      originalPushState.call(history, state, title, url);
-      handlePushState();
-    };
-
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      history.pushState = originalPushState;
     };
   }, [trackCurrentPage]);
 
@@ -240,8 +227,13 @@ export function useVisitStats(): VisitStats {
     try {
       // Use cached localStorage to reduce expensive operations
       const cachedVisits = getCachedLocalStorage('visit-tracker-visits', 30000); // 30 second cache
+
       if (cachedVisits) {
-        // Only recalculate if cache is fresh
+        // Use cached data if available
+        const newStats = getVisitStats();
+        setStats(newStats);
+      } else {
+        // Only recalculate if cache is missing/stale
         const newStats = getVisitStats();
         setStats(newStats);
       }
@@ -288,12 +280,14 @@ export function useVisitedPages(): string[] {
     refreshVisitedPages();
 
     // Throttle storage change events to prevent excessive updates
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: number | undefined;
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key?.includes('visit-tracker')) {
         // Debounce storage events to prevent excessive refreshes
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(refreshVisitedPages, 100);
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
+        timeoutId = window.setTimeout(refreshVisitedPages, 100);
       }
     };
 
@@ -305,7 +299,10 @@ export function useVisitedPages(): string[] {
       if (typeof window !== 'undefined') {
         window.removeEventListener('storage', handleStorageChange);
       }
-      clearTimeout(timeoutId);
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
     };
   }, [refreshVisitedPages]);
 

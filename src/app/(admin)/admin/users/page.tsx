@@ -51,17 +51,19 @@ export default function AdminUsersPage() {
             <Link href="/admin/users/invite">Invite User</Link>
           </Button>
         </div>
-        {/* TODO: Replace with actual user table */}
-        <div className="bg-muted p-4 rounded">
-          <p>TODO: Implement user list table here</p>
-          <p>Features needed:</p>
-          <ul className="list-disc list-inside">
-            <li>Display users with name, email, role, status</li>
-            <li>Search and filter options</li>
-            <li>Action buttons for edit, ban, delete</li>
-            <li>Pagination for large user lists</li>
-          </ul>
-        </div>
+        {/* TODO: Replace with actual user table - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-muted p-4 rounded">
+            <p>TODO: Implement user list table here</p>
+            <p>Features needed:</p>
+            <ul className="list-disc list-inside">
+              <li>Display users with name, email, role, status</li>
+              <li>Search and filter options</li>
+              <li>Action buttons for edit, ban, delete</li>
+              <li>Pagination for large user lists</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )

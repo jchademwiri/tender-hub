@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { UseFormReturn, FieldPath, FieldValues } from 'react-hook-form';
-import { z } from 'zod';
 import { Input } from './input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from './input-group';
 import { Label } from './label';
@@ -377,7 +376,7 @@ export function ValidatedCheckbox<
           type="checkbox"
           disabled={disabled}
           className={cn(
-            'h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+            'peer h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
             hasError && isTouched && 'border-red-500 focus:ring-red-500'
           )}
           data-testid={testId}

@@ -1,10 +1,11 @@
 "use client"
 
 import React, { memo, useMemo, useCallback } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { NavItemWithIndicator } from "@/components/nav-item-with-indicator";
 import { useVisitTrackerContext } from "@/contexts/visit-tracker-context";
+import { authClient } from "@/lib/auth-client";
 import {
   LayoutDashboard,
   Building2,
@@ -15,6 +16,7 @@ import {
 
 const DashboardNav = memo(() => {
   const pathname = usePathname();
+  const router = useRouter();
   const { isEnabled } = useVisitTrackerContext();
 
   // Memoize navigation items to prevent recreation on every render
@@ -40,11 +42,25 @@ const DashboardNav = memo(() => {
   ], []);
 
   // Memoize logout handler to prevent unnecessary re-renders of logout button
-  const handleLogout = useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleLogout = useCallback(async (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    // Add logout logic here
-    console.log("Logout clicked");
-  }, []);
+
+    try {
+      // Call Better Auth signOut method
+      await authClient.signOut();
+
+      // Clear any client-side state if needed
+      // (Better Auth handles session cleanup automatically)
+
+      // Redirect to home page or login page
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Optionally show error message to user
+      // For now, we'll still redirect even if signOut fails
+      router.push('/');
+    }
+  }, [router]);
 
   // Show only on dashboard and publishers paths
   if (!pathname.startsWith('/dashboard') && pathname !== '/publishers' && pathname !== '/profile') {

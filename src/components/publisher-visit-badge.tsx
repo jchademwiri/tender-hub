@@ -8,6 +8,22 @@ import { getCachedLocalStorage } from "@/lib/performance-utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
+// Define proper interfaces for visit data
+interface Visit {
+  url: string
+  timestamp: number
+  sessionId?: string
+  [key: string]: any
+}
+
+interface DayVisits {
+  date: string
+  visits: Visit[]
+}
+
+// Cache TTL constant (30 seconds)
+const CACHE_TTL_MS = 30000
+
 interface PublisherVisitBadgeProps {
   /** Publisher ID or unique identifier */
   publisherId: string
@@ -41,8 +57,8 @@ const PublisherVisitBadge = memo(({
   }, [publisherId])
 
   // Memoized function to get all visits using cached localStorage
-  const getAllVisitsCached = useCallback(() => {
-    return getCachedLocalStorage('visit-tracker-visits', 5000) || []
+  const getAllVisitsCached = useCallback((): Visit[] | DayVisits[] => {
+    return getCachedLocalStorage('visit-tracker-visits', CACHE_TTL_MS) || []
   }, [])
 
   // Get visit statistics for this publisher
@@ -50,21 +66,23 @@ const PublisherVisitBadge = memo(({
     const stats = getVisitStats()
     const visitCount = stats.visitCountByPage[publisherUrl] || 0
 
-    // Find the most recent visit for this publisher
-    const allVisits = getAllVisitsCached() as any[]
-    let lastVisit: Date | null = null
+    // Find the most recent visit for this publisher with optimized single-pass algorithm
+    const allVisits = getAllVisitsCached()
+    let lastVisitTimestamp: number | null = null
 
+    // Single pass through all visits to find the latest timestamp
     for (const day of allVisits) {
-      for (const visit of day.visits) {
-        if (visit.url === publisherUrl && (!lastVisit || visit.timestamp > lastVisit.getTime())) {
-          lastVisit = new Date(visit.timestamp)
+      const visits: Visit[] = (day as DayVisits).visits || [day as Visit]
+      for (const visit of visits) {
+        if (visit.url === publisherUrl && (!lastVisitTimestamp || visit.timestamp > lastVisitTimestamp)) {
+          lastVisitTimestamp = visit.timestamp
         }
       }
     }
 
     return {
       visitCount,
-      lastVisit,
+      lastVisit: lastVisitTimestamp ? new Date(lastVisitTimestamp) : null,
       isVisited: visitCount > 0,
     }
   }, [publisherUrl, getAllVisitsCached])

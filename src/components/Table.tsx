@@ -9,9 +9,10 @@ import {
 } from '@/components/ui/table';
 
 interface Column<T> {
-  key: keyof T | string;
+  key?: keyof T | string;
   header: string | React.ReactNode;
   render?: (value: any, item: T) => React.ReactNode;
+  compute?: (item: T) => React.ReactNode;
 }
 
 interface TableProps<T> {
@@ -49,11 +50,19 @@ interface TableRowProps<T> {
 
 const TableRowComponent = memo(<T,>({ item, index, columns, actions }: TableRowProps<T>) => (
   <TableRow key={index}>
-    {columns.map((col) => (
-      <TableCell key={col.key as string}>
-        {col.render ? col.render((item as any)[col.key], item) : String((item as any)[col.key])}
-      </TableCell>
-    ))}
+    {columns.map((col) => {
+      const cellContent = col.compute
+        ? col.compute(item)
+        : col.key
+          ? (col.render ? col.render((item as any)[col.key], item) : String((item as any)[col.key] || ''))
+          : '';
+
+      return (
+        <TableCell key={col.key as string}>
+          {cellContent}
+        </TableCell>
+      );
+    })}
     {actions && <TableCell>{actions(item)}</TableCell>}
   </TableRow>
 )) as <T>(props: TableRowProps<T>) => ReactElement;

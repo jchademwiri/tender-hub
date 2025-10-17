@@ -75,6 +75,9 @@ export function VisitTrackerProvider({
   // Get today's visits (we'll implement this as a state)
   const [todayVisits, setTodayVisits] = useState<DailyVisits | null>(null);
 
+  // State for forcing refresh of visited pages
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   /**
     * Refresh today's visits data with caching
     */
@@ -102,22 +105,25 @@ export function VisitTrackerProvider({
    }, []);
 
   /**
-   * Refresh visit statistics
-   */
-  const refreshStats = useCallback(() => {
-    // The useVisitStats hook handles its own refresh
-    // We can force a re-render by updating a dummy state if needed
-    refreshTodayVisits();
-  }, [refreshTodayVisits]);
+    * Refresh visit statistics
+    */
+   const refreshStats = useCallback(() => {
+     // The useVisitStats hook handles its own refresh
+     // We can force a re-render by updating a dummy state if needed
+     refreshTodayVisits();
+   }, [refreshTodayVisits]);
 
-  /**
-   * Refresh visited pages
-   */
-  const refreshVisitedPages = useCallback(() => {
-    // The useVisitedPages hook handles its own refresh
-    // We can force a re-render by updating a dummy state if needed
-    setTodayVisits(prev => prev); // Trigger re-render
-  }, []);
+   /**
+    * Refresh visited pages by triggering a refresh of the underlying data
+    */
+   const refreshVisitedPages = useCallback(() => {
+     // Force refresh by updating the refresh trigger
+     // This will cause the useVisitedPages hook to refetch data
+     setRefreshTrigger(prev => prev + 1);
+
+     // Also refresh today's visits as they are related
+     refreshTodayVisits();
+   }, [refreshTodayVisits]);
 
   /**
    * Enhanced track visit function that respects enabled state

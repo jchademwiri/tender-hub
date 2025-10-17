@@ -44,6 +44,16 @@ export function TableRowWithVisits({
   highlightVisited = true,
   showVisitIndicators = true,
 }: TableRowWithVisitsProps) {
+  // Helper function to get all visits from storage (defined first for dependency order)
+  const getAllVisits = React.useCallback(() => {
+    try {
+      const visits = localStorage.getItem('visit-tracker-visits')
+      return visits ? JSON.parse(visits) : []
+    } catch {
+      return []
+    }
+  }, [])
+
   // Generate publisher URL for visit tracking
   const publisherUrl = React.useMemo(() => {
     return `/publishers/${publisher.id}`
@@ -75,17 +85,7 @@ export function TableRowWithVisits({
       lastVisit,
       isVisited,
     }
-  }, [publisherUrl])
-
-  // Helper function to get all visits from storage
-  const getAllVisits = React.useCallback(() => {
-    try {
-      const visits = localStorage.getItem('visit-tracker-visits')
-      return visits ? JSON.parse(visits) : []
-    } catch {
-      return []
-    }
-  }, [])
+  }, [publisherUrl, getAllVisits])
 
   // Format last visit time for display
   const formatLastVisit = React.useCallback((date: Date): string => {

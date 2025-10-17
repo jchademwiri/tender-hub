@@ -1,17 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Explicitly configure for App Router
+  // Configure App Router-related experimental options
   experimental: {
-    // Ensure we're using the latest App Router features
+    // Optimize package imports for better performance
     optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],
   },
-  // Disable Pages Router features that might cause conflicts
+  // Enable standalone build for containerized/Docker deployments
   output: 'standalone',
-  // Ensure proper handling of environment variables
-  env: {
-    // This helps with Edge Runtime compatibility
-  },
 };
 
 export default nextConfig;

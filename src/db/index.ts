@@ -5,17 +5,14 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "./schema";
 
-// Only load dotenv in Node.js environments, not in Edge Runtime
-if (typeof process !== 'undefined' && process.env && typeof window === 'undefined') {
+// Load dotenv synchronously in Node.js environments (development only)
+// Note: .env.local is only loaded in development; production relies on externally provided environment variables
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   try {
-    // Use dynamic import to prevent bundling in Edge Runtime
-    import('dotenv').then(({ config }) => {
-      config({ path: ".env.local" });
-    }).catch(() => {
-      // dotenv not available or not needed
-    });
+    // Use require for synchronous loading to ensure env vars are available before DB initialization
+    require('dotenv').config({ path: '.env.local' });
   } catch (error) {
-    // Silently continue if dotenv is not available
+    // dotenv not available - continue with existing environment variables
   }
 }
 

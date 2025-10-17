@@ -61,6 +61,12 @@ export function useAsyncOperation<T>(initialData: T | null = null) {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Store the last operation for retry functionality
+  const lastOperationRef = useRef<{
+    operation: () => Promise<T>;
+    options: Parameters<typeof execute>[1];
+  } | null>(null);
+
   const execute = useCallback(async (
     operation: () => Promise<T>,
     options: {
@@ -71,6 +77,9 @@ export function useAsyncOperation<T>(initialData: T | null = null) {
     } = {}
   ) => {
     const { onSuccess, onError, retryOptions, signal } = options;
+
+    // Store the operation for retry functionality
+    lastOperationRef.current = { operation, options };
 
     // Cancel previous operation if still running
     if (abortControllerRef.current) {
@@ -156,24 +165,16 @@ export function useAsyncOperation<T>(initialData: T | null = null) {
   }, []);
 
   const retry = useCallback(async () => {
-    if (!state.error) return;
+    if (!state.error || !lastOperationRef.current) {
+      return;
+    }
 
-    setState(prev => ({
-      ...prev,
-      loading: true,
-      error: null,
-    }));
-
-    // The retry logic would need to be implemented based on the last operation
-    // For now, we'll just reset the state
-    setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        retryCount: 0,
-      }));
-    }, 1000);
-  }, [state.error]);
+    // Re-run the last operation with the same options
+    await execute(
+      lastOperationRef.current.operation,
+      lastOperationRef.current.options
+    );
+  }, [state.error, execute]);
 
   const reset = useCallback(() => {
     setState({

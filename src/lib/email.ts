@@ -1,10 +1,11 @@
 import { Resend } from 'resend';
 import React from 'react';
 import { render } from '@react-email/render';
-import { PasswordResetEmail } from '../../emails/password-reset';
-import { EmailVerificationEmail } from '../../emails/email-verification';
-import { AccountDeletionEmail } from '../../emails/account-deletion';
-import { PasswordChangedEmail } from '../../emails/password-changed';
+import PasswordResetEmail from '@emails/password-reset';
+import EmailVerificationEmail from '@emails/email-verification';
+import AccountDeletionEmail from '@emails/account-deletion';
+import PasswordChangedEmail from '@emails/password-changed';
+
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -51,7 +52,11 @@ export async function sendEmail({
 
 export async function sendPasswordResetEmail(to: string, url: string) {
   try {
-    const renderedHtml = await render(React.createElement(PasswordResetEmail, { url }));
+    const renderedHtml = await render(React.createElement(PasswordResetEmail, {
+      userEmail: to,
+      resetUrl: url,
+      expirationTime: "1 hour"
+    }));
 
     const result = await resend.emails.send({
       from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
@@ -69,7 +74,11 @@ export async function sendPasswordResetEmail(to: string, url: string) {
 
 export async function sendEmailVerification(to: string, url: string) {
   try {
-    const renderedHtml = await render(React.createElement(EmailVerificationEmail, { url }));
+    const renderedHtml = await render(React.createElement(EmailVerificationEmail, {
+      userEmail: to,
+      verificationUrl: url,
+      expirationTime: "1 hour"
+    }));
 
     const result = await resend.emails.send({
       from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
@@ -87,7 +96,11 @@ export async function sendEmailVerification(to: string, url: string) {
 
 export async function sendAccountDeletionEmail(to: string, url: string) {
   try {
-    const renderedHtml = await render(React.createElement(AccountDeletionEmail, { url }));
+    const renderedHtml = await render(React.createElement(AccountDeletionEmail, {
+      userEmail: to,
+      confirmationUrl: url,
+      expirationTime: "24 hours"
+    }));
 
     const result = await resend.emails.send({
       from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
@@ -105,7 +118,9 @@ export async function sendAccountDeletionEmail(to: string, url: string) {
 
 export async function sendPasswordChangedEmail(to: string) {
   try {
-    const renderedHtml = await render(React.createElement(PasswordChangedEmail));
+    const renderedHtml = await render(React.createElement(PasswordChangedEmail, {
+      userEmail: to
+    }));
 
     const result = await resend.emails.send({
       from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
