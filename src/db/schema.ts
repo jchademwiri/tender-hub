@@ -1,5 +1,8 @@
 // src/db/schema.ts
-import { pgTable, text, varchar, timestamp, uuid, boolean, pgEnum, jsonb, integer, decimal, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, uuid, boolean, pgEnum, jsonb, integer, decimal, index, bigint } from "drizzle-orm/pg-core";
+
+// User status enum
+export const userStatusEnum = pgEnum("user_status", ["active", "suspended", "pending"]);
 
 
 export const role = pgEnum('role', [ 'owner','admin', 'manager', 'user']);
@@ -11,16 +14,23 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  role: text("role"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
+  status: userStatusEnum("status").default("active"),
+  invitedBy: text("invited_by").references((): any => user.id),
+  invitedAt: timestamp("invited_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role"),
-  banned: boolean("banned").default(false),
-  banReason: text("ban_reason"),
-  banExpires: timestamp("ban_expires"),
-});
+}, (table) => ({
+  emailIdx: index("user_email_idx").on(table.email), // ✅ CRITICAL
+  roleIdx: index("user_role_idx").on(table.role),
+  statusIdx: index("user_status_idx").on(table.status)
+}));
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -87,12 +97,14 @@ export const provinces = pgTable("provinces", {
  * Each publisher belongs to one province.
  */
 export const publishers = pgTable("publishers", {
-   id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  website: text("website"),
-  province_id: uuid("province_id").notNull(), // FK to provinces.id
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+    id: uuid("id").defaultRandom().primaryKey(),
+   name: text("name").notNull(),
+   website: text("website"),
+   province_id: uuid("province_id").notNull(), // FK to provinces.id
+   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  provinceIdx: index("publishers_province_idx").on(table.province_id),
+}));
 
 export const invitation = pgTable("invitation", {
   id: text("id").primaryKey(),
@@ -363,3 +375,43 @@ export type RetentionPolicy = typeof retentionPolicies.$inferSelect;
 export type NewRetentionPolicy = typeof retentionPolicies.$inferInsert;
 export type AnalyticsAccessLog = typeof analyticsAccessLog.$inferSelect;
 export type NewAnalyticsAccessLog = typeof analyticsAccessLog.$inferInsert;
+
+// ✅ Rate limit table (created by Better Auth migration)
+export const rateLimit = pgTable("rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull()
+}, (table) => ({
+  keyIdx: index("rate_limit_key_idx").on(table.key)
+}));
+
+// ✅ Audit log table
+export const auditLog = pgTable("audit_log", {
+  id: text("id").primaryKey(),
+  userId: text("user_id"),
+  action: text("action").notNull(),
+  targetUserId: text("target_user_id"),
+  ipAddress: text("ip_address"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("audit_log_user_idx").on(table.userId),
+  actionIdx: index("audit_log_action_idx").on(table.action),
+  createdAtIdx: index("audit_log_created_at_idx").on(table.createdAt)
+}));
+
+// ✅ Profile update request table (for approval workflow)
+export const profileUpdateRequest = pgTable("profile_update_request", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  requestedChanges: jsonb("requested_changes").notNull(),
+  status: text("status").notNull().default("pending"),
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  reviewedBy: text("reviewed_by").references(() => user.id),
+  reviewedAt: timestamp("reviewed_at"),
+  rejectionReason: text("rejection_reason")
+}, (table) => ({
+  userIdIdx: index("profile_update_user_idx").on(table.userId),
+  statusIdx: index("profile_update_status_idx").on(table.status)
+}));

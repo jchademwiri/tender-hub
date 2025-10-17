@@ -6,7 +6,7 @@
  * Integrates with Next.js router for seamless tracking
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useVisitTrackerContext } from '@/contexts/visit-tracker-context';
 
@@ -268,4 +268,16 @@ export function usePageTracking(options?: {
     getCurrentUrl,
     isEnabled,
   };
+}
+
+/**
+ * Visit Tracker with Suspense Boundary
+ * Wrapper component that provides Suspense boundary for useSearchParams
+ */
+export function VisitTrackerWithSuspense(props: VisitTrackerProps) {
+  return (
+    <Suspense fallback={null}>
+      <VisitTracker {...props} />
+    </Suspense>
+  );
 }

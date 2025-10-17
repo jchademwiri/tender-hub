@@ -3,6 +3,7 @@
 // src/db.ts
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
+import * as schema from "./schema";
 
 // Only load dotenv in Node.js environments, not in Edge Runtime
 if (typeof process !== 'undefined' && process.env && typeof window === 'undefined') {
@@ -19,4 +20,4 @@ if (typeof process !== 'undefined' && process.env && typeof window === 'undefine
 }
 
 const sql = neon(process.env.DATABASE_URL!);
-export const db = drizzle({ client: sql });
+export const db = drizzle({ client: sql, schema });

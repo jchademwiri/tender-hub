@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { VisitTrackerProvider } from "@/contexts/visit-tracker-context";
-import { VisitTracker } from "@/components/visit-tracker";
+import { VisitTrackerWithSuspense } from "@/components/visit-tracker";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 
@@ -41,7 +41,7 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <VisitTrackerProvider enabled={true} autoTrack={true}>
-            <VisitTracker
+            <VisitTrackerWithSuspense
               trackOnMount={true}
               trackVisibility={true}
               trackUnload={true}
