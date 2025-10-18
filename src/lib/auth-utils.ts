@@ -94,6 +94,19 @@ export async function requireAdmin() {
 }
 
 /**
+ * Require manager role - redirect to dashboard if not manager or admin
+ */
+export async function requireManager() {
+  const user = await requireAuth();
+
+  if (!["admin", "owner", "manager"].includes(user.role || "")) {
+    redirect("/dashboard");
+  }
+
+  return user;
+}
+
+/**
  * Require specific role - redirect to dashboard if not authorized
  */
 export async function requireRole(role: string) {

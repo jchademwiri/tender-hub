@@ -46,7 +46,7 @@ This document summarizes the successful implementation of comprehensive enhancem
 **Files Created/Modified**:
 - `src/middleware.ts` - Route protection middleware
 - `src/lib/auth-utils.ts` - Authentication utility functions
-- `src/app/(admin)/layout.tsx` - Admin route protection
+- `src/app/(roles)/admin/layout.tsx` - Admin route protection
 - `src/app/(dashboard)/layout.tsx` - Dashboard route protection
 - `.env.example` - Environment configuration template
 
@@ -205,7 +205,7 @@ const debouncedFn = debounce(fn, 300);
 - `src/server/province.ts` - Enhanced with error handling
 - `src/app/layout.tsx` - Wrapped with error boundary
 - `src/app/(dashboard)/layout.tsx` - Dashboard error boundary
-- `src/app/(admin)/layout.tsx` - Admin error boundary
+- `src/app/(roles)/admin/layout.tsx` - Admin error boundary
 
 **Features Implemented**:
 - **Error Boundary**: Catches JavaScript errors in component tree

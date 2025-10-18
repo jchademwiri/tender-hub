@@ -160,7 +160,7 @@ export async function acceptInvitation({
   // Update user with invitation metadata
   await db.update(user)
     .set({
-      role: invite.role,
+      role: invite.role as "admin" | "manager" | "user",
       status: "active",
       emailVerified: true,
       invitedBy: invite.inviterId,

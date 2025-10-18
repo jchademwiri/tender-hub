@@ -215,7 +215,7 @@ CREATE TABLE "user_consent" (
 **Files Requiring Security Updates**:
 - `src/server/publisher.ts` - Add input validation
 - `src/server/province.ts` - Add error handling
-- `src/app/(admin)/layout.tsx` - Add auth middleware
+- `src/app/(roles)/admin/layout.tsx` - Add auth middleware
 
 ### 4.2 Performance Optimizations (High Priority)
 
