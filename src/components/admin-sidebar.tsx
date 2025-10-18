@@ -55,7 +55,7 @@ const data = {
     },
     {
       title: "Publishers",
-      url: "/admin/publishers",
+      url: "/publishers",
       icon: BookOpen,
     },
   ],
