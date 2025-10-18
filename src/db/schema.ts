@@ -106,16 +106,46 @@ export const publishers = pgTable("publishers", {
   provinceIdx: index("publishers_province_idx").on(table.province_id),
 }));
 
+// Invitation status enum for better type safety
+export const invitationStatusEnum = pgEnum("invitation_status", ["pending", "sent", "opened", "accepted", "expired", "cancelled", "declined"]);
+
 export const invitation = pgTable("invitation", {
   id: text("id").primaryKey(),
   email: text("email").notNull(),
   role: text("role"),
-  status: text("status").default("pending").notNull(),
+  status: invitationStatusEnum("status").default("pending").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   inviterId: text("inviter_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-});
+  // Enhanced tracking fields
+  sentAt: timestamp("sent_at"),
+  openedAt: timestamp("opened_at"),
+  acceptedAt: timestamp("accepted_at"),
+  expiredAt: timestamp("expired_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  declinedAt: timestamp("declined_at"),
+  // Email tracking
+  emailSubject: text("email_subject"),
+  emailTemplate: text("email_template"),
+  // Response tracking
+  responseTime: integer("response_time"), // in hours
+  reminderSent: boolean("reminder_sent").default(false),
+  reminderSentAt: timestamp("reminder_sent_at"),
+  // Metadata
+  metadata: jsonb("metadata"), // Additional context data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+}, (table) => ({
+  emailIdx: index("invitation_email_idx").on(table.email),
+  statusIdx: index("invitation_status_idx").on(table.status),
+  inviterIdx: index("invitation_inviter_idx").on(table.inviterId),
+  createdAtIdx: index("invitation_created_at_idx").on(table.createdAt),
+  expiresAtIdx: index("invitation_expires_at_idx").on(table.expiresAt),
+}));
 
 /**
  * Analytics Tables
@@ -347,6 +377,7 @@ export const analyticsAccessLog = pgTable("analytics_access_log", {
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Role = (typeof role.enumValues)[number];
+export type InvitationStatus = (typeof invitationStatusEnum.enumValues)[number];
 export type Invitation = typeof invitation.$inferSelect;
 export type NewInvitation = typeof invitation.$inferInsert;
 export type Session = typeof session.$inferSelect;

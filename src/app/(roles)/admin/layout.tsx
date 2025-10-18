@@ -41,8 +41,8 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // TODO: Enable admin authentication check
-  // await requireAdmin();
+  // Enable admin authentication check
+  await requireAdmin();
 
   return (
     <ErrorBoundary>

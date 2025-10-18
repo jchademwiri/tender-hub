@@ -2,20 +2,8 @@ import { db } from "@/db";
 import { user, account } from "@/db/schema";
 import { hashPassword } from "better-auth/crypto";
 import { eq, count } from "drizzle-orm";
-import * as readline from "readline";
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-function question(prompt: string): Promise<string> {
-  return new Promise((resolve) => {
-    rl.question(prompt, resolve);
-  });
-}
-
-async function createFirstAdmin() {
+async function createFirstAdmin(email?: string, name?: string, password?: string) {
   console.log("=".repeat(50));
   console.log("CREATE FIRST ADMIN - Tender Hub");
   console.log("=".repeat(50));
@@ -28,36 +16,40 @@ async function createFirstAdmin() {
 
   if (adminCount[0].count > 0) {
     console.log("❌ Admin already exists. Exiting.");
-    rl.close();
     process.exit(0);
   }
 
-  // Collect admin details
-  const email = await question("Admin email: ");
-  const name = await question("Admin name: ");
-  const password = await question("Admin password (min 12 chars): ");
+  // Use provided values or get from command line arguments
+  const adminEmail = email || process.argv[2];
+  const adminName = name || process.argv[3];
+  const adminPassword = password || process.argv[4];
 
-  // Validate
-  if (!email.includes("@")) {
-    console.error("❌ Invalid email address");
-    rl.close();
+  // Validate required arguments
+  if (!adminEmail || !adminName || !adminPassword) {
+    console.log("Usage: npx tsx src/scripts/create-first-admin.ts <email> <name> <password>");
+    console.log("Example: npx tsx src/scripts/create-first-admin.ts admin@test.com \"John Doe\" \"securepassword123\"");
     process.exit(1);
   }
 
-  if (password.length < 12) {
+  // Validate
+  if (!adminEmail.includes("@")) {
+    console.error("❌ Invalid email address");
+    process.exit(1);
+  }
+
+  if (adminPassword.length < 12) {
     console.error("❌ Password must be at least 12 characters");
-    rl.close();
     process.exit(1);
   }
 
   // Create admin
   const adminId = crypto.randomUUID();
-  const hashedPassword = await hashPassword(password);
+  const hashedPassword = await hashPassword(adminPassword);
 
   await db.insert(user).values({
     id: adminId,
-    email,
-    name,
+    email: adminEmail,
+    name: adminName,
     role: "admin",
     status: "active",
     emailVerified: true,
@@ -75,17 +67,15 @@ async function createFirstAdmin() {
 
   console.log();
   console.log("✅ First admin created successfully!");
-  console.log("Email:", email);
+  console.log("Email:", adminEmail);
+  console.log("Name:", adminName);
   console.log("Role: admin");
   console.log();
   console.log("⚠️  You can now sign in at:", process.env.NEXT_PUBLIC_APP_URL);
   console.log();
-
-  rl.close();
 }
 
 createFirstAdmin().catch((error) => {
   console.error("❌ Error:", error.message);
-  rl.close();
   process.exit(1);
 });

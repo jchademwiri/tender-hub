@@ -22,6 +22,13 @@
       "when": 1760681589442,
       "tag": "0002_sad_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1760819853405,
+      "tag": "0003_glossy_scorpion",
+      "breakpoints": true
     }
   ]
 }

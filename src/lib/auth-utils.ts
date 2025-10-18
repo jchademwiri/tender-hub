@@ -94,6 +94,28 @@ export async function requireAdmin() {
 }
 
 /**
+ * Require admin role for API routes - return error instead of redirect
+ */
+export async function requireAdminForAPI() {
+  try {
+    const session = await getSession();
+    if (!session?.user) {
+      throw new Error("Authentication required");
+    }
+
+    const user = session.user;
+    if (user.role !== "admin" && user.role !== "owner") {
+      throw new Error("Admin access required");
+    }
+
+    return user;
+  } catch (error) {
+    // Re-throw the error to be handled by the API route
+    throw error;
+  }
+}
+
+/**
  * Require manager role - redirect to dashboard if not manager or admin
  */
 export async function requireManager() {

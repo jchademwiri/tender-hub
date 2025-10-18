@@ -1,6 +1,7 @@
 import { sendEmail } from "@/lib/email";
 import { checkPermission } from "@/lib/permissions";
 import { auth } from "@/lib/auth";
+import { invitationTracking, invitationTrackingUtils } from "@/lib/invitation-tracking";
 
 export async function createInvitation({
   email,
@@ -81,7 +82,7 @@ export async function createInvitation({
     }
 
     // Send invitation email manually (since we disabled auto-send)
-    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invitation?id=${newInvitation.id}`;
+    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${newInvitation.id}`;
 
     await sendEmail({
       to: email,
@@ -95,6 +96,25 @@ export async function createInvitation({
         <p>If you didn't expect this invitation, you can safely ignore this email.</p>
       `,
     });
+
+    // Track the invitation as sent
+    try {
+      await invitationTracking.trackSent({
+        invitationId: newInvitation.id,
+        email,
+        role,
+        inviterId: invitedBy,
+        metadata: invitationTrackingUtils.generateMetadata({
+          emailSubject: `You've been invited to Tender Hub`,
+          emailTemplate: "default-invitation",
+          invitationUrl,
+          expiresAt: newInvitation.expiresAt
+        })
+      });
+    } catch (trackingError) {
+      console.error("Failed to track invitation sent event:", trackingError);
+      // Don't fail the invitation creation if tracking fails
+    }
 
     return newInvitation;
   } catch (error) {
@@ -191,6 +211,24 @@ export async function acceptInvitation({
         action: 'accept'
       }),
     });
+
+    // Track the invitation as accepted
+    try {
+      await invitationTracking.trackAccepted({
+        invitationId,
+        email: invite.email,
+        role: invite.role,
+        userId: userData.user.id,
+        inviterId: invite.inviterId,
+        metadata: invitationTrackingUtils.generateMetadata({
+          acceptedAt: new Date().toISOString(),
+          newUserId: userData.user.id
+        })
+      });
+    } catch (trackingError) {
+      console.error("Failed to track invitation accepted event:", trackingError);
+      // Don't fail the invitation acceptance if tracking fails
+    }
 
     return {
       user: userData.user,

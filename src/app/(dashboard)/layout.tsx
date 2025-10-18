@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 // import { requireAuth } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { requireAuth } from "@/lib/auth-utils";
 
 export const metadata: Metadata = {
   title: "Tender Hub | Dashboard",
@@ -16,8 +17,8 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Authentication temporarily disabled
-  // await requireAuth();
+  // Enable authentication for dashboard
+  await requireAuth();
 
   return (
     <ErrorBoundary>

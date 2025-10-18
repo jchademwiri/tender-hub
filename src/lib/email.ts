@@ -37,7 +37,7 @@ export async function sendEmail({
     const renderedHtml = await render(React.createElement(SimpleEmailComponent, { html, text }));
 
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
+      from: process.env.RESEND_FROM_EMAIL || 'Tender Hub <noreply@tenderhub.com>',
       to: [to],
       subject,
       html: renderedHtml,
@@ -59,7 +59,7 @@ export async function sendPasswordResetEmail(to: string, url: string) {
     }));
 
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
+      from: process.env.RESEND_FROM_EMAIL || 'Tender Hub <noreply@tenderhub.com>',
       to: [to],
       subject: 'Reset Your Password - Tender Hub',
       html: renderedHtml,
@@ -81,7 +81,7 @@ export async function sendEmailVerification(to: string, url: string) {
     }));
 
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
+      from: process.env.RESEND_FROM_EMAIL || 'Tender Hub <noreply@tenderhub.com>',
       to: [to],
       subject: 'Verify Your Email - Tender Hub',
       html: renderedHtml,
@@ -103,7 +103,7 @@ export async function sendAccountDeletionEmail(to: string, url: string) {
     }));
 
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
+      from: process.env.RESEND_FROM_EMAIL || 'Tender Hub <noreply@tenderhub.com>',
       to: [to],
       subject: 'Confirm Account Deletion - Tender Hub',
       html: renderedHtml,
@@ -123,7 +123,7 @@ export async function sendPasswordChangedEmail(to: string) {
     }));
 
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Tender Hub <noreply@tenderhub.com>',
+      from: process.env.RESEND_FROM_EMAIL || 'Tender Hub <noreply@tenderhub.com>',
       to: [to],
       subject: 'Password Changed - Tender Hub',
       html: renderedHtml,

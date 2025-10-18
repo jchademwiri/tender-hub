@@ -14,8 +14,8 @@ export default function Home() {
           <Link href="/publishers" className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
             Browse Publishers
           </Link>
-          <Link href="/dashboard" className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer">
-            My Dashboard
+          <Link href="/sign-in" className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer">
+            Sign In
           </Link>
         </div>
       </section>

@@ -5,6 +5,7 @@ import {
   BookOpen,
   Command,
   Home,
+  Mail,
   Map,
   Settings2,
   Users,
@@ -57,6 +58,11 @@ const data = {
       title: "Publishers",
       url: "/publishers",
       icon: BookOpen,
+    },
+    {
+      title: "Invitations",
+      url: "/admin/invitations",
+      icon: Mail,
     },
   ],
 }
