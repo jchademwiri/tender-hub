@@ -1,13 +1,508 @@
 
+"use client";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+
+import { updateProfileFormSchema, type UpdateProfileFormData, authDefaultValues } from "@/lib/validations/auth";
+import { getCurrentUser, getUserInitials, formatUserRole } from "@/lib/auth-utils-client";
+import { cn } from "@/lib/utils";
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  emailVerified: boolean;
+}
+
+interface ProfileCompleteness {
+  percentage: number;
+  missingFields: string[];
+}
+
+interface PendingRequest {
+  id: string;
+  requestedChanges: Record<string, any>;
+  status: string;
+  requestedAt: string;
+  rejectionReason?: string;
+}
+
 export default function ProfilePage() {
-  return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [saveMethod, setSaveMethod] = useState<"direct" | "approval">("direct");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const form = useForm<UpdateProfileFormData>({
+    resolver: zodResolver(updateProfileFormSchema),
+    defaultValues: authDefaultValues.updateProfile,
+  });
+
+  // Fetch user profile data
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/user/profile");
+      if (response.ok) {
+        const data = await fetch("/api/user/profile").then(res => res.json());
+        setProfile(data.profile);
+        setCompleteness(data.completeness);
+
+        // Update form with current values
+        if (data.profile) {
+          form.reset({
+            name: data.profile.name || "",
+            email: data.profile.email || "",
+          });
+        }
+      } else {
+        setMessage({ type: "error", text: "Failed to load profile data" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Error loading profile" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchPendingRequests = async () => {
+    try {
+      // This would be implemented when the pending requests API is available
+      // const response = await fetch("/api/user/profile/pending-requests");
+      // if (response.ok) {
+      //   const data = await response.json();
+      //   setPendingRequests(data.requests);
+      // }
+    } catch (error) {
+      console.error("Error fetching pending requests:", error);
+    }
+  };
+
+  const onSubmit = async (data: UpdateProfileFormData) => {
+    try {
+      setIsSaving(true);
+      setMessage(null);
+
+      const endpoint = saveMethod === "approval" ? "/api/user/profile" : "/api/user/profile";
+      const method = saveMethod === "approval" ? "POST" : "PUT";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          method === "POST"
+            ? { changes: data, reason: "Profile update request" }
+            : data
+        ),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setMessage({
+          type: "success",
+          text: method === "POST"
+            ? "Profile update request submitted successfully"
+            : "Profile updated successfully"
+        });
+
+        if (method === "PUT") {
+          await fetchProfile(); // Refresh profile data
+        } else {
+          await fetchPendingRequests(); // Refresh pending requests
+        }
+      } else {
+        const error = await response.json();
+        setMessage({ type: "error", text: error.error || "Failed to save profile" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Error saving profile" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/user/profile/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        await fetchProfile(); // Refresh profile data
+        setMessage({ type: "success", text: "Profile image updated successfully" });
+      } else {
+        setMessage({ type: "error", text: "Failed to upload image" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Error uploading image" });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="w-full max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Profile</h1>
-          <div className="bg-card rounded-lg border shadow-sm p-6">
-            <p className="text-muted-foreground">Profile content goes here</p>
+          <Skeleton className="h-8 w-48 mb-6" />
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </CardContent>
+            </Card>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="w-full max-w-5xl mx-auto">
+          <Alert>
+            <AlertDescription>Failed to load profile data. Please try again.</AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Profile</h1>
+          {completeness && (
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-muted-foreground">
+                Profile Completeness
+              </div>
+              <div className="flex items-center gap-2">
+                <Progress value={completeness.percentage} className="w-24" />
+                <span className="text-sm font-medium">{completeness.percentage}%</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {message && (
+          <Alert className={cn(
+            "mb-6",
+            message.type === "success" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
+          )}>
+            <AlertDescription className={cn(
+              message.type === "success" ? "text-green-800" : "text-red-800"
+            )}>
+              {message.text}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Profile Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+              <CardDescription>
+                Update your personal information and profile picture
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Picture */}
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profile.image} alt={profile.name} />
+                  <AvatarFallback className="text-lg">
+                    {getUserInitials({ name: profile.name, email: profile.email } as any)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-2">
+                  <label htmlFor="image-upload" className="cursor-pointer">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isUploading}
+                      className="cursor-pointer"
+                    >
+                      {isUploading ? "Uploading..." : "Change Picture"}
+                    </Button>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      aria-label="Upload profile picture"
+                    />
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    JPG, PNG or GIF. Max size 2MB.
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Profile Form */}
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your full name"
+                            {...field}
+                            aria-describedby="name-description"
+                          />
+                        </FormControl>
+                        <FormDescription id="name-description">
+                          Your display name visible to other users
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="Enter your email"
+                            {...field}
+                            aria-describedby="email-description"
+                          />
+                        </FormControl>
+                        <FormDescription id="email-description">
+                          {profile.emailVerified ? (
+                            <span className="text-green-600 flex items-center gap-1">
+                              ✓ Email verified
+                            </span>
+                          ) : (
+                            "Email verification required"
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <label className="text-sm font-medium">
+                          Update Method
+                        </label>
+                        <p className="text-xs text-muted-foreground">
+                          Choose how you want to save your changes
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Direct</span>
+                        <Switch
+                          checked={saveMethod === "approval"}
+                          onCheckedChange={(checked) =>
+                            setSaveMethod(checked ? "approval" : "direct")
+                          }
+                          aria-label="Toggle approval workflow"
+                        />
+                        <span className="text-sm">Approval</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSaving}
+                    >
+                      {isSaving
+                        ? "Saving..."
+                        : saveMethod === "approval"
+                          ? "Submit for Approval"
+                          : "Save Changes"
+                      }
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Profile Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>
+                Your account details and status
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Role</span>
+                  <Badge variant="secondary">
+                    {formatUserRole(profile.role)}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Status</span>
+                  <Badge
+                    variant={profile.status === "active" ? "default" : "destructive"}
+                  >
+                    {profile.status}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Email Verified</span>
+                  <Badge variant={profile.emailVerified ? "default" : "outline"}>
+                    {profile.emailVerified ? "Verified" : "Unverified"}
+                  </Badge>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Account Created</span>
+                    <span>{format(new Date(profile.createdAt), "PPP")}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Last Updated</span>
+                    <span>{format(new Date(profile.updatedAt), "PPP")}</span>
+                  </div>
+                </div>
+
+                {completeness && completeness.missingFields.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <span className="text-sm font-medium">Missing Information</span>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {completeness.missingFields.map((field) => (
+                          <li key={field} className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
+                            {field.charAt(0).toUpperCase() + field.slice(1)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pending Requests */}
+        {pendingRequests.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Pending Approval Requests</CardTitle>
+              <CardDescription>
+                Your profile update requests awaiting approval
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {pendingRequests.map((request) => (
+                  <div key={request.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="outline">Pending Approval</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {format(new Date(request.requestedAt), "PPP")}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Requested Changes:</p>
+                      <ul className="text-sm text-muted-foreground">
+                        {Object.entries(request.requestedChanges).map(([key, value]) => (
+                          <li key={key}>
+                            {key}: {String(value)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {request.rejectionReason && (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                        <p className="text-sm text-red-800">
+                          <strong>Rejection Reason:</strong> {request.rejectionReason}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
