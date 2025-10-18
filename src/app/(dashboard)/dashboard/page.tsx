@@ -24,13 +24,14 @@ export default async function Dashboard() {
     .limit(5);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">My Dashboard</h2>
-        <p className="text-muted-foreground">
-          Overview of provinces and publishers in the system
-        </p>
-      </div>
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">My Dashboard</h2>
+          <p className="text-muted-foreground">
+            Overview of provinces and publishers in the system
+          </p>
+        </div>
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -120,6 +121,7 @@ export default async function Dashboard() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
