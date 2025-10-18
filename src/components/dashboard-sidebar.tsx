@@ -5,8 +5,8 @@ import {
   BookOpen,
   Command,
   Home,
-  Map,
   Settings2,
+  User,
   Users,
 } from "lucide-react"
 
@@ -23,9 +23,9 @@ import {
 
 const data = {
   user: {
-    name: "Admin",
-    email: "admin@tenderhub.com",
-    avatar: "/avatars/admin.jpg",
+    name: "User",
+    email: "user@tenderhub.com",
+    avatar: "/avatars/user.jpg",
   },
   navMain: [
     {
@@ -39,42 +39,42 @@ const data = {
       icon: Command,
     },
     {
-      title: "Manager",
-      url: "/manager",
-      icon: Users,
-    },
-    {
-      title: "Users",
-      url: "/admin/users",
-      icon: Users,
-    },
-    {
-      title: "Provinces",
-      url: "/admin/provinces",
-      icon: Map,
-    },
-    {
       title: "Publishers",
       url: "/publishers",
       icon: BookOpen,
     },
+    {
+      title: "Profile",
+      url: "/profile",
+      icon: User,
+    },
+    {
+      title: "Admin",
+      url: "/admin",
+      icon: Settings2,
+    },
+    {
+      title: "Manager",
+      url: "/manager",
+      icon: Users,
+    },
   ],
 }
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/admin">
+              <a href="/dashboard">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Tender Hub</span>
-                  <span className="truncate text-xs">Admin</span>
+                  <span className="truncate text-xs">Dashboard</span>
                 </div>
               </a>
             </SidebarMenuButton>

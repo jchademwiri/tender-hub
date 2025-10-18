@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdmin, getCurrentUser } from "@/lib/auth-utils";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
+import { z } from "zod";
+import { emailSchema, nameSchema } from "@/lib/validations/common";
+import { auth } from "@/lib/auth";
 
 /**
  * TODO: Admin Users API Implementation Checklist
@@ -101,22 +104,34 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Implement admin authentication
-    // await requireAdmin();
+    // Authenticate and authorize admin user
+    const currentUser = await requireAdmin();
 
     const body = await request.json();
-    const { email, name, role, sendInvitation } = body;
+    const { email, name, role, sendInvitation = true } = body;
 
-    // TODO: Validate input data
-    if (!email || !name || !role) {
+    // Validate input data using existing schemas
+    const validation = z.object({
+      email: emailSchema,
+      name: nameSchema,
+      role: z.enum(['admin', 'manager', 'user']),
+      sendInvitation: z.boolean().optional().default(true)
+    }).safeParse({ email, name, role, sendInvitation });
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Email, name, and role are required" },
+        {
+          error: "Validation failed",
+          details: validation.error.format()
+        },
         { status: 400 }
       );
     }
 
-    // TODO: Check if user already exists
-    const existingUser = await db.select().from(user).where(eq(user.email, email)).limit(1);
+    const validatedData = validation.data;
+
+    // Check if user already exists
+    const existingUser = await db.select().from(user).where(eq(user.email, validatedData.email)).limit(1);
 
     if (existingUser.length > 0) {
       return NextResponse.json(
@@ -125,23 +140,107 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Create user account
-    // TODO: Send invitation email if requested
-    // TODO: Audit log the creation
+    // Create user account using auth system
+    const authResult = await auth.api.signUpEmail({
+      body: {
+        email: validatedData.email,
+        password: crypto.randomUUID(), // Temporary password, will be reset via invitation
+        name: validatedData.name,
+      }
+    });
+
+    if (!authResult.user) {
+      throw new Error("Failed to create user account");
+    }
+
+    // Update user with role and invitation metadata
+    await db.update(user)
+      .set({
+        role: validatedData.role,
+        status: "pending",
+        invitedBy: currentUser.id,
+        invitedAt: new Date()
+      })
+      .where(eq(user.id, authResult.user.id));
+
+    // Send invitation if requested
+    let invitationResult = null;
+    if (sendInvitation) {
+      try {
+        const { createInvitation } = await import("@/lib/invitation");
+        invitationResult = await createInvitation({
+          email: validatedData.email,
+          role: validatedData.role,
+          invitedBy: currentUser.id
+        });
+      } catch (invitationError) {
+        console.error("Failed to send invitation:", invitationError);
+        // Don't fail the entire operation if invitation fails
+      }
+    }
+
+    // Audit log the user creation
+    await import("@/lib/audit-logger").then(({ AuditLogger }) => {
+      AuditLogger.logUserCreated(
+        authResult.user.id,
+        currentUser.id,
+        {
+          userId: currentUser.id,
+          metadata: {
+            createdUserEmail: validatedData.email,
+            createdUserRole: validatedData.role,
+            invitationSent: sendInvitation,
+            invitationId: invitationResult?.id
+          }
+        }
+      );
+    });
 
     return NextResponse.json({
       message: "User created successfully",
       user: {
-        id: "temp-id", // TODO: Return actual user data
-        email,
-        name,
-        role,
-        status: "active"
-      }
+        id: authResult.user.id,
+        email: validatedData.email,
+        name: validatedData.name,
+        role: validatedData.role,
+        status: "pending",
+        invitedBy: currentUser.id,
+        invitedAt: new Date().toISOString()
+      },
+      invitation: invitationResult ? {
+        id: invitationResult.id,
+        status: invitationResult.status,
+        expiresAt: invitationResult.expiresAt
+      } : null
     }, { status: 201 });
 
   } catch (error) {
     console.error("Admin create user API error:", error);
+
+    // Audit log failed user creation attempts
+    if (error instanceof Error && error.message !== "User with this email already exists") {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          await import("@/lib/audit-logger").then(({ AuditLogger }) => {
+            AuditLogger.logUserCreated(
+              "failed",
+              currentUser.id,
+              {
+                userId: currentUser.id,
+                metadata: {
+                  error: error.message,
+                  email: "unknown"
+                }
+              }
+            );
+          });
+        }
+      } catch (auditError) {
+        console.error("Failed to log audit event:", auditError);
+      }
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

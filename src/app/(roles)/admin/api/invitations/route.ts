@@ -4,6 +4,8 @@ import { createInvitation, resendInvitation, cancelInvitation } from "@/lib/invi
 import { db } from "@/db";
 import { invitation } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
+import { AuditLogger } from "@/lib/audit-logger";
+import { invitationValidationHelpers, invitationErrorMessages } from "@/lib/validations/invitations";
 
 /**
  * TODO: Admin Invitations API Implementation Checklist
@@ -104,36 +106,43 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Implement admin authentication
-    // await requireAdmin();
+    // Authenticate and authorize admin user
+    const currentUser = await requireAdmin();
 
     const body = await request.json();
-    const { email, role, sendEmail = true } = body;
 
-    // TODO: Validate input
-    if (!email || !role) {
+    // Validate input using schema
+    const validationResult = invitationValidationHelpers.safeValidateCreateInvitation(body);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Email and role are required" },
+        {
+          error: "Invalid input data",
+          details: validationResult.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        },
         { status: 400 }
       );
     }
 
-    // TODO: Validate role
-    if (!["admin", "manager", "user"].includes(role)) {
-      return NextResponse.json(
-        { error: "Invalid role specified" },
-        { status: 400 }
-      );
-    }
+    const { email, role, sendEmail = true } = invitationValidationHelpers.transformForCreateInvitation(validationResult.data);
 
-    // TODO: Get current admin user ID from session
-    const currentUserId = "admin-id"; // TODO: Get from session
-
-    // TODO: Create invitation using existing function
+    // Create invitation using existing function
     const newInvitation = await createInvitation({
       email,
       role,
-      invitedBy: currentUserId,
+      invitedBy: currentUser.id,
+    });
+
+    // Log the invitation creation
+    await AuditLogger.logInvitationCreated(email, role, currentUser.id, {
+      userId: currentUser.id,
+      metadata: {
+        invitationId: newInvitation.id,
+        sendEmail,
+        source: "admin_api"
+      }
     });
 
     return NextResponse.json({
@@ -144,7 +153,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Admin create invitation API error:", error);
 
-    // TODO: Handle specific invitation errors
+    // Handle specific invitation errors
     if (error instanceof Error) {
       if (error.message.includes("already exists")) {
         return NextResponse.json(
@@ -156,6 +165,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: error.message },
           { status: 429 }
+        );
+      }
+      if (error.message.includes("Insufficient permissions")) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 403 }
         );
       }
     }

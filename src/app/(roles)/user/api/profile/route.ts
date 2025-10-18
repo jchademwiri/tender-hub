@@ -3,6 +3,8 @@ import { requireAuth } from "@/lib/auth-utils";
 import { db } from "@/db";
 import { user, profileUpdateRequest } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
+import { authValidationHelpers } from "@/lib/validations/auth";
+import { AuditLogger } from "@/lib/audit-logger";
 
 /**
  * TODO: User Profile API Implementation Checklist
@@ -79,28 +81,35 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    // TODO: Implement user authentication
-    // const currentUser = await requireAuth();
+    // Authenticate user
+    const currentUser = await requireAuth();
 
     const body = await request.json();
-    const { name, email, bio, phone, department } = body;
+    const { name, email } = body;
 
-    // TODO: Get current user ID from session
-    const currentUserId = "user-id"; // TODO: Get from session
+    // Validate input data using existing schema
+    const validationResult = authValidationHelpers.safeValidateUpdateProfile({ name, email });
 
-    // TODO: Validate input data
-    if (!name || !email) {
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Name and email are required" },
+        {
+          error: "Validation failed",
+          details: validationResult.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        },
         { status: 400 }
       );
     }
 
-    // TODO: Check if email is already taken by another user
+    const validatedData = validationResult.data;
+
+    // Check if email is already taken by another user
     const existingUser = await db.select().from(user)
       .where(and(
-        eq(user.email, email),
-        ne(user.id, currentUserId)
+        eq(user.email, validatedData.email.toLowerCase()),
+        ne(user.id, currentUser.id)
       )).limit(1);
 
     if (existingUser.length > 0) {
@@ -110,18 +119,46 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // TODO: Update user profile
+    // Store previous values for audit logging
+    const previousValues = {
+      name: currentUser.name,
+      email: currentUser.email
+    };
+
+    // Update user profile
     const updatedUser = await db.update(user)
       .set({
-        name,
-        email,
-        // TODO: Add bio, phone, department fields if they exist in schema
+        name: validatedData.name,
+        email: validatedData.email.toLowerCase(),
         updatedAt: new Date()
       })
-      .where(eq(user.id, currentUserId))
+      .where(eq(user.id, currentUser.id))
       .returning();
 
-    // TODO: Audit log the profile update
+    if (updatedUser.length === 0) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Audit log the profile update
+    await AuditLogger.logUserUpdated(
+      currentUser.id,
+      {
+        name: validatedData.name,
+        email: validatedData.email.toLowerCase()
+      },
+      {
+        userId: currentUser.id,
+        previousValues,
+        metadata: {
+          updateType: "direct",
+          ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown"
+        }
+      }
+    );
 
     return NextResponse.json({
       message: "Profile updated successfully",
@@ -139,16 +176,13 @@ export async function PUT(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Implement user authentication
-    // const currentUser = await requireAuth();
+    // Authenticate user
+    const currentUser = await requireAuth();
 
     const body = await request.json();
     const { changes, reason } = body;
 
-    // TODO: Get current user ID from session
-    const currentUserId = "user-id"; // TODO: Get from session
-
-    // TODO: Validate input
+    // Validate input - ensure changes object exists and has content
     if (!changes || Object.keys(changes).length === 0) {
       return NextResponse.json(
         { error: "No changes specified" },
@@ -156,10 +190,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Check for existing pending requests
+    // Validate that at least one field is being changed
+    const allowedFields = ['name', 'email'];
+    const invalidFields = Object.keys(changes).filter(field => !allowedFields.includes(field));
+
+    if (invalidFields.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Invalid fields: ${invalidFields.join(', ')}. Allowed fields: ${allowedFields.join(', ')}`
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate the changes using the profile update schema
+    const validationResult = authValidationHelpers.safeValidateUpdateProfile(changes);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          error: "Validation failed for requested changes",
+          details: validationResult.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check for existing pending requests
     const pendingRequests = await db.select().from(profileUpdateRequest)
       .where(and(
-        eq(profileUpdateRequest.userId, currentUserId),
+        eq(profileUpdateRequest.userId, currentUser.id),
         eq(profileUpdateRequest.status, "pending")
       )).limit(1);
 
@@ -170,17 +233,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Create profile update request
+    // Check if email is being changed and if it's already taken by another user
+    if (changes.email) {
+      const existingUser = await db.select().from(user)
+        .where(and(
+          eq(user.email, changes.email.toLowerCase()),
+          ne(user.id, currentUser.id)
+        )).limit(1);
+
+      if (existingUser.length > 0) {
+        return NextResponse.json(
+          { error: "Email is already in use" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Create profile update request
     const newRequest = await db.insert(profileUpdateRequest).values({
       id: crypto.randomUUID(),
-      userId: currentUserId,
-      requestedChanges: changes,
+      userId: currentUser.id,
+      requestedChanges: {
+        ...changes,
+        email: changes.email?.toLowerCase()
+      },
       status: "pending",
       requestedAt: new Date(),
-      // TODO: Add reason field if exists in schema
+      rejectionReason: reason || null
     }).returning();
 
-    // TODO: Audit log the request
+    if (newRequest.length === 0) {
+      return NextResponse.json(
+        { error: "Failed to create profile update request" },
+        { status: 500 }
+      );
+    }
+
+    // Audit log the profile update request
+    await AuditLogger.logProfileUpdateRequested(
+      currentUser.id,
+      {
+        ...changes,
+        email: changes.email?.toLowerCase()
+      },
+      {
+        userId: currentUser.id,
+        metadata: {
+          requestId: newRequest[0].id,
+          reason: reason || "No reason provided",
+          ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown"
+        }
+      }
+    );
 
     return NextResponse.json({
       message: "Profile update request submitted successfully",
@@ -196,14 +301,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// TODO: Helper functions
+// Helper functions
 function calculateProfileCompleteness(profile: any): number {
   const fields = ['name', 'email', 'role'];
-  const completedFields = fields.filter(field => profile[field]).length;
+  const completedFields = fields.filter(field => profile[field] && profile[field].trim() !== '').length;
   return Math.round((completedFields / fields.length) * 100);
 }
 
 function getMissingFields(profile: any): string[] {
   const fields = ['name', 'email', 'role'];
-  return fields.filter(field => !profile[field]);
+  return fields.filter(field => !profile[field] || profile[field].trim() === '');
 }

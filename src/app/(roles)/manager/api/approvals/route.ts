@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireManager } from "@/lib/auth-utils";
+import { requireManager, getCurrentUser } from "@/lib/auth-utils";
 import { db } from "@/db";
-import { profileUpdateRequest } from "@/db/schema";
+import { profileUpdateRequest, user } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { z } from "zod";
 
 /**
  * TODO: Manager Approvals API Implementation Checklist
@@ -96,32 +97,46 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Implement manager authentication
-    // await requireManager();
+    // Authenticate and authorize manager user
+    const currentUser = await requireManager();
 
     const body = await request.json();
     const { approvalId, action, reason } = body;
 
-    // TODO: Validate input
-    if (!approvalId || !action) {
+    // Validate input using Zod schema
+    const validation = z.object({
+      approvalId: z.string().uuid("Invalid approval ID format"),
+      action: z.enum(["approve", "reject"]),
+      reason: z.string().optional()
+    }).safeParse({ approvalId, action, reason });
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Approval ID and action are required" },
+        {
+          error: "Validation failed",
+          details: validation.error.format()
+        },
         { status: 400 }
       );
     }
 
-    if (!["approve", "reject"].includes(action)) {
-      return NextResponse.json(
-        { error: "Action must be 'approve' or 'reject'" },
-        { status: 400 }
-      );
-    }
+    const validatedData = validation.data;
 
-    // TODO: Get current manager's user ID
-    const currentUserId = "manager-id"; // TODO: Get from session
-
-    // TODO: Get the approval request
-    const approval = await db.select().from(profileUpdateRequest).where(eq(profileUpdateRequest.id, approvalId)).limit(1);
+    // Get the approval request with user details
+    const approval = await db.select({
+      id: profileUpdateRequest.id,
+      userId: profileUpdateRequest.userId,
+      requestedChanges: profileUpdateRequest.requestedChanges,
+      status: profileUpdateRequest.status,
+      requestedAt: profileUpdateRequest.requestedAt,
+      // Join with user table to get requester details
+      userEmail: user.email,
+      userName: user.name
+    })
+    .from(profileUpdateRequest)
+    .leftJoin(user, eq(profileUpdateRequest.userId, user.id))
+    .where(eq(profileUpdateRequest.id, validatedData.approvalId))
+    .limit(1);
 
     if (approval.length === 0) {
       return NextResponse.json(
@@ -139,56 +154,132 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Check if manager has permission to approve this request
-    // Could be based on team assignment, department, etc.
+    // Check if manager has permission to approve this request
+    // For now, allow all managers to approve any request
+    // TODO: Add more sophisticated permission logic based on team/department
 
-    if (action === "approve") {
-      // TODO: Apply the profile changes to the user
-      // TODO: Update user record with approved changes
+    if (validatedData.action === "approve") {
+      // Apply the profile changes to the user
+      const changes = approvalRequest.requestedChanges as Record<string, any>;
 
-      // TODO: Update approval request status
+      // Update user record with approved changes
+      await db.update(user)
+        .set({
+          ...changes,
+          updatedAt: new Date()
+        })
+        .where(eq(user.id, approvalRequest.userId));
+
+      // Update approval request status
       await db.update(profileUpdateRequest)
         .set({
           status: "approved",
-          reviewedBy: currentUserId,
+          reviewedBy: currentUser.id,
           reviewedAt: new Date()
         })
-        .where(eq(profileUpdateRequest.id, approvalId));
+        .where(eq(profileUpdateRequest.id, validatedData.approvalId));
 
-      // TODO: Audit log the approval
-
-      return NextResponse.json({
-        message: "Profile update approved successfully"
+      // Audit log the approval
+      await import("@/lib/audit-logger").then(({ AuditLogger }) => {
+        AuditLogger.logProfileUpdateApproved(
+          approvalRequest.userId,
+          validatedData.approvalId,
+          currentUser.id,
+          {
+            userId: currentUser.id,
+            metadata: {
+              approvedChanges: changes,
+              approverName: currentUser.name,
+              approverEmail: currentUser.email
+            }
+          }
+        );
       });
 
-    } else if (action === "reject") {
-      // TODO: Validate rejection reason if required
-      if (!reason) {
+      return NextResponse.json({
+        message: "Profile update approved successfully",
+        approvedChanges: changes,
+        approvedBy: {
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email
+        }
+      });
+
+    } else if (validatedData.action === "reject") {
+      // Validate rejection reason if required
+      if (!validatedData.reason || validatedData.reason.trim() === "") {
         return NextResponse.json(
           { error: "Rejection reason is required" },
           { status: 400 }
         );
       }
 
-      // TODO: Update approval request status
+      // Update approval request status
       await db.update(profileUpdateRequest)
         .set({
           status: "rejected",
-          reviewedBy: currentUserId,
+          reviewedBy: currentUser.id,
           reviewedAt: new Date(),
-          rejectionReason: reason
+          rejectionReason: validatedData.reason.trim()
         })
-        .where(eq(profileUpdateRequest.id, approvalId));
+        .where(eq(profileUpdateRequest.id, validatedData.approvalId));
 
-      // TODO: Audit log the rejection
+      // Audit log the rejection
+      await import("@/lib/audit-logger").then(({ AuditLogger }) => {
+        AuditLogger.logProfileUpdateRejected(
+          approvalRequest.userId,
+          validatedData.approvalId,
+          currentUser.id,
+          validatedData.reason || "No reason provided",
+          {
+            userId: currentUser.id,
+            metadata: {
+              rejectedByName: currentUser.name,
+              rejectedByEmail: currentUser.email,
+              rejectionReason: validatedData.reason || "No reason provided"
+            }
+          }
+        );
+      });
 
       return NextResponse.json({
-        message: "Profile update rejected"
+        message: "Profile update rejected",
+        rejectedBy: {
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email
+        },
+        reason: validatedData.reason
       });
     }
 
   } catch (error) {
     console.error("Manager approval action API error:", error);
+
+    // Audit log failed approval attempts
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        await import("@/lib/audit-logger").then(({ AuditLogger }) => {
+          AuditLogger.logProfileUpdateRejected(
+            "unknown",
+            "failed",
+            currentUser.id,
+            "System error during approval process",
+            {
+              userId: currentUser.id,
+              metadata: {
+                error: error instanceof Error ? error.message : "Unknown error"
+              }
+            }
+          );
+        });
+      }
+    } catch (auditError) {
+      console.error("Failed to log audit event:", auditError);
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

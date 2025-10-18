@@ -1,26 +1,45 @@
 "use client"
 
-import React, { memo, useMemo, useCallback } from "react";
+import React, { memo, useMemo, useCallback, useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { NavItemWithIndicator } from "@/components/nav-item-with-indicator";
 import { useVisitTrackerContext } from "@/contexts/visit-tracker-context";
 import { authClient } from "@/lib/auth-client";
+import { getCurrentUser, isAdmin, setCurrentUser } from "@/lib/auth-utils-client";
+import type { User as DatabaseUser } from "@/db/schema";
 import {
   LayoutDashboard,
   Building2,
   User,
   LogOut,
-  Home
+  Home,
+  Settings2,
+  Users
 } from "lucide-react";
 
 const DashboardNav = memo(() => {
   const pathname = usePathname();
   const router = useRouter();
   const { isEnabled } = useVisitTrackerContext();
+  const [currentUser, setCurrentUser] = useState<DatabaseUser | null>(null);
 
-  // Memoize navigation items to prevent recreation on every render
-  const navigationItems = useMemo(() => [
+  // Initialize current user on component mount
+  useEffect(() => {
+    // In a real app, you might fetch user data from an API or context
+    // For now, we'll rely on the user being set by a parent component or server component
+    const initializeUser = () => {
+      // This is a placeholder - in a real implementation, you might:
+      // 1. Get user from a global state management solution
+      // 2. Fetch from localStorage if stored there
+      // 3. Get from a context provider
+    };
+
+    initializeUser();
+  }, []);
+
+  // Base navigation items
+  const baseNavigationItems = [
     {
       href: "/dashboard",
       label: "Dashboard",
@@ -39,7 +58,33 @@ const DashboardNav = memo(() => {
       icon: <User className="w-4 h-4" />,
       ariaLabel: "Go to Profile"
     }
-  ], []);
+  ];
+
+  // Memoize navigation items to prevent recreation on every render
+  const navigationItems = useMemo(() => {
+    const items = [...baseNavigationItems];
+
+    // Add role-based navigation items
+    if (isAdmin()) {
+      items.push({
+        href: "/admin",
+        label: "Admin",
+        icon: <Settings2 className="w-4 h-4" />,
+        ariaLabel: "Go to Admin Panel"
+      });
+    }
+
+    if (isAdmin() || currentUser?.role === "manager") {
+      items.push({
+        href: "/manager",
+        label: "Manager",
+        icon: <Users className="w-4 h-4" />,
+        ariaLabel: "Go to Manager Panel"
+      });
+    }
+
+    return items;
+  }, [currentUser]);
 
   // Memoize logout handler to prevent unnecessary re-renders of logout button
   const handleLogout = useCallback(async (event: React.MouseEvent<HTMLAnchorElement>) => {
