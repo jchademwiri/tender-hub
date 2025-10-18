@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { VisitTrackerProvider } from "@/contexts/visit-tracker-context";
+import { VisitTrackerWithSuspense } from "@/components/visit-tracker";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 
 
@@ -20,6 +23,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tender Hub",
   description: "Browse tender publishers by province",
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -32,11 +39,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-      
-        <main className="">
-          {children}
-        </main>
-        <Toaster />
+        <ErrorBoundary>
+          <VisitTrackerProvider enabled={true} autoTrack={true}>
+            <VisitTrackerWithSuspense
+              trackOnMount={true}
+              trackVisibility={true}
+              trackUnload={true}
+              enabled={true}
+            />
+            <main className="">
+              {children}
+            </main>
+            <Toaster />
+          </VisitTrackerProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

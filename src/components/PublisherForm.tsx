@@ -2,7 +2,6 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Publisher, Province } from '@/db/schema';
 import {
   Form,
@@ -12,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -28,14 +26,12 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Building, Globe, MapPin } from 'lucide-react';
-
-const publisherSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  website: z.string().url('Invalid URL').optional().or(z.literal('')),
-  province_id: z.string().min(1, 'Province is required'),
-});
-
-type PublisherFormData = z.infer<typeof publisherSchema>;
+import {
+  publisherFormSchema,
+  type PublisherFormData,
+  publisherDefaultValues,
+} from '@/lib/validations/publisher';
+import { toast } from 'sonner';
 
 interface PublisherFormProps {
   publisher?: Publisher;
@@ -45,22 +41,35 @@ interface PublisherFormProps {
 
 export default function PublisherForm({ publisher, provinces, action }: PublisherFormProps) {
   const form = useForm<PublisherFormData>({
-    resolver: zodResolver(publisherSchema),
-    defaultValues: {
-      name: publisher?.name || '',
-      website: publisher?.website || '',
-      province_id: publisher?.province_id || '',
-    },
+    resolver: zodResolver(publisherFormSchema),
+    defaultValues: publisher
+      ? {
+          name: publisher.name,
+          website: publisher.website || '',
+          province_id: publisher.province_id,
+        }
+      : publisherDefaultValues,
   });
 
   const onSubmit = async (data: PublisherFormData) => {
-    const formData = new FormData();
-    formData.append('name', data.name);
-    formData.append('website', data.website || '');
-    formData.append('province_id', data.province_id);
-    if (publisher?.id) formData.append('id', publisher.id);
+    try {
+      const formData = new FormData();
+      formData.append('name', data.name.trim());
+      formData.append('website', data.website?.trim() || '');
+      formData.append('province_id', data.province_id);
+      if (publisher?.id) formData.append('id', publisher.id);
 
-    await action({}, formData);
+      const result = await action({}, formData);
+      
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(publisher ? 'Publisher updated successfully' : 'Publisher created successfully');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -89,7 +98,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
           name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Website</FormLabel>
+              <FormLabel>Website (Optional)</FormLabel>
               <FormControl>
                 <InputGroup>
                   <InputGroupAddon>

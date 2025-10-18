@@ -8,6 +8,20 @@
       "when": 1760107166911,
       "tag": "0000_outstanding_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760603413073,
+      "tag": "0001_new_glorian",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760681589442,
+      "tag": "0002_sad_strong_guy",
+      "breakpoints": true
     }
   ]
 }
