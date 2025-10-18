@@ -2,8 +2,7 @@ import { db } from '@/db';
 import { publishers, provinces } from '@/db/schema';
 import { eq, count, desc } from 'drizzle-orm';
 import Link from 'next/link';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { AppBreadcrumbs } from '@/components/app-breadcrumbs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function Dashboard() {
   // Placeholder: since no user auth, show summary
@@ -25,56 +24,86 @@ export default async function Dashboard() {
     .limit(5);
 
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex-1">
-            <AppBreadcrumbs />
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">My Dashboard</h2>
+        <p className="text-muted-foreground">
+          Overview of provinces and publishers in the system
+        </p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Provinces</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{provinceCount.count}</div>
+            <p className="text-xs text-muted-foreground">
+              Registered provinces
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Publishers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{publisherCount.count}</div>
+            <p className="text-xs text-muted-foreground">
+              Active publishers
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Publishers */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Publishers</CardTitle>
+          <CardDescription>
+            Latest publisher registrations and updates
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentPublishers.map((pub) => (
+              <div key={pub.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{pub.name}</p>
+                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                    <span>{pub.provinceName}</span>
+                    <span>•</span>
+                    <span>Added {new Date(pub.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                {pub.website && (
+                  <a
+                    href={pub.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
+                  >
+                    Visit Website
+                  </a>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
-      </header>
-      <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="w-full max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">My Dashboard</h1>
-          <div className="grid gap-4 mb-8 md:grid-cols-2">
-            <div className="bg-blue-50 dark:bg-blue-950/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h2 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-2">Total Provinces</h2>
-              <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{provinceCount.count}</p>
-            </div>
-            <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border border-green-200 dark:border-green-800">
-              <h2 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-2">Total Publishers</h2>
-              <p className="text-3xl font-bold text-green-700 dark:text-green-300">{publisherCount.count}</p>
-            </div>
-          </div>
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Recent Publishers</h2>
-            <div className="bg-card rounded-lg border shadow-sm">
-              <ul className="divide-y divide-border">
-                {recentPublishers.map((pub) => (
-                  <li key={pub.id} className="p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <strong className="text-foreground">{pub.name}</strong>
-                        <span className="text-muted-foreground ml-2">- {pub.provinceName}</span>
-                        <span className="text-muted-foreground ml-2">({new Date(pub.createdAt).toLocaleDateString()})</span>
-                      </div>
-                      {pub.website && (
-                        <a
-                          href={pub.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 transition-colors"
-                        >
-                          Visit Website
-                        </a>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>
+            Common tasks and navigation
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
               href="/publishers"
@@ -89,8 +118,8 @@ export default async function Dashboard() {
               Back to Home
             </Link>
           </div>
-        </div>
-      </div>
-    </>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
