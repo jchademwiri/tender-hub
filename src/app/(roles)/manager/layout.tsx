@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import DashboardNav from "@/components/dashboard-nav";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { requireManager } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
 
 /**
  * TODO: Manager Role Implementation Checklist
@@ -50,12 +52,22 @@ export default async function ManagerLayout({
 
   return (
     <ErrorBoundary>
-      <section className="antialiased py-20 overflow-x-hidden">
-        <DashboardNav />
-        <section>
-          {children}
-        </section>
-      </section>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <div className="flex-1">
+                <AppBreadcrumbs />
+              </div>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
     </ErrorBoundary>
   );
 }
