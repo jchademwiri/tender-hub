@@ -202,6 +202,24 @@ export const AuditLogger = {
     });
   },
 
+  async logInvitationCancelled(email: string, invitationId: string, cancelledBy: string, context: AuditLogContext) {
+    return logAuditEvent("invitation_cancelled", {
+      ...context,
+      userId: cancelledBy,
+      resourceId: invitationId,
+      metadata: { ...context.metadata, cancelledEmail: email, invitationId }
+    });
+  },
+
+  async logInvitationResent(email: string, invitationId: string, resentBy: string, context: AuditLogContext) {
+    return logAuditEvent("invitation_resent", {
+      ...context,
+      userId: resentBy,
+      resourceId: invitationId,
+      metadata: { ...context.metadata, resentEmail: email, invitationId }
+    });
+  },
+
   // Profile update workflow
   async logProfileUpdateRequested(userId: string, changes: Record<string, any>, context: AuditLogContext) {
     return logAuditEvent("profile_update_requested", {
