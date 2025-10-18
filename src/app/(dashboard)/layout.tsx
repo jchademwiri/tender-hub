@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import DashboardNav from "@/components/dashboard-nav";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 // import { requireAuth } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
 
@@ -18,12 +19,12 @@ export default async function DashboardLayout({
 
   return (
     <ErrorBoundary>
-      <section className="antialiased py-20 overflow-x-hidden">
-        <DashboardNav />
-        <section >
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
           {children}
-        </section>
-      </section>
+        </SidebarInset>
+      </SidebarProvider>
     </ErrorBoundary>
   );
 }
