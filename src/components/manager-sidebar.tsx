@@ -5,9 +5,11 @@ import {
   BookOpen,
   Command,
   Home,
-  Map,
   Settings2,
   Users,
+  CheckCircle,
+  FileText,
+  UserCheck,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -23,9 +25,9 @@ import {
 
 const data = {
   user: {
-    name: "Admin",
-    email: "admin@tenderhub.com",
-    avatar: "/avatars/admin.jpg",
+    name: "Manager",
+    email: "manager@tenderhub.com",
+    avatar: "/avatars/manager.jpg",
   },
   navMain: [
     {
@@ -39,42 +41,42 @@ const data = {
       icon: Command,
     },
     {
-      title: "Manager",
-      url: "/manager",
+      title: "Team Management",
+      url: "/manager/team",
       icon: Users,
     },
     {
-      title: "Users",
-      url: "/admin/users",
-      icon: Users,
+      title: "Approvals",
+      url: "/manager/approvals",
+      icon: CheckCircle,
     },
     {
-      title: "Provinces",
-      url: "/admin/provinces",
-      icon: Map,
+      title: "Reports",
+      url: "/manager/reports",
+      icon: FileText,
     },
     {
-      title: "Publishers",
-      url: "/admin/publishers",
-      icon: BookOpen,
+      title: "Admin Panel",
+      url: "/admin",
+      icon: Settings2,
     },
   ],
 }
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function ManagerSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/admin">
+              <a href="/manager">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
+                  <UserCheck className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Tender Hub</span>
-                  <span className="truncate text-xs">Admin</span>
+                  <span className="truncate text-xs">Manager</span>
                 </div>
               </a>
             </SidebarMenuButton>

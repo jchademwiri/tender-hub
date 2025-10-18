@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppSidebar } from "@/components/app-sidebar";
+import { ManagerSidebar } from "@/components/manager-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -54,7 +54,7 @@ export default async function ManagerLayout({
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <AppSidebar />
+        <ManagerSidebar />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

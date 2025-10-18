@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@/db/schema";
 
 /**
- * Get the current session from headers
+ * Get the current session from headers (Server-only)
  */
 export async function getSession() {
   try {
@@ -19,7 +19,7 @@ export async function getSession() {
 }
 
 /**
- * Get the current user from session
+ * Get the current user from session (Server-only)
  */
 export async function getCurrentUser() {
   const session = await getSession();
