@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,7 +89,7 @@ export function InvitationAnalyticsDashboard({
   const [exportFormat, _setExportFormat] = useState("csv");
 
   // Fetch analytics data
-  const fetchAnalytics = async (range = timeRange) => {
+  const fetchAnalytics = useCallback(async (range = timeRange) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -110,10 +110,10 @@ export function InvitationAnalyticsDashboard({
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
 
   // Handle export
-  const handleExport = async (format: string) => {
+  const handleExport = useCallback(async (format: string) => {
     try {
       const params = new URLSearchParams({
         analytics: "true",
@@ -143,11 +143,11 @@ export function InvitationAnalyticsDashboard({
       console.error("Export error:", error);
       toast.error("Failed to export analytics data");
     }
-  };
+  }, [timeRange]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [fetchAnalytics]);
+  }, [fetchAnalytics, timeRange]);
 
   if (loading) {
     return (

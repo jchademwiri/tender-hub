@@ -11,7 +11,7 @@ import {
   UserPlus,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { BulkCreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/bulk-create-invitation-dialog";
 import { CreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/create-invitation-dialog";
@@ -94,7 +94,7 @@ export default function AdminInvitationsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   // Fetch invitations data
-  const fetchInvitations = async (page = 1, filters = {}) => {
+  const fetchInvitations = useCallback(async (page = 1, filters = {}) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -158,7 +158,7 @@ export default function AdminInvitationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Initial load
   useEffect(() => {
