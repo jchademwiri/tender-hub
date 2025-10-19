@@ -90,16 +90,31 @@ export function CreateInvitationDialog({
       }
 
       // Submit the invitation
+      console.log("Sending invitation data:", JSON.stringify(validationResult.data, null, 2));
+
+      // Include credentials to ensure cookies are sent
       const response = await fetch("/api/admin/invitations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // This ensures cookies are sent with the request
         body: JSON.stringify(validationResult.data),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+          console.log("Error response data:", JSON.stringify(errorData, null, 2));
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+          // If we can't parse the error response, create a generic error
+          errorData = { error: "Invalid response from server" };
+        }
 
         if (response.status === 409) {
           setErrors({ email: errorData.error || "User with this email already exists" });

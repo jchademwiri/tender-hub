@@ -29,7 +29,6 @@ interface Invitation {
   role: string;
   status: "pending" | "accepted" | "expired" | "cancelled";
   expiresAt: string;
-  createdAt: string;
   inviter?: {
     id: string;
     name: string;

@@ -18,7 +18,6 @@ interface Invitation {
   role: string;
   status: "pending" | "accepted" | "expired" | "cancelled";
   expiresAt: string;
-  createdAt: string;
   inviter?: {
     id: string;
     name: string;
@@ -182,14 +181,14 @@ export function InvitationTable({
   // Table columns configuration
   const columns = [
     {
-      key: "select",
+      key: "select" as keyof Invitation,
       header: onBulkAction ? (
         <Checkbox
           checked={selectedInvitations.size === invitations.length && invitations.length > 0}
           onCheckedChange={toggleSelectAll}
         />
       ) : "Select",
-      render: (invitation: Invitation) => (
+      render: (value: any, invitation: Invitation) => (
         <Checkbox
           checked={selectedInvitations.has(invitation.id)}
           onCheckedChange={() => toggleInvitationSelection(invitation.id)}
@@ -197,14 +196,14 @@ export function InvitationTable({
       ),
     },
     {
-      key: "email",
+      key: "email" as keyof Invitation,
       header: "Email",
       render: (email: string) => (
         <div className="font-medium">{email}</div>
       ),
     },
     {
-      key: "role",
+      key: "role" as keyof Invitation,
       header: "Role",
       render: (role: string) => (
         <Badge variant="outline" className="capitalize">
@@ -213,7 +212,7 @@ export function InvitationTable({
       ),
     },
     {
-      key: "status",
+      key: "status" as keyof Invitation,
       header: "Status",
       render: (status: string) => (
         <Badge variant={getStatusVariant(status)} className="capitalize">
@@ -223,7 +222,7 @@ export function InvitationTable({
       ),
     },
     {
-      key: "expiresAt",
+      key: "expiresAt" as keyof Invitation,
       header: "Expires",
       render: (expiresAt: string) => {
         const expired = isExpired(expiresAt);
@@ -235,16 +234,7 @@ export function InvitationTable({
       },
     },
     {
-      key: "createdAt",
-      header: "Created",
-      render: (createdAt: string) => (
-        <div className="text-sm text-muted-foreground">
-          {formatDate(createdAt)}
-        </div>
-      ),
-    },
-    {
-      key: "inviter",
+      key: "inviter" as keyof Invitation,
       header: "Invited By",
       render: (inviter: any) => (
         <div className="text-sm">
