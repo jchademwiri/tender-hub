@@ -1,7 +1,6 @@
-import { provinces, publishers } from "./schema";
 import { db } from ".";
 import publisherData, { provinceData } from "./data";
-
+import { provinces, publishers } from "./schema";
 
 const provinceRecords: Record<string, any> = {};
 

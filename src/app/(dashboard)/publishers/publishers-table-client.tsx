@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
-import Table from '@/components/Table';
-import { PublisherVisitBadge } from '@/components/publisher-visit-badge';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { PublisherVisitBadge } from "@/components/publisher-visit-badge";
+import Table from "@/components/Table";
 
 interface Publisher {
   id: string;
@@ -20,11 +20,13 @@ interface PublishersTableClientProps {
 }
 
 type SortKey = keyof Publisher;
-type SortDirection = 'asc' | 'desc';
+type SortDirection = "asc" | "desc";
 
-export function PublishersTableClient({ publishers }: PublishersTableClientProps) {
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+export function PublishersTableClient({
+  publishers,
+}: PublishersTableClientProps) {
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const sortedPublishers = useMemo(() => {
     return [...publishers].sort((a, b) => {
@@ -37,15 +39,15 @@ export function PublishersTableClient({ publishers }: PublishersTableClientProps
       if (bVal === null) return -1;
 
       // Handle string comparison
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortDirection === 'asc'
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return sortDirection === "asc"
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       }
 
       // Handle date comparison
       if (aVal instanceof Date && bVal instanceof Date) {
-        return sortDirection === 'asc'
+        return sortDirection === "asc"
           ? aVal.getTime() - bVal.getTime()
           : bVal.getTime() - aVal.getTime();
       }
@@ -56,26 +58,27 @@ export function PublishersTableClient({ publishers }: PublishersTableClientProps
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const validateAndRenderUrl = (url: string | null) => {
-    if (!url) return 'N/A';
+    if (!url) return "N/A";
 
     try {
       // Handle relative URLs by prefixing with https://
-      const normalizedUrl = url.startsWith('http://') || url.startsWith('https://')
-        ? url
-        : `https://${url}`;
+      const normalizedUrl =
+        url.startsWith("http://") || url.startsWith("https://")
+          ? url
+          : `https://${url}`;
 
       const urlObj = new URL(normalizedUrl);
 
       // Only allow http and https protocols
-      if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+      if (urlObj.protocol === "http:" || urlObj.protocol === "https:") {
         return (
           <a
             href={urlObj.toString()}
@@ -88,24 +91,26 @@ export function PublishersTableClient({ publishers }: PublishersTableClientProps
         );
       }
 
-      return 'N/A';
+      return "N/A";
     } catch {
-      return 'N/A';
+      return "N/A";
     }
   };
 
   const columns = [
     {
-      key: 'name',
+      key: "name",
       header: (
         <button
-          onClick={() => handleSort('name')}
+          onClick={() => handleSort("name")}
           className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
         >
           Publisher
-          <ArrowUpDown className={`w-3 h-3 transition-opacity ${
-            sortKey === 'name' ? 'opacity-100' : 'opacity-50'
-          }`} />
+          <ArrowUpDown
+            className={`w-3 h-3 transition-opacity ${
+              sortKey === "name" ? "opacity-100" : "opacity-50"
+            }`}
+          />
         </button>
       ),
       render: (value: string, item: Publisher) => (
@@ -122,59 +127,60 @@ export function PublishersTableClient({ publishers }: PublishersTableClientProps
             size="sm"
           />
         </div>
-      )
+      ),
     },
     {
-      key: 'website',
+      key: "website",
       header: (
         <button
-          onClick={() => handleSort('website')}
+          onClick={() => handleSort("website")}
           className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
         >
           Website
-          <ArrowUpDown className={`w-3 h-3 transition-opacity ${
-            sortKey === 'website' ? 'opacity-100' : 'opacity-50'
-          }`} />
+          <ArrowUpDown
+            className={`w-3 h-3 transition-opacity ${
+              sortKey === "website" ? "opacity-100" : "opacity-50"
+            }`}
+          />
         </button>
       ),
-      render: (value: string | null) => validateAndRenderUrl(value)
+      render: (value: string | null) => validateAndRenderUrl(value),
     },
     {
-      key: 'provinceName',
+      key: "provinceName",
       header: (
         <button
-          onClick={() => handleSort('provinceName')}
+          onClick={() => handleSort("provinceName")}
           className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
         >
           Province
-          <ArrowUpDown className={`w-3 h-3 transition-opacity ${
-            sortKey === 'provinceName' ? 'opacity-100' : 'opacity-50'
-          }`} />
+          <ArrowUpDown
+            className={`w-3 h-3 transition-opacity ${
+              sortKey === "provinceName" ? "opacity-100" : "opacity-50"
+            }`}
+          />
         </button>
       ),
-      render: (value: string | null) => value || 'N/A'
+      render: (value: string | null) => value || "N/A",
     },
     {
-      key: 'createdAt',
+      key: "createdAt",
       header: (
         <button
-          onClick={() => handleSort('createdAt')}
+          onClick={() => handleSort("createdAt")}
           className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
         >
           Created
-          <ArrowUpDown className={`w-3 h-3 transition-opacity ${
-            sortKey === 'createdAt' ? 'opacity-100' : 'opacity-50'
-          }`} />
+          <ArrowUpDown
+            className={`w-3 h-3 transition-opacity ${
+              sortKey === "createdAt" ? "opacity-100" : "opacity-50"
+            }`}
+          />
         </button>
       ),
-      render: (value: Date) => new Date(value).toLocaleDateString()
-    }
+      render: (value: Date) => new Date(value).toLocaleDateString(),
+    },
   ];
 
-  return (
-    <Table
-      data={sortedPublishers}
-      columns={columns}
-    />
-  );
+  return <Table data={sortedPublishers} columns={columns} />;
 }

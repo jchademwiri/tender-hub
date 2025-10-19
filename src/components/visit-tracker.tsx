@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Visit Tracker Component
@@ -6,9 +6,10 @@
  * Integrates with Next.js router for seamless tracking
  */
 
-import React, { useEffect, useRef, Suspense, useCallback } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useVisitTrackerContext } from '@/contexts/visit-tracker-context';
+import { usePathname, useSearchParams } from "next/navigation";
+import type React from "react";
+import { Suspense, useCallback, useEffect, useRef } from "react";
+import { useVisitTrackerContext } from "@/contexts/visit-tracker-context";
 
 interface VisitTrackerProps {
   /** Whether to track the current page immediately on mount */
@@ -41,18 +42,18 @@ export function VisitTracker({
   // Track if we've already tracked this page to avoid duplicate tracking
   const hasTrackedRef = useRef(false);
   // Track the last URL we processed to avoid duplicate tracking
-  const lastUrlRef = useRef<string>('');
+  const lastUrlRef = useRef<string>("");
 
   /**
    * Generate the current full URL for tracking (memoized for stable reference)
    */
   const getCurrentUrl = useCallback((): string => {
-    if (typeof window === 'undefined') {
-      return pathname || '';
+    if (typeof window === "undefined") {
+      return pathname || "";
     }
 
     const url = new URL(window.location.href);
-    url.pathname = pathname || '';
+    url.pathname = pathname || "";
 
     // Include search params if they exist
     if (searchParams?.toString()) {
@@ -82,7 +83,7 @@ export function VisitTracker({
       hasTrackedRef.current = true;
       lastUrlRef.current = url;
     } catch (error) {
-      console.warn('Visit tracking failed:', error);
+      console.warn("Visit tracking failed:", error);
     }
   };
 
@@ -95,7 +96,7 @@ export function VisitTracker({
     }
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         // Page became visible, track the visit
         const url = getCurrentUrl();
         if (url && url !== lastUrlRef.current) {
@@ -104,10 +105,10 @@ export function VisitTracker({
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [trackVisibility, enabled, isEnabled, getCurrentUrl, performTracking]);
 
@@ -126,10 +127,10 @@ export function VisitTracker({
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [trackUnload, enabled, isEnabled, getCurrentUrl, performTracking]);
 
@@ -156,7 +157,7 @@ export function VisitTracker({
       hasTrackedRef.current = false;
       lastUrlRef.current = url;
     }
-  }, [pathname, searchParams, enabled, isEnabled, trackOnMount, getCurrentUrl, performTracking]);
+  }, [enabled, isEnabled, trackOnMount, getCurrentUrl, performTracking]);
 
   // This component doesn't render anything
   return null;
@@ -167,7 +168,7 @@ export function VisitTracker({
  */
 export function withVisitTracker<P extends object>(
   Component: React.ComponentType<P>,
-  options?: Omit<VisitTrackerProps, 'enabled'>
+  options?: Omit<VisitTrackerProps, "enabled">,
 ) {
   const WrappedComponent = (props: P) => {
     return (
@@ -196,12 +197,12 @@ export function usePageTracking(options?: {
   const { trackCurrentPage, isEnabled } = useVisitTrackerContext();
 
   const getCurrentUrl = (): string => {
-    if (typeof window === 'undefined') {
-      return pathname || '';
+    if (typeof window === "undefined") {
+      return pathname || "";
     }
 
     const url = new URL(window.location.href);
-    url.pathname = pathname || '';
+    url.pathname = pathname || "";
 
     if (searchParams?.toString()) {
       url.search = searchParams.toString();
@@ -228,7 +229,7 @@ export function usePageTracking(options?: {
     if (options?.trackOnMount !== false) {
       trackPage();
     }
-  }, [pathname, searchParams]);
+  }, [options?.trackOnMount, trackPage]);
 
   useEffect(() => {
     if (!options?.trackVisibility || !isEnabled) {
@@ -236,16 +237,16 @@ export function usePageTracking(options?: {
     }
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         trackPage();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [options?.trackVisibility, isEnabled]);
+  }, [options?.trackVisibility, isEnabled, trackPage]);
 
   return {
     trackPage,

@@ -1,13 +1,13 @@
-import React from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Loader2, RefreshCw } from "lucide-react";
+import type React from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
   message?: string;
-  variant?: 'spinner' | 'skeleton' | 'pulse';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "spinner" | "skeleton" | "pulse";
+  size?: "sm" | "md" | "lg";
   className?: string;
   showRetry?: boolean;
   onRetry?: () => void;
@@ -15,18 +15,18 @@ interface LoadingStateProps {
 }
 
 export function LoadingState({
-  message = 'Loading...',
-  variant = 'spinner',
-  size = 'md',
+  message = "Loading...",
+  variant = "spinner",
+  size = "md",
   className,
   showRetry = false,
   onRetry,
   rows = 3,
 }: LoadingStateProps) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8',
+    sm: "h-4 w-4",
+    md: "h-6 w-6",
+    lg: "h-8 w-8",
   };
 
   const handleRetry = () => {
@@ -35,9 +35,9 @@ export function LoadingState({
     }
   };
 
-  if (variant === 'skeleton') {
+  if (variant === "skeleton") {
     return (
-      <div className={cn('space-y-3', className)}>
+      <div className={cn("space-y-3", className)}>
         {Array.from({ length: rows }).map((_, i) => (
           <Skeleton key={i} className="h-4 w-full" />
         ))}
@@ -45,9 +45,9 @@ export function LoadingState({
     );
   }
 
-  if (variant === 'pulse') {
+  if (variant === "pulse") {
     return (
-      <div className={cn('animate-pulse', className)}>
+      <div className={cn("animate-pulse", className)}>
         <div className="space-y-3">
           {Array.from({ length: rows }).map((_, i) => (
             <div key={i} className="h-4 bg-muted rounded w-full" />
@@ -59,12 +59,24 @@ export function LoadingState({
 
   // Default spinner variant
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-4 p-8', className)}>
-      <Loader2 className={cn('animate-spin text-muted-foreground', sizeClasses[size])} />
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-4 p-8",
+        className,
+      )}
+    >
+      <Loader2
+        className={cn("animate-spin text-muted-foreground", sizeClasses[size])}
+      />
       <div className="text-center space-y-2">
         <p className="text-sm text-muted-foreground">{message}</p>
         {showRetry && onRetry && (
-          <Button variant="ghost" size="sm" onClick={handleRetry} className="gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRetry}
+            className="gap-2"
+          >
             <RefreshCw className="h-3 w-3" />
             Retry
           </Button>
@@ -75,17 +87,37 @@ export function LoadingState({
 }
 
 // Specific loading components for common use cases
-export function LoadingSpinner({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
+export function LoadingSpinner({
+  size = "md",
+  className,
+}: {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}) {
   const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8',
+    sm: "h-4 w-4",
+    md: "h-6 w-6",
+    lg: "h-8 w-8",
   };
 
-  return <Loader2 className={cn('animate-spin text-muted-foreground', sizeClasses[size], className)} />;
+  return (
+    <Loader2
+      className={cn(
+        "animate-spin text-muted-foreground",
+        sizeClasses[size],
+        className,
+      )}
+    />
+  );
 }
 
-export function LoadingButton({ children, loading, ...props }: { children: React.ReactNode; loading?: boolean } & React.ComponentProps<typeof Button>) {
+export function LoadingButton({
+  children,
+  loading,
+  ...props
+}: { children: React.ReactNode; loading?: boolean } & React.ComponentProps<
+  typeof Button
+>) {
   return (
     <Button {...props} disabled={loading || props.disabled}>
       {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
@@ -94,7 +126,15 @@ export function LoadingButton({ children, loading, ...props }: { children: React
   );
 }
 
-export function LoadingOverlay({ children, loading, message }: { children: React.ReactNode; loading?: boolean; message?: string }) {
+export function LoadingOverlay({
+  children,
+  loading,
+  message,
+}: {
+  children: React.ReactNode;
+  loading?: boolean;
+  message?: string;
+}) {
   if (!loading) return <>{children}</>;
 
   return (

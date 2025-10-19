@@ -1,17 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { invitation } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { AuditLogger } from "@/lib/audit-logger";
+import { requireAdminForAPI } from "@/lib/auth-utils";
 import { sendEmail } from "@/lib/email";
-import { z } from "zod";
 
 /**
  * Cancel invitation validation schema
  */
 const cancelInvitationSchema = z.object({
-  reason: z.enum(["manual", "expired", "bounced", "complaint", "suppressed"]).optional(),
+  reason: z
+    .enum(["manual", "expired", "bounced", "complaint", "suppressed"])
+    .optional(),
   notes: z.string().optional(),
 });
 
@@ -21,11 +23,11 @@ const cancelInvitationSchema = z.object({
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate and authorize admin user
-    const currentUser = await requireAdmin();
+    const currentUser = await requireAdminForAPI();
 
     const { id: invitationId } = await params;
 
@@ -37,12 +39,12 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Invalid input data",
-          details: validationResult.error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
+          details: validationResult.error.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          })),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -50,7 +52,13 @@ export async function POST(
 
     // Check if invitation exists
     const existingInvitation = await db
-      .select()
+      .select({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+      })
       .from(invitation)
       .where(eq(invitation.id, invitationId))
       .limit(1);
@@ -58,7 +66,7 @@ export async function POST(
     if (existingInvitation.length === 0) {
       return NextResponse.json(
         { error: "Invitation not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -68,7 +76,7 @@ export async function POST(
     if (invite.status !== "pending") {
       return NextResponse.json(
         { error: "Can only cancel pending invitations" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -76,7 +84,7 @@ export async function POST(
     if (new Date() > new Date(invite.expiresAt)) {
       return NextResponse.json(
         { error: "Invitation has already expired" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -100,9 +108,9 @@ export async function POST(
           notes,
           cancelledAt: new Date().toISOString(),
           previousStatus: invite.status,
-          source: "admin_api"
-        }
-      }
+          source: "admin_api",
+        },
+      },
     );
 
     // Send cancellation notification email if reason is manual
@@ -114,7 +122,7 @@ export async function POST(
           html: `
             <h1>Invitation Cancelled</h1>
             <p>Your invitation to join Tender Hub has been cancelled.</p>
-            ${notes ? `<p><strong>Reason:</strong> ${notes}</p>` : ''}
+            ${notes ? `<p><strong>Reason:</strong> ${notes}</p>` : ""}
             <p>If you believe this was an error or have questions, please contact our support team.</p>
             <p>Best regards,<br>Tender Hub Team</p>
           `,
@@ -133,44 +141,34 @@ export async function POST(
         status: "cancelled",
         cancelledAt: new Date().toISOString(),
         reason,
-        notes
-      }
+        notes,
+      },
     });
-
   } catch (error) {
     console.error("Admin cancel invitation API error:", error);
 
     // Handle specific invitation errors
     if (error instanceof Error) {
       if (error.message.includes("Invitation not found")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 404 });
       }
       if (error.message.includes("Can only cancel pending invitations")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
       if (error.message.includes("Invitation has already expired")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
-      if (error.message.includes("Unauthorized") || error.message.includes("Insufficient permissions")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 403 }
-        );
+      if (
+        error.message.includes("Unauthorized") ||
+        error.message.includes("Insufficient permissions")
+      ) {
+        return NextResponse.json({ error: error.message }, { status: 403 });
       }
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

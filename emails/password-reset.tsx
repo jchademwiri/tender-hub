@@ -1,17 +1,16 @@
-import * as React from 'react';
 import {
   Body,
   Button,
   Container,
-  Section,
-  Text,
+  Head,
   Hr,
   Html,
-  Head,
-  Preview,
-  Tailwind,
   Link,
-} from '@react-email/components';
+  Preview,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
 
 interface PasswordResetEmailProps {
   userEmail?: string;
@@ -21,18 +20,18 @@ interface PasswordResetEmailProps {
 }
 
 const PasswordResetEmail = (props: PasswordResetEmailProps) => {
-  const { 
+  const {
     userEmail = "hello@jacobc.co.za",
     resetUrl = "https://tenderhub.com/reset-password?token=abc123xyz",
     expirationTime = "1 hour",
-    requestTime = new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Africa/Johannesburg'
-    })
+    requestTime = new Date().toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Africa/Johannesburg",
+    }),
   } = props;
 
   return (
@@ -46,13 +45,15 @@ const PasswordResetEmail = (props: PasswordResetEmailProps) => {
               <Text className="text-[28px] font-bold text-gray-900 text-center mb-[24px] m-0">
                 Password Reset Request
               </Text>
-              
+
               <Text className="text-[16px] text-gray-700 leading-[24px] mb-[24px] m-0">
-                We received a request to reset your password for your Tender Hub account ({userEmail}) on {requestTime}.
+                We received a request to reset your password for your Tender Hub
+                account ({userEmail}) on {requestTime}.
               </Text>
 
               <Text className="text-[16px] text-gray-700 leading-[24px] mb-[32px] m-0">
-                Click the button below to create a new password. You'll be taken to a secure page where you can set up your new password.
+                Click the button below to create a new password. You'll be taken
+                to a secure page where you can set up your new password.
               </Text>
 
               <Section className="text-center mb-[32px]">
@@ -69,7 +70,8 @@ const PasswordResetEmail = (props: PasswordResetEmailProps) => {
                   🔒 Security Information
                 </Text>
                 <Text className="text-[14px] text-amber-700 leading-[20px] m-0 mb-[8px]">
-                  • This password reset link will expire in {expirationTime} for security reasons
+                  • This password reset link will expire in {expirationTime} for
+                  security reasons
                 </Text>
                 <Text className="text-[14px] text-amber-700 leading-[20px] m-0 mb-[8px]">
                   • The link can only be used once
@@ -84,11 +86,16 @@ const PasswordResetEmail = (props: PasswordResetEmailProps) => {
                   ⚠️ Didn't Request This?
                 </Text>
                 <Text className="text-[14px] text-red-700 leading-[20px] m-0 mb-[12px]">
-                  If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
+                  If you didn't request this password reset, please ignore this
+                  email. Your password will remain unchanged.
                 </Text>
                 <Text className="text-[14px] text-red-700 leading-[20px] m-0">
-                  However, if you're concerned about account security, contact us immediately at{' '}
-                  <Link href="mailto:security@tenderhub.com" className="text-red-600 underline">
+                  However, if you're concerned about account security, contact
+                  us immediately at{" "}
+                  <Link
+                    href="mailto:security@tenderhub.com"
+                    className="text-red-600 underline"
+                  >
                     security@tenderhub.com
                   </Link>
                 </Text>
@@ -97,19 +104,29 @@ const PasswordResetEmail = (props: PasswordResetEmailProps) => {
               <Hr className="border-gray-200 my-[32px]" />
 
               <Text className="text-[14px] text-gray-600 leading-[20px] mb-[16px] m-0">
-                If you're having trouble clicking the button, copy and paste this URL into your browser:{' '}
-                <Link href={resetUrl} className="text-blue-600 underline break-all">
+                If you're having trouble clicking the button, copy and paste
+                this URL into your browser:{" "}
+                <Link
+                  href={resetUrl}
+                  className="text-blue-600 underline break-all"
+                >
                   {resetUrl}
                 </Link>
               </Text>
 
               <Text className="text-[14px] text-gray-600 leading-[20px] mb-[32px] m-0">
-                Need help? Contact our support team at{' '}
-                <Link href="mailto:support@tenderhub.com" className="text-blue-600 underline">
+                Need help? Contact our support team at{" "}
+                <Link
+                  href="mailto:support@tenderhub.com"
+                  className="text-blue-600 underline"
+                >
                   support@tenderhub.com
-                </Link>{' '}
-                or call{' '}
-                <Link href="tel:+27111234567" className="text-blue-600 underline">
+                </Link>{" "}
+                or call{" "}
+                <Link
+                  href="tel:+27111234567"
+                  className="text-blue-600 underline"
+                >
                   +27 11 123 4567
                 </Link>
               </Text>
@@ -123,11 +140,17 @@ const PasswordResetEmail = (props: PasswordResetEmailProps) => {
                   Tender Hub, 123 Business District, Sandton, Johannesburg, 2196
                 </Text>
                 <Text className="text-[12px] text-gray-500 text-center leading-[16px] m-0 mb-[8px]">
-                  <Link href="mailto:support@tenderhub.com" className="text-gray-500 underline">
+                  <Link
+                    href="mailto:support@tenderhub.com"
+                    className="text-gray-500 underline"
+                  >
                     support@tenderhub.com
-                  </Link>{' '}
-                  |{' '}
-                  <Link href="https://tenderhub.com/privacy" className="text-gray-500 underline">
+                  </Link>{" "}
+                  |{" "}
+                  <Link
+                    href="https://tenderhub.com/privacy"
+                    className="text-gray-500 underline"
+                  >
                     Privacy Policy
                   </Link>
                 </Text>

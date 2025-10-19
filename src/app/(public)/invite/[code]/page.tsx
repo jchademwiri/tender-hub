@@ -1,144 +1,386 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { redirect } from "next/navigation"
+import { eq } from "drizzle-orm";
+import {
+  AlertCircle,
+  CheckCircle,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { db } from "@/db";
+import { invitation, user } from "@/db/schema";
+import { acceptInvitation } from "@/lib/invitation";
+import { InvitationForm } from "./invitation-form";
+
+// Types for invitation details
+interface InvitationDetails {
+  id: string;
+  email: string;
+  role: string | null;
+  status: string;
+  expiresAt: Date;
+  inviterName?: string | null;
+  inviterEmail?: string | null;
+}
+
+// Server action for fetching invitation details
+async function getInvitationDetails(
+  code: string,
+): Promise<InvitationDetails | null> {
+  "use server";
+
+  try {
+    const invite = await db
+      .select({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+        inviterName: user.name,
+        inviterEmail: user.email,
+      })
+      .from(invitation)
+      .leftJoin(user, eq(invitation.inviterId, user.id))
+      .where(eq(invitation.id, code))
+      .limit(1);
+
+    if (!invite[0]) {
+      return null;
+    }
+
+    return {
+      ...invite[0],
+      expiresAt: invite[0].expiresAt,
+    };
+  } catch (error) {
+    console.error("Error fetching invitation details:", error);
+    return null;
+  }
+}
 
 // Server action for handling form submission
-async function handleInviteAcceptance(formData: FormData) {
-  'use server'
+async function handleInviteAcceptance(
+  _prevState: any,
+  formData: FormData,
+): Promise<
+  { error: string } | { success: boolean; message: string; redirectTo: string }
+> {
+  "use server";
 
-  // TODO: Implement proper invitation validation and user creation
-  // For now, this is a placeholder that prevents the form from submitting
-
-  const name = formData.get('name') as string
-  const password = formData.get('password') as string
-  const confirmPassword = formData.get('confirmPassword') as string
+  const name = formData.get("name") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+  const invitationId = formData.get("invitationId") as string;
 
   // Basic validation
-  if (!name || !password || !confirmPassword) {
-    throw new Error('All fields are required')
+  if (!name || !password || !confirmPassword || !invitationId) {
+    return { error: "All fields are required" };
   }
 
   if (password !== confirmPassword) {
-    throw new Error('Passwords do not match')
+    return { error: "Passwords do not match" };
   }
 
   if (password.length < 12) {
-    throw new Error('Password must be at least 12 characters long')
+    return { error: "Password must be at least 12 characters long" };
   }
 
-  // TODO: Implement actual invitation validation and user creation
-  console.log('Form submitted - implementation needed')
+  try {
+    // Use the existing acceptInvitation function
+    const result = await acceptInvitation({
+      invitationId,
+      password,
+      name,
+    });
 
-  // For now, redirect to login
-  redirect('/sign-in?message=invitation-accepted')
+    // Return success response instead of redirecting
+    if (result.success) {
+      return {
+        success: true,
+        message: "Invitation accepted successfully",
+        redirectTo: result.redirectTo || "/?message=invitation-accepted",
+      };
+    } else {
+      return { error: "Failed to accept invitation" };
+    }
+  } catch (error) {
+    // Return error message for display
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    return { error: errorMessage };
+  }
+}
+
+// Helper function to get role display information
+function getRoleDisplayInfo(role: string | null) {
+  switch (role) {
+    case "admin":
+      return {
+        name: "Administrator",
+        description: "Full system access with user management capabilities",
+        icon: Shield,
+        color: "bg-red-100 text-red-800",
+        permissions: [
+          "Manage users",
+          "Manage invitations",
+          "Access all data",
+          "System configuration",
+        ],
+      };
+    case "manager":
+      return {
+        name: "Manager",
+        description: "Team management and reporting access",
+        icon: Settings,
+        color: "bg-blue-100 text-blue-800",
+        permissions: [
+          "Manage team members",
+          "View reports",
+          "Approve requests",
+          "Access team data",
+        ],
+      };
+    case "user":
+      return {
+        name: "User",
+        description: "Standard user access with basic functionality",
+        icon: Users,
+        color: "bg-green-100 text-green-800",
+        permissions: [
+          "View assigned data",
+          "Submit reports",
+          "Basic system access",
+        ],
+      };
+    default:
+      return {
+        name: "Unknown Role",
+        description: "Role information not available",
+        icon: AlertCircle,
+        color: "bg-gray-100 text-gray-800",
+        permissions: [],
+      };
+  }
+}
+
+// Helper function to check if invitation is expired
+function isInvitationExpired(expiresAt: Date): boolean {
+  return new Date() > expiresAt;
 }
 
 interface InvitePageProps {
-  params: Promise<{ code: string }>
+  params: Promise<{ code: string }>;
 }
 
-export default async function InviteAcceptancePage({ params }: InvitePageProps) {
-  const { code } = await params
+export default async function InviteAcceptancePage({
+  params,
+}: InvitePageProps) {
+  const { code } = await params;
 
-  // TODO: Implement invitation validation
-  // - Check if invitation code exists in database
-  // - Verify invitation is not expired and not already accepted
-  // - Fetch invitation details: email, role, expiresAt
+  // Fetch invitation details
+  const invitationDetails = await getInvitationDetails(code);
 
-  // TODO: Implement sign-up form logic
-  // - Pre-fill email from invitation
-  // - Validate form: name, password, confirm password
-  // - On submit: Create user account with Better Auth
-  // - Mark invitation as accepted
-  // - Redirect to login or dashboard
+  // Handle invalid invitation
+  if (!invitationDetails) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-red-900">Invalid Invitation</CardTitle>
+            <CardDescription>
+              This invitation link is invalid or has been cancelled.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 text-center mb-4">
+              Please contact your administrator to request a new invitation.
+            </p>
+            <div className="text-center">
+              <Link href="/">
+                <Button variant="outline">Back to Home</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  // TODO: Handle invalid invitation
-  // - If code invalid/expired, show error message
-  // - Provide option to contact admin for new invitation
+  // Handle expired invitation
+  if (invitationDetails.status !== "pending") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-yellow-600" />
+            </div>
+            <CardTitle className="text-yellow-900">
+              Invitation Already Used
+            </CardTitle>
+            <CardDescription>
+              This invitation has already been accepted or cancelled.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 text-center mb-4">
+              If you believe this is an error, please contact your
+              administrator.
+            </p>
+            <div className="text-center">
+              <Link href="/">
+                <Button variant="outline">Back to Home</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Handle expired invitation
+  if (isInvitationExpired(invitationDetails.expiresAt)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            </div>
+            <CardTitle className="text-orange-900">
+              Invitation Expired
+            </CardTitle>
+            <CardDescription>
+              This invitation expired on{" "}
+              {invitationDetails.expiresAt.toLocaleDateString()}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 text-center mb-4">
+              Please contact your administrator to request a new invitation.
+            </p>
+            <div className="text-center">
+              <Link href="/">
+                <Button variant="outline">Back to Home</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Valid invitation - show acceptance form
+  const roleInfo = getRoleDisplayInfo(invitationDetails.role);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Accept Invitation
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            You've been invited to join Tender Hub
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" action={handleInviteAcceptance}>
-          {/* TODO: Conditionally render based on invitation validity */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value="user@example.com"
-                readOnly
-              />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        {/* Invitation Details Card */}
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
-            <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Enter your full name"
-                required
-              />
+            <CardTitle>Welcome to Tender Hub</CardTitle>
+            <CardDescription>
+              You've been invited to join as a {roleInfo.name.toLowerCase()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Role Badge */}
+            <div className="flex justify-center">
+              <Badge className={`${roleInfo.color} flex items-center gap-1`}>
+                <roleInfo.icon className="w-3 h-3" />
+                {roleInfo.name}
+              </Badge>
             </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Create a password"
-                required
-              />
+
+            {/* Invitation Details */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Email:</span>
+                <span className="font-medium">{invitationDetails.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Expires:</span>
+                <span className="font-medium">
+                  {invitationDetails.expiresAt.toLocaleDateString()}
+                </span>
+              </div>
+              {invitationDetails.inviterName && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Invited by:</span>
+                  <span className="font-medium">
+                    {invitationDetails.inviterName}
+                  </span>
+                </div>
+              )}
             </div>
+
+            <Separator />
+
+            {/* Role Description */}
             <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Confirm your password"
-                required
-              />
+              <h4 className="font-medium text-sm mb-2">Role Overview:</h4>
+              <p className="text-sm text-gray-600 mb-3">
+                {roleInfo.description}
+              </p>
+
+              <div className="space-y-1">
+                <h5 className="font-medium text-xs text-gray-700 uppercase tracking-wide">
+                  Permissions:
+                </h5>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  {roleInfo.permissions.map((permission, index) => (
+                    <li key={index} className="flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3 text-green-500" />
+                      {permission}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
-          <div>
-            <Button type="submit" className="w-full">
-              Create Account
-            </Button>
-          </div>
-        </form>
-        {/* TODO: Add error/success message display - Only show in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-muted rounded">
-            <p>TODO: Implement invitation acceptance logic</p>
-            <p>Invitation Code: {code}</p>
-            <p>Features needed:</p>
-            <ul className="list-disc list-inside">
-              <li>Validate invitation code</li>
-              <li>Handle sign-up with Better Auth</li>
-              <li>Mark invitation as accepted</li>
-              <li>Redirect after successful registration</li>
-            </ul>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+
+        {/* Registration Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Your Account</CardTitle>
+            <CardDescription>
+              Please provide your details to complete the registration process.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InvitationForm
+              invitationId={invitationDetails.id}
+              email={invitationDetails.email}
+              action={handleInviteAcceptance}
+            />
+          </CardContent>
+        </Card>
+
         <div className="text-center">
-          <Link href="/" className="text-sm text-blue-600 hover:text-blue-500">
+          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
             Back to Home
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

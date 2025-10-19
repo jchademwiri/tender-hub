@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin, getCurrentUser } from "@/lib/auth-utils";
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { user } from "@/db/schema";
-import { eq, desc, asc } from "drizzle-orm";
-import { z } from "zod";
-import { emailSchema, nameSchema } from "@/lib/validations/common";
 import { auth } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth-utils";
+import { emailSchema, nameSchema } from "@/lib/validations/common";
 
 /**
  * TODO: Admin Users API Implementation Checklist
@@ -46,16 +46,16 @@ export async function GET(request: NextRequest) {
     // await requireAdmin();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
     const search = searchParams.get("search");
     const role = searchParams.get("role");
     const status = searchParams.get("status");
-    const sortBy = searchParams.get("sortBy") || "createdAt";
-    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const _sortBy = searchParams.get("sortBy") || "createdAt";
+    const _sortOrder = searchParams.get("sortOrder") || "desc";
 
     // TODO: Implement user filtering logic
-    let query = db.select().from(user);
+    const query = db.select().from(user);
 
     // TODO: Add search functionality
     if (search) {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     // query = query.orderBy(orderBy);
 
     // TODO: Add pagination
-    const offset = (page - 1) * limit;
+    const _offset = (page - 1) * limit;
     // query = query.limit(limit).offset(offset);
 
     // TODO: Execute query and return results
@@ -89,15 +89,14 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: users.length, // TODO: Get actual total count
-        pages: Math.ceil(users.length / limit) // TODO: Calculate actual pages
-      }
+        pages: Math.ceil(users.length / limit), // TODO: Calculate actual pages
+      },
     });
-
   } catch (error) {
     console.error("Admin users API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -111,32 +110,38 @@ export async function POST(request: NextRequest) {
     const { email, name, role, sendInvitation = true } = body;
 
     // Validate input data using existing schemas
-    const validation = z.object({
-      email: emailSchema,
-      name: nameSchema,
-      role: z.enum(['admin', 'manager', 'user']),
-      sendInvitation: z.boolean().optional().default(true)
-    }).safeParse({ email, name, role, sendInvitation });
+    const validation = z
+      .object({
+        email: emailSchema,
+        name: nameSchema,
+        role: z.enum(["admin", "manager", "user"]),
+        sendInvitation: z.boolean().optional().default(true),
+      })
+      .safeParse({ email, name, role, sendInvitation });
 
     if (!validation.success) {
       return NextResponse.json(
         {
           error: "Validation failed",
-          details: validation.error.format()
+          details: validation.error.format(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const validatedData = validation.data;
 
     // Check if user already exists
-    const existingUser = await db.select().from(user).where(eq(user.email, validatedData.email)).limit(1);
+    const existingUser = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, validatedData.email))
+      .limit(1);
 
     if (existingUser.length > 0) {
       return NextResponse.json(
         { error: "User with this email already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -146,7 +151,7 @@ export async function POST(request: NextRequest) {
         email: validatedData.email,
         password: crypto.randomUUID(), // Temporary password, will be reset via invitation
         name: validatedData.name,
-      }
+      },
     });
 
     if (!authResult.user) {
@@ -154,12 +159,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user with role and invitation metadata
-    await db.update(user)
+    await db
+      .update(user)
       .set({
         role: validatedData.role,
         status: "pending",
         invitedBy: currentUser.id,
-        invitedAt: new Date()
+        invitedAt: new Date(),
       })
       .where(eq(user.id, authResult.user.id));
 
@@ -171,7 +177,7 @@ export async function POST(request: NextRequest) {
         invitationResult = await createInvitation({
           email: validatedData.email,
           role: validatedData.role,
-          invitedBy: currentUser.id
+          invitedBy: currentUser.id,
         });
       } catch (invitationError) {
         console.error("Failed to send invitation:", invitationError);
@@ -181,59 +187,58 @@ export async function POST(request: NextRequest) {
 
     // Audit log the user creation
     await import("@/lib/audit-logger").then(({ AuditLogger }) => {
-      AuditLogger.logUserCreated(
-        authResult.user.id,
-        currentUser.id,
-        {
-          userId: currentUser.id,
-          metadata: {
-            createdUserEmail: validatedData.email,
-            createdUserRole: validatedData.role,
-            invitationSent: sendInvitation,
-            invitationId: invitationResult?.id
-          }
-        }
-      );
+      AuditLogger.logUserCreated(authResult.user.id, currentUser.id, {
+        userId: currentUser.id,
+        metadata: {
+          createdUserEmail: validatedData.email,
+          createdUserRole: validatedData.role,
+          invitationSent: sendInvitation,
+          invitationId: invitationResult?.id,
+        },
+      });
     });
 
-    return NextResponse.json({
-      message: "User created successfully",
-      user: {
-        id: authResult.user.id,
-        email: validatedData.email,
-        name: validatedData.name,
-        role: validatedData.role,
-        status: "pending",
-        invitedBy: currentUser.id,
-        invitedAt: new Date().toISOString()
+    return NextResponse.json(
+      {
+        message: "User created successfully",
+        user: {
+          id: authResult.user.id,
+          email: validatedData.email,
+          name: validatedData.name,
+          role: validatedData.role,
+          status: "pending",
+          invitedBy: currentUser.id,
+          invitedAt: new Date().toISOString(),
+        },
+        invitation: invitationResult
+          ? {
+              id: invitationResult.id,
+              status: invitationResult.status,
+              expiresAt: invitationResult.expiresAt,
+            }
+          : null,
       },
-      invitation: invitationResult ? {
-        id: invitationResult.id,
-        status: invitationResult.status,
-        expiresAt: invitationResult.expiresAt
-      } : null
-    }, { status: 201 });
-
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Admin create user API error:", error);
 
     // Audit log failed user creation attempts
-    if (error instanceof Error && error.message !== "User with this email already exists") {
+    if (
+      error instanceof Error &&
+      error.message !== "User with this email already exists"
+    ) {
       try {
         const currentUser = await getCurrentUser();
         if (currentUser) {
           await import("@/lib/audit-logger").then(({ AuditLogger }) => {
-            AuditLogger.logUserCreated(
-              "failed",
-              currentUser.id,
-              {
-                userId: currentUser.id,
-                metadata: {
-                  error: error.message,
-                  email: "unknown"
-                }
-              }
-            );
+            AuditLogger.logUserCreated("failed", currentUser.id, {
+              userId: currentUser.id,
+              metadata: {
+                error: error.message,
+                email: "unknown",
+              },
+            });
           });
         }
       } catch (auditError) {
@@ -243,7 +248,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

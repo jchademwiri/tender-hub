@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
 /**
  * Visit tracking hook for React components
  * Provides functions to track page visits and get visit data
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from "react";
+import { getCachedLocalStorage } from "@/lib/performance-utils";
 import {
   addVisit,
-  getVisitStats,
-  getVisitedPagesForSession,
-  getTodayVisits,
   clearAllVisitData,
-  type VisitStats,
   type DailyVisits,
-} from '@/lib/visit-utils';
-import { getCachedLocalStorage } from '@/lib/performance-utils';
+  getTodayVisits,
+  getVisitedPagesForSession,
+  getVisitStats,
+  type VisitStats,
+} from "@/lib/visit-utils";
 
 export interface UseVisitTrackerReturn {
   // Tracking functions
@@ -50,12 +50,12 @@ export function useVisitTracker(): UseVisitTrackerReturn {
   const trackVisit = useCallback((url: string): boolean => {
     try {
       // Validate URL
-      if (!url || typeof url !== 'string') {
-        throw new Error('Invalid URL provided');
+      if (!url || typeof url !== "string") {
+        throw new Error("Invalid URL provided");
       }
 
       // Normalize URL (remove query params and fragments for consistency)
-      const normalizedUrl = url.split('?')[0].split('#')[0];
+      const normalizedUrl = url.split("?")[0].split("#")[0];
 
       const success = addVisit(normalizedUrl);
 
@@ -70,15 +70,16 @@ export function useVisitTracker(): UseVisitTrackerReturn {
           setIsTracking(false);
         }, 100);
       } else {
-        throw new Error('Failed to track visit');
+        throw new Error("Failed to track visit");
       }
 
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
       setError(errorMessage);
       setIsTracking(false);
-      console.warn('Visit tracking error:', err);
+      console.warn("Visit tracking error:", err);
       return false;
     }
   }, []);
@@ -87,7 +88,7 @@ export function useVisitTracker(): UseVisitTrackerReturn {
    * Track the current page URL
    */
   const trackCurrentPage = useCallback((): boolean => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return false; // SSR guard
     }
 
@@ -101,12 +102,12 @@ export function useVisitTracker(): UseVisitTrackerReturn {
     try {
       return getVisitStats();
     } catch (err) {
-      console.warn('Failed to get visit stats:', err);
+      console.warn("Failed to get visit stats:", err);
       return {
         totalVisits: 0,
         uniquePages: 0,
         averageVisitsPerPage: 0,
-        mostVisitedPage: '',
+        mostVisitedPage: "",
         visitCountByPage: {},
       };
     }
@@ -119,7 +120,7 @@ export function useVisitTracker(): UseVisitTrackerReturn {
     try {
       return getTodayVisits();
     } catch (err) {
-      console.warn('Failed to get today\'s visits:', err);
+      console.warn("Failed to get today's visits:", err);
       return null;
     }
   }, []);
@@ -131,7 +132,7 @@ export function useVisitTracker(): UseVisitTrackerReturn {
     try {
       return getVisitedPagesForSession();
     } catch (err) {
-      console.warn('Failed to get visited pages:', err);
+      console.warn("Failed to get visited pages:", err);
       return [];
     }
   }, []);
@@ -145,9 +146,10 @@ export function useVisitTracker(): UseVisitTrackerReturn {
       setError(null);
       return clearAllVisitData();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to clear data';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to clear data";
       setError(errorMessage);
-      console.warn('Failed to clear visit data:', err);
+      console.warn("Failed to clear visit data:", err);
       return false;
     }
   }, []);
@@ -157,7 +159,7 @@ export function useVisitTracker(): UseVisitTrackerReturn {
    * This effect runs when the component mounts and when the URL changes
    */
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return; // SSR guard
     }
 
@@ -178,7 +180,7 @@ export function useVisitTracker(): UseVisitTrackerReturn {
    * Listen for browser navigation events (popstate only)
    */
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return; // SSR guard
     }
 
@@ -187,10 +189,10 @@ export function useVisitTracker(): UseVisitTrackerReturn {
     };
 
     // Listen for browser back/forward navigation
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [trackCurrentPage]);
 
@@ -218,7 +220,7 @@ export function useVisitStats(): VisitStats {
     totalVisits: 0,
     uniquePages: 0,
     averageVisitsPerPage: 0,
-    mostVisitedPage: '',
+    mostVisitedPage: "",
     visitCountByPage: {},
   });
 
@@ -226,7 +228,7 @@ export function useVisitStats(): VisitStats {
   const refreshStats = useCallback(() => {
     try {
       // Use cached localStorage to reduce expensive operations
-      const cachedVisits = getCachedLocalStorage('visit-tracker-visits', 30000); // 30 second cache
+      const cachedVisits = getCachedLocalStorage("visit-tracker-visits", 30000); // 30 second cache
 
       if (cachedVisits) {
         // Use cached data if available
@@ -238,7 +240,7 @@ export function useVisitStats(): VisitStats {
         setStats(newStats);
       }
     } catch (err) {
-      console.warn('Failed to refresh visit stats:', err);
+      console.warn("Failed to refresh visit stats:", err);
     }
   }, []);
 
@@ -266,13 +268,16 @@ export function useVisitedPages(): string[] {
   const refreshVisitedPages = useCallback(() => {
     try {
       // Use cached session ID to avoid unnecessary recalculations
-      const sessionId = getCachedLocalStorage('visit-tracker-session-id', 60000); // 1 minute cache
+      const sessionId = getCachedLocalStorage(
+        "visit-tracker-session-id",
+        60000,
+      ); // 1 minute cache
       if (sessionId) {
         const pages = getVisitedPagesForSession();
         setVisitedPages(pages);
       }
     } catch (err) {
-      console.warn('Failed to refresh visited pages:', err);
+      console.warn("Failed to refresh visited pages:", err);
     }
   }, []);
 
@@ -282,7 +287,7 @@ export function useVisitedPages(): string[] {
     // Throttle storage change events to prevent excessive updates
     let timeoutId: number | undefined;
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key?.includes('visit-tracker')) {
+      if (e.key?.includes("visit-tracker")) {
         // Debounce storage events to prevent excessive refreshes
         if (timeoutId !== undefined) {
           clearTimeout(timeoutId);
@@ -291,13 +296,13 @@ export function useVisitedPages(): string[] {
       }
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('storage', handleStorageChange);
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleStorageChange);
     }
 
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('storage', handleStorageChange);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleStorageChange);
       }
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);

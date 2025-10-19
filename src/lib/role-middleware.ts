@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { db } from "@/db";
-import { user, auditLog } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { type NextRequest, NextResponse } from "next/server";
+import { db } from "@/db";
+import { auditLog, user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 
 /**
  * TODO: Role-Based Middleware Implementation Checklist
@@ -37,10 +37,10 @@ export type RoleLevel = "admin" | "manager" | "user";
  */
 export function getRoleLevel(role: string | null): number {
   const roleHierarchy: Record<string, number> = {
-    "owner": 4,
-    "admin": 3,
-    "manager": 2,
-    "user": 1
+    owner: 4,
+    admin: 3,
+    manager: 2,
+    user: 1,
   };
   return roleHierarchy[role || "user"] || 0;
 }
@@ -48,7 +48,10 @@ export function getRoleLevel(role: string | null): number {
 /**
  * Check if user has minimum required role level
  */
-export function hasMinimumRole(userRole: string | null, requiredRole: RoleLevel): boolean {
+export function hasMinimumRole(
+  userRole: string | null,
+  requiredRole: RoleLevel,
+): boolean {
   const userLevel = getRoleLevel(userRole);
   const requiredLevel = getRoleLevel(requiredRole);
   return userLevel >= requiredLevel;
@@ -63,7 +66,7 @@ export async function requireRoleMiddleware(
   options?: {
     redirectTo?: string;
     logAccess?: boolean;
-  }
+  },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -72,7 +75,9 @@ export async function requireRoleMiddleware(
 
     if (!session?.user) {
       if (options?.logAccess) {
-        await logAccessAttempt(request, "unauthorized", { reason: "no_session" });
+        await logAccessAttempt(request, "unauthorized", {
+          reason: "no_session",
+        });
       }
 
       const redirectUrl = options?.redirectTo || "/?error=unauthorized";
@@ -84,7 +89,7 @@ export async function requireRoleMiddleware(
         await logAccessAttempt(request, "forbidden", {
           userRole: session.user.role,
           requiredRole,
-          reason: "insufficient_role"
+          reason: "insufficient_role",
         });
       }
 
@@ -96,24 +101,23 @@ export async function requireRoleMiddleware(
     if (options?.logAccess) {
       await logAccessAttempt(request, "granted", {
         userRole: session.user.role,
-        requiredRole
+        requiredRole,
       });
     }
 
     return null; // Access granted, continue to route
-
   } catch (error) {
     console.error("Role middleware error:", error);
 
     if (options?.logAccess) {
       await logAccessAttempt(request, "error", {
-        error: error instanceof Error ? error.message : "unknown"
+        error: error instanceof Error ? error.message : "unknown",
       });
     }
 
     return NextResponse.json(
       { error: "Authentication error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -125,7 +129,7 @@ export async function requireResourceAccess(
   request: NextRequest,
   resourceType: string,
   resourceId: string,
-  action: string = "read"
+  action: string = "read",
 ) {
   try {
     const session = await auth.api.getSession({
@@ -135,7 +139,7 @@ export async function requireResourceAccess(
     if (!session?.user) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -144,7 +148,7 @@ export async function requireResourceAccess(
       session.user.id,
       resourceType,
       resourceId,
-      action
+      action,
     );
 
     if (!hasAccess) {
@@ -152,22 +156,18 @@ export async function requireResourceAccess(
         resourceType,
         resourceId,
         action,
-        reason: "insufficient_permissions"
+        reason: "insufficient_permissions",
       });
 
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     return null; // Access granted
-
   } catch (error) {
     console.error("Resource access middleware error:", error);
     return NextResponse.json(
       { error: "Access control error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -177,13 +177,13 @@ export async function requireResourceAccess(
  */
 export async function roleBasedRateLimit(
   request: NextRequest,
-  role: string | null
+  role: string | null,
 ) {
   // TODO: Implement role-based rate limiting
   const limits: Record<string, { window: number; max: number }> = {
-    admin: { window: 60, max: 1000 },     // High limit for admins
-    manager: { window: 60, max: 500 },    // Medium limit for managers
-    user: { window: 60, max: 100 },       // Lower limit for users
+    admin: { window: 60, max: 1000 }, // High limit for admins
+    manager: { window: 60, max: 500 }, // Medium limit for managers
+    user: { window: 60, max: 100 }, // Lower limit for users
   };
 
   const userLimit = limits[role || "user"] || limits.user;
@@ -193,10 +193,7 @@ export async function roleBasedRateLimit(
   const isRateLimited = await checkRateLimit(request, userLimit);
 
   if (isRateLimited) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
   return null; // Within limits
@@ -208,7 +205,7 @@ export async function roleBasedRateLimit(
 async function logAccessAttempt(
   request: NextRequest,
   status: "granted" | "forbidden" | "unauthorized" | "error",
-  metadata: Record<string, any>
+  metadata: Record<string, any>,
 ) {
   try {
     const session = await auth.api.getSession({
@@ -223,14 +220,14 @@ async function logAccessAttempt(
         path: request.nextUrl.pathname,
         method: request.method,
         userAgent: request.headers.get("user-agent"),
-        ipAddress: request.headers.get("x-forwarded-for") ||
-                  request.headers.get("x-real-ip") ||
-                  "unknown",
-        ...metadata
+        ipAddress:
+          request.headers.get("x-forwarded-for") ||
+          request.headers.get("x-real-ip") ||
+          "unknown",
+        ...metadata,
       },
-      createdAt: new Date()
+      createdAt: new Date(),
     });
-
   } catch (error) {
     console.error("Failed to log access attempt:", error);
   }
@@ -243,12 +240,16 @@ async function checkResourcePermission(
   userId: string,
   resourceType: string,
   resourceId: string,
-  action: string
+  _action: string,
 ): Promise<boolean> {
   // TODO: Implement resource-specific permission checking
   // This would depend on the resource type and business logic
 
-  const userResult = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+  const userResult = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
 
   if (userResult.length === 0) {
     return false;
@@ -285,13 +286,13 @@ async function checkResourcePermission(
  */
 async function checkRateLimit(
   request: NextRequest,
-  limit: { window: number; max: number }
+  _limit: { window: number; max: number },
 ): Promise<boolean> {
   // TODO: Implement rate limiting logic
   // This would typically use Redis or database to track request counts
 
   const userId = "current-user-id"; // TODO: Get from session
-  const key = `rate_limit:${userId}:${request.nextUrl.pathname}`;
+  const _key = `rate_limit:${userId}:${request.nextUrl.pathname}`;
 
   // TODO: Check current request count in time window
   // TODO: Increment counter if within limits
@@ -310,7 +311,7 @@ export function withRoleMiddleware(
     checkResource?: boolean;
     resourceType?: string;
     action?: string;
-  }
+  },
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     // TODO: Check role permissions
@@ -320,13 +321,13 @@ export function withRoleMiddleware(
     // TODO: Check resource permissions if specified
     if (options?.checkResource && options?.resourceType) {
       const url = new URL(request.url);
-      const resourceId = url.pathname.split('/').pop() || "";
+      const resourceId = url.pathname.split("/").pop() || "";
 
       const resourceCheck = await requireResourceAccess(
         request,
         options.resourceType,
         resourceId,
-        options.action
+        options.action,
       );
 
       if (resourceCheck) return resourceCheck;
@@ -334,7 +335,10 @@ export function withRoleMiddleware(
 
     // TODO: Apply rate limiting
     const session = await auth.api.getSession({ headers: await headers() });
-    const rateLimitCheck = await roleBasedRateLimit(request, session?.user?.role || null);
+    const rateLimitCheck = await roleBasedRateLimit(
+      request,
+      session?.user?.role || null,
+    );
     if (rateLimitCheck) return rateLimitCheck;
 
     // TODO: Execute original handler

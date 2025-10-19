@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@/db/schema";
+import { auth } from "@/lib/auth";
 
 /**
  * Get the current session from headers (Server-only)
@@ -71,7 +71,9 @@ export async function requireAuth(redirectTo?: string) {
   const user = await getCurrentUser();
 
   if (!user) {
-    const redirectPath = redirectTo ? `/?redirect=${encodeURIComponent(redirectTo)}` : "/";
+    const redirectPath = redirectTo
+      ? `/?redirect=${encodeURIComponent(redirectTo)}`
+      : "/";
     redirect(redirectPath);
   }
 
@@ -88,6 +90,23 @@ export async function requireAdmin() {
   const admin = await isAdmin();
   if (!admin) {
     redirect("/dashboard");
+  }
+
+  return user;
+}
+
+/**
+ * Require admin role for API routes - return error instead of redirect
+ */
+export async function requireAdminForAPI() {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new Error("Authentication required");
+  }
+
+  const user = session.user;
+  if (user.role !== "admin" && user.role !== "owner") {
+    throw new Error("Admin access required");
   }
 
   return user;
@@ -164,7 +183,10 @@ export function formatUserRole(role: string | null): string {
 /**
  * Check if user can perform an action based on permissions
  */
-export async function canUser(action: string, resource?: string): Promise<boolean> {
+export async function canUser(
+  action: string,
+  _resource?: string,
+): Promise<boolean> {
   const user = await getCurrentUser();
 
   if (!user?.role) return false;
@@ -187,5 +209,7 @@ export async function canUser(action: string, resource?: string): Promise<boolea
 export function getRoleBasedRedirectUrl(user: User | null): string {
   if (!user) return "/";
 
-  return user.role === "admin" || user.role === "owner" ? "/admin" : "/dashboard";
+  return user.role === "admin" || user.role === "owner"
+    ? "/admin"
+    : "/dashboard";
 }

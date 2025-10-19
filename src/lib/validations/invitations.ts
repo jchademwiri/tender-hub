@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { emailSchema } from './common';
+import { z } from "zod";
+import { emailSchema } from "./common";
 
 /**
  * Invitation API validation schemas
@@ -8,23 +8,28 @@ import { emailSchema } from './common';
 // Single invitation creation schema
 export const createInvitationSchema = z.object({
   email: emailSchema,
-  role: z.enum(['admin', 'manager', 'user'], {
-    message: 'Please select a valid role',
+  role: z.enum(["admin", "manager", "user"], {
+    message: "Please select a valid role",
   }),
   sendEmail: z.boolean().optional().default(true),
 });
 
 // Bulk invitation creation schema
 export const bulkInvitationSchema = z.object({
-  invitations: z.array(z.object({
-    email: emailSchema,
-    role: z.enum(['admin', 'manager', 'user'], {
-      message: 'Please select a valid role',
-    }),
-    name: z.string().optional(),
-    department: z.string().optional(),
-    customMessage: z.string().optional(),
-  })).min(1, 'At least one invitation is required').max(100, 'Maximum 100 invitations per request'),
+  invitations: z
+    .array(
+      z.object({
+        email: emailSchema,
+        role: z.enum(["admin", "manager", "user"], {
+          message: "Please select a valid role",
+        }),
+        name: z.string().optional(),
+        department: z.string().optional(),
+        customMessage: z.string().optional(),
+      }),
+    )
+    .min(1, "At least one invitation is required")
+    .max(100, "Maximum 100 invitations per request"),
   templateId: z.string().optional(),
   sendImmediately: z.boolean().optional().default(true),
   scheduleDate: z.string().datetime().optional(),
@@ -34,8 +39,8 @@ export const bulkInvitationSchema = z.object({
 export const invitationQuerySchema = z.object({
   page: z.string().regex(/^\d+$/).transform(Number).optional().default(1),
   limit: z.string().regex(/^\d+$/).transform(Number).optional().default(50),
-  status: z.enum(['pending', 'accepted', 'expired', 'cancelled']).optional(),
-  role: z.enum(['admin', 'manager', 'user']).optional(),
+  status: z.enum(["pending", "accepted", "expired", "cancelled"]).optional(),
+  role: z.enum(["admin", "manager", "user"]).optional(),
   search: z.string().optional(),
 });
 
@@ -70,9 +75,12 @@ export const invitationValidationHelpers = {
   /**
    * Safe validation methods
    */
-  safeValidateCreateInvitation: (data: unknown) => createInvitationSchema.safeParse(data),
-  safeValidateBulkInvitation: (data: unknown) => bulkInvitationSchema.safeParse(data),
-  safeValidateInvitationQuery: (data: unknown) => invitationQuerySchema.safeParse(data),
+  safeValidateCreateInvitation: (data: unknown) =>
+    createInvitationSchema.safeParse(data),
+  safeValidateBulkInvitation: (data: unknown) =>
+    bulkInvitationSchema.safeParse(data),
+  safeValidateInvitationQuery: (data: unknown) =>
+    invitationQuerySchema.safeParse(data),
 
   /**
    * Transform invitation data for database
@@ -90,7 +98,7 @@ export const invitationValidationHelpers = {
    */
   transformForBulkInvitation: (data: BulkInvitationData) => {
     return {
-      invitations: data.invitations.map(inv => ({
+      invitations: data.invitations.map((inv) => ({
         email: inv.email.toLowerCase().trim(),
         role: inv.role,
         name: inv.name?.trim(),
@@ -107,8 +115,8 @@ export const invitationValidationHelpers = {
 // Default values
 export const invitationDefaultValues = {
   createInvitation: {
-    email: '',
-    role: 'user' as const,
+    email: "",
+    role: "user" as const,
     sendEmail: true,
   },
   bulkInvitation: {
@@ -123,15 +131,15 @@ export const invitationDefaultValues = {
 
 // Error messages
 export const invitationErrorMessages = {
-  emailRequired: 'Email is required',
-  roleRequired: 'Role is required',
-  invalidRole: 'Please select a valid role',
-  maxInvitations: 'Maximum 100 invitations per request',
-  minInvitations: 'At least one invitation is required',
-  userAlreadyExists: 'User with this email already exists',
-  invitationAlreadySent: 'Invitation already sent to this email',
-  dailyLimitReached: 'Daily invitation limit reached',
-  insufficientPermissions: 'Insufficient permissions to invite users',
-  invalidInvitationData: 'Invalid invitation data provided',
-  bulkOperationFailed: 'Bulk invitation operation failed',
+  emailRequired: "Email is required",
+  roleRequired: "Role is required",
+  invalidRole: "Please select a valid role",
+  maxInvitations: "Maximum 100 invitations per request",
+  minInvitations: "At least one invitation is required",
+  userAlreadyExists: "User with this email already exists",
+  invitationAlreadySent: "Invitation already sent to this email",
+  dailyLimitReached: "Daily invitation limit reached",
+  insufficientPermissions: "Insufficient permissions to invite users",
+  invalidInvitationData: "Invalid invitation data provided",
+  bulkOperationFailed: "Bulk invitation operation failed",
 };

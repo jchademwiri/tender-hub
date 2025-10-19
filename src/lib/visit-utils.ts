@@ -3,7 +3,10 @@
  * Handles localStorage operations with error handling and data validation
  */
 
-import { getCachedLocalStorage, setCachedLocalStorage } from './performance-utils';
+import {
+  getCachedLocalStorage,
+  setCachedLocalStorage,
+} from "./performance-utils";
 
 export interface VisitData {
   url: string;
@@ -40,9 +43,9 @@ export interface VisitStats {
  * Storage keys for localStorage
  */
 const STORAGE_KEYS = {
-  VISITS: 'visit-tracker-visits',
-  SESSION_ID: 'visit-tracker-session-id',
-  LAST_RESET: 'visit-tracker-last-reset',
+  VISITS: "visit-tracker-visits",
+  SESSION_ID: "visit-tracker-session-id",
+  LAST_RESET: "visit-tracker-last-reset",
 } as const;
 
 /**
@@ -63,7 +66,7 @@ export function generateSessionId(): string {
  * Get current date in YYYY-MM-DD format
  */
 export function getCurrentDate(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 /**
@@ -87,14 +90,14 @@ export function markDailyReset(): void {
  * Save data to localStorage with error handling
  */
 export function saveToStorage(key: string, data: any): boolean {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return false;
   }
   try {
     localStorage.setItem(key, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.warn('Failed to save to localStorage:', error);
+    console.warn("Failed to save to localStorage:", error);
     return false;
   }
 }
@@ -103,14 +106,14 @@ export function saveToStorage(key: string, data: any): boolean {
  * Get data from localStorage with error handling
  */
 export function getFromStorage<T>(key: string): T | null {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : null;
   } catch (error) {
-    console.warn('Failed to read from localStorage:', error);
+    console.warn("Failed to read from localStorage:", error);
     return null;
   }
 }
@@ -119,14 +122,14 @@ export function getFromStorage<T>(key: string): T | null {
  * Remove data from localStorage
  */
 export function removeFromStorage(key: string): boolean {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return false;
   }
   try {
     localStorage.removeItem(key);
     return true;
   } catch (error) {
-    console.warn('Failed to remove from localStorage:', error);
+    console.warn("Failed to remove from localStorage:", error);
     return false;
   }
 }
@@ -153,7 +156,7 @@ export function getTodayVisits(): DailyVisits | null {
   const allVisits = getAllVisits();
   const currentDate = getCurrentDate();
 
-  return allVisits.find(day => day.date === currentDate) || null;
+  return allVisits.find((day) => day.date === currentDate) || null;
 }
 
 /**
@@ -172,7 +175,7 @@ export function addVisit(url: string): boolean {
     const sessionId = generateSessionId();
 
     // Get or create today's visit data
-    let todayVisits = allVisits.find(day => day.date === currentDate);
+    let todayVisits = allVisits.find((day) => day.date === currentDate);
     if (!todayVisits) {
       todayVisits = {
         date: currentDate,
@@ -184,14 +187,15 @@ export function addVisit(url: string): boolean {
 
     // Check if this URL was visited in the current session
     const lastVisit = todayVisits.visits
-      .filter(v => v.sessionId === sessionId)
+      .filter((v) => v.sessionId === sessionId)
       .pop();
 
     // Only add if it's a different URL or more than 30 seconds since last visit
-    if (!lastVisit ||
-        lastVisit.url !== url ||
-        (Date.now() - lastVisit.timestamp) > 30000) {
-
+    if (
+      !lastVisit ||
+      lastVisit.url !== url ||
+      Date.now() - lastVisit.timestamp > 30000
+    ) {
       const visitData: VisitData = {
         url,
         timestamp: Date.now(),
@@ -217,7 +221,7 @@ export function addVisit(url: string): boolean {
 
     return true; // No new visit added, but not an error
   } catch (error) {
-    console.warn('Failed to add visit:', error);
+    console.warn("Failed to add visit:", error);
     return false;
   }
 }
@@ -231,14 +235,14 @@ export function clearOldVisits(): void {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const filteredVisits = allVisits.filter(day => {
+    const filteredVisits = allVisits.filter((day) => {
       const visitDate = new Date(day.date);
       return visitDate >= thirtyDaysAgo;
     });
 
     saveVisits(filteredVisits);
   } catch (error) {
-    console.warn('Failed to clear old visits:', error);
+    console.warn("Failed to clear old visits:", error);
   }
 }
 
@@ -247,7 +251,7 @@ export function clearOldVisits(): void {
  */
 export function getVisitStats(): VisitStats {
   // Use cached data to avoid expensive recalculations
-  const cacheKey = 'visit-stats-cache';
+  const cacheKey = "visit-stats-cache";
   const cachedStats = getCachedLocalStorage<VisitStats>(cacheKey, 30000); // 30 second cache
 
   if (cachedStats) {
@@ -258,11 +262,11 @@ export function getVisitStats(): VisitStats {
 
   const totalVisits = allVisits.reduce((sum, day) => sum + day.totalCount, 0);
   const visitCountByPage: Record<string, number> = {};
-  let mostVisitedPage = '';
+  let mostVisitedPage = "";
   let maxCount = 0;
 
-  allVisits.forEach(day => {
-    day.visits.forEach(visit => {
+  allVisits.forEach((day) => {
+    day.visits.forEach((visit) => {
       const url = visit.url;
       visitCountByPage[url] = (visitCountByPage[url] || 0) + 1;
 
@@ -300,10 +304,10 @@ export function getVisitedPagesForSession(): string[] {
   const allVisits = getAllVisits();
   const visitedUrls = new Set<string>();
 
-  allVisits.forEach(day => {
+  allVisits.forEach((day) => {
     day.visits
-      .filter(visit => visit.sessionId === sessionId)
-      .forEach(visit => visitedUrls.add(visit.url));
+      .filter((visit) => visit.sessionId === sessionId)
+      .forEach((visit) => visitedUrls.add(visit.url));
   });
 
   return Array.from(visitedUrls);
@@ -319,7 +323,7 @@ export function clearAllVisitData(): boolean {
     removeFromStorage(STORAGE_KEYS.LAST_RESET);
     return true;
   } catch (error) {
-    console.warn('Failed to clear visit data:', error);
+    console.warn("Failed to clear visit data:", error);
     return false;
   }
 }

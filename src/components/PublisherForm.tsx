@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Publisher, Province } from '@/db/schema';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Building, Globe, MapPin } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -10,28 +12,26 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+} from "@/components/ui/form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import type { Province, Publisher } from "@/db/schema";
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
-import { Building, Globe, MapPin } from 'lucide-react';
-import {
-  publisherFormSchema,
   type PublisherFormData,
   publisherDefaultValues,
-} from '@/lib/validations/publisher';
-import { toast } from 'sonner';
+  publisherFormSchema,
+} from "@/lib/validations/publisher";
 
 interface PublisherFormProps {
   publisher?: Publisher;
@@ -39,13 +39,17 @@ interface PublisherFormProps {
   action: (prevState: any, formData: FormData) => Promise<any>;
 }
 
-export default function PublisherForm({ publisher, provinces, action }: PublisherFormProps) {
+export default function PublisherForm({
+  publisher,
+  provinces,
+  action,
+}: PublisherFormProps) {
   const form = useForm<PublisherFormData>({
     resolver: zodResolver(publisherFormSchema),
     defaultValues: publisher
       ? {
           name: publisher.name,
-          website: publisher.website || '',
+          website: publisher.website || "",
           province_id: publisher.province_id,
         }
       : publisherDefaultValues,
@@ -54,20 +58,25 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
   const onSubmit = async (data: PublisherFormData) => {
     try {
       const formData = new FormData();
-      formData.append('name', data.name.trim());
-      formData.append('website', data.website?.trim() || '');
-      formData.append('province_id', data.province_id);
-      if (publisher?.id) formData.append('id', publisher.id);
+      formData.append("name", data.name.trim());
+      formData.append("website", data.website?.trim() || "");
+      formData.append("province_id", data.province_id);
+      if (publisher?.id) formData.append("id", publisher.id);
 
       const result = await action({}, formData);
-      
+
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success(publisher ? 'Publisher updated successfully' : 'Publisher created successfully');
+        toast.success(
+          publisher
+            ? "Publisher updated successfully"
+            : "Publisher created successfully",
+        );
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
     }
   };
@@ -86,7 +95,10 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
                   <InputGroupAddon>
                     <Building className="size-4" />
                   </InputGroupAddon>
-                  <InputGroupInput placeholder="Enter publisher name" {...field} />
+                  <InputGroupInput
+                    placeholder="Enter publisher name"
+                    {...field}
+                  />
                 </InputGroup>
               </FormControl>
               <FormMessage />
@@ -104,7 +116,11 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
                   <InputGroupAddon>
                     <Globe className="size-4" />
                   </InputGroupAddon>
-                  <InputGroupInput type="url" placeholder="https://example.com" {...field} />
+                  <InputGroupInput
+                    type="url"
+                    placeholder="https://example.com"
+                    {...field}
+                  />
                 </InputGroup>
               </FormControl>
               <FormMessage />
@@ -140,7 +156,7 @@ export default function PublisherForm({ publisher, provinces, action }: Publishe
         />
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Spinner className="mr-2" />}
-          {publisher ? 'Update' : 'Create'} Publisher
+          {publisher ? "Update" : "Create"} Publisher
         </Button>
       </form>
     </Form>

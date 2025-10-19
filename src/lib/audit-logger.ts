@@ -77,7 +77,7 @@ export async function logAuditEvent(
     alertLevel?: "low" | "medium" | "high" | "critical";
     notifyAdmins?: boolean;
     requireJustification?: boolean;
-  }
+  },
 ) {
   try {
     const auditEntry = {
@@ -96,16 +96,19 @@ export async function logAuditEvent(
         reason: context.reason,
         alertLevel: options?.alertLevel || "low",
         timestamp: new Date().toISOString(),
-        ...context.metadata
+        ...context.metadata,
       },
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     // TODO: Insert audit log entry
     await db.insert(auditLog).values(auditEntry);
 
     // TODO: Check if this action requires admin notification
-    if (options?.notifyAdmins && shouldNotifyAdmins(action, options.alertLevel)) {
+    if (
+      options?.notifyAdmins &&
+      shouldNotifyAdmins(action, options.alertLevel)
+    ) {
       await notifyAdminsOfAuditEvent(auditEntry);
     }
 
@@ -115,7 +118,6 @@ export async function logAuditEvent(
     }
 
     return auditEntry.id;
-
   } catch (error) {
     console.error("Failed to log audit event:", error);
     // TODO: Implement fallback logging mechanism
@@ -137,158 +139,264 @@ export const AuditLogger = {
   },
 
   async logFailedLogin(email: string, context: AuditLogContext) {
-    return logAuditEvent("failed_login", {
-      ...context,
-      metadata: { ...context.metadata, attemptedEmail: email }
-    }, { alertLevel: "medium" });
+    return logAuditEvent(
+      "failed_login",
+      {
+        ...context,
+        metadata: { ...context.metadata, attemptedEmail: email },
+      },
+      { alertLevel: "medium" },
+    );
   },
 
   // User management events
-  async logUserCreated(userId: string, invitedBy: string, context: AuditLogContext) {
+  async logUserCreated(
+    userId: string,
+    invitedBy: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("user_created", {
       ...context,
       userId: invitedBy,
       resourceId: userId,
-      metadata: { ...context.metadata, createdBy: invitedBy }
+      metadata: { ...context.metadata, createdBy: invitedBy },
     });
   },
 
-  async logUserUpdated(userId: string, changes: Record<string, any>, context: AuditLogContext) {
+  async logUserUpdated(
+    userId: string,
+    changes: Record<string, any>,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("user_updated", {
       ...context,
       userId: context.userId || "system",
       resourceId: userId,
       previousValues: context.previousValues,
-      newValues: changes
+      newValues: changes,
     });
   },
 
-  async logUserDeleted(userId: string, deletedBy: string, context: AuditLogContext) {
-    return logAuditEvent("user_deleted", {
-      ...context,
-      userId: deletedBy,
-      resourceId: userId,
-      metadata: { ...context.metadata, deletedBy }
-    }, { alertLevel: "high" });
+  async logUserDeleted(
+    userId: string,
+    deletedBy: string,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "user_deleted",
+      {
+        ...context,
+        userId: deletedBy,
+        resourceId: userId,
+        metadata: { ...context.metadata, deletedBy },
+      },
+      { alertLevel: "high" },
+    );
   },
 
   // Role and permission events
-  async logRoleChanged(userId: string, oldRole: string, newRole: string, changedBy: string, context: AuditLogContext) {
-    return logAuditEvent("role_changed", {
-      ...context,
-      userId: changedBy,
-      resourceId: userId,
-      previousValues: { role: oldRole },
-      newValues: { role: newRole },
-      metadata: { ...context.metadata, changedBy }
-    }, { alertLevel: "medium" });
+  async logRoleChanged(
+    userId: string,
+    oldRole: string,
+    newRole: string,
+    changedBy: string,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "role_changed",
+      {
+        ...context,
+        userId: changedBy,
+        resourceId: userId,
+        previousValues: { role: oldRole },
+        newValues: { role: newRole },
+        metadata: { ...context.metadata, changedBy },
+      },
+      { alertLevel: "medium" },
+    );
   },
 
   // Invitation events
-  async logInvitationCreated(email: string, role: string, invitedBy: string, context: AuditLogContext) {
+  async logInvitationCreated(
+    email: string,
+    role: string,
+    invitedBy: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("invitation_created", {
       ...context,
       userId: invitedBy,
-      metadata: { ...context.metadata, invitedEmail: email, invitedRole: role }
+      metadata: { ...context.metadata, invitedEmail: email, invitedRole: role },
     });
   },
 
-  async logInvitationAccepted(userId: string, invitationId: string, context: AuditLogContext) {
+  async logInvitationAccepted(
+    userId: string,
+    invitationId: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("invitation_accepted", {
       ...context,
       userId,
       resourceId: invitationId,
-      metadata: { ...context.metadata, invitationId }
+      metadata: { ...context.metadata, invitationId },
     });
   },
 
-  async logInvitationCancelled(email: string, invitationId: string, cancelledBy: string, context: AuditLogContext) {
+  async logInvitationCancelled(
+    email: string,
+    invitationId: string,
+    cancelledBy: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("invitation_cancelled", {
       ...context,
       userId: cancelledBy,
       resourceId: invitationId,
-      metadata: { ...context.metadata, cancelledEmail: email, invitationId }
+      metadata: { ...context.metadata, cancelledEmail: email, invitationId },
     });
   },
 
-  async logInvitationResent(email: string, invitationId: string, resentBy: string, context: AuditLogContext) {
+  async logInvitationResent(
+    email: string,
+    invitationId: string,
+    resentBy: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("invitation_resent", {
       ...context,
       userId: resentBy,
       resourceId: invitationId,
-      metadata: { ...context.metadata, resentEmail: email, invitationId }
+      metadata: { ...context.metadata, resentEmail: email, invitationId },
     });
   },
 
   // Profile update workflow
-  async logProfileUpdateRequested(userId: string, changes: Record<string, any>, context: AuditLogContext) {
+  async logProfileUpdateRequested(
+    userId: string,
+    changes: Record<string, any>,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("profile_update_requested", {
       ...context,
       userId,
-      newValues: changes
+      newValues: changes,
     });
   },
 
-  async logProfileUpdateApproved(userId: string, requestId: string, approvedBy: string, context: AuditLogContext) {
+  async logProfileUpdateApproved(
+    userId: string,
+    requestId: string,
+    approvedBy: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("profile_update_approved", {
       ...context,
       userId: approvedBy,
       resourceId: userId,
-      metadata: { ...context.metadata, requestId, approvedBy }
+      metadata: { ...context.metadata, requestId, approvedBy },
     });
   },
 
-  async logProfileUpdateRejected(userId: string, requestId: string, rejectedBy: string, reason: string, context: AuditLogContext) {
+  async logProfileUpdateRejected(
+    userId: string,
+    requestId: string,
+    rejectedBy: string,
+    reason: string,
+    context: AuditLogContext,
+  ) {
     return logAuditEvent("profile_update_rejected", {
       ...context,
       userId: rejectedBy,
       resourceId: userId,
-      metadata: { ...context.metadata, requestId, rejectedBy, reason }
+      metadata: { ...context.metadata, requestId, rejectedBy, reason },
     });
   },
 
   // Data access events
-  async logDataExported(userId: string, dataType: string, recordCount: number, context: AuditLogContext) {
-    return logAuditEvent("data_exported", {
-      ...context,
-      userId,
-      metadata: { ...context.metadata, dataType, recordCount }
-    }, { alertLevel: "medium" });
+  async logDataExported(
+    userId: string,
+    dataType: string,
+    recordCount: number,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "data_exported",
+      {
+        ...context,
+        userId,
+        metadata: { ...context.metadata, dataType, recordCount },
+      },
+      { alertLevel: "medium" },
+    );
   },
 
-  async logDataDeleted(userId: string, dataType: string, recordCount: number, context: AuditLogContext) {
-    return logAuditEvent("data_deleted", {
-      ...context,
-      userId,
-      metadata: { ...context.metadata, dataType, recordCount }
-    }, { alertLevel: "high" });
+  async logDataDeleted(
+    userId: string,
+    dataType: string,
+    recordCount: number,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "data_deleted",
+      {
+        ...context,
+        userId,
+        metadata: { ...context.metadata, dataType, recordCount },
+      },
+      { alertLevel: "high" },
+    );
   },
 
   // System events
-  async logSystemAccess(userId: string, resource: string, context: AuditLogContext) {
-    return logAuditEvent("system_access", {
-      ...context,
-      userId,
-      metadata: { ...context.metadata, accessedResource: resource }
-    }, { alertLevel: "medium" });
+  async logSystemAccess(
+    userId: string,
+    resource: string,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "system_access",
+      {
+        ...context,
+        userId,
+        metadata: { ...context.metadata, accessedResource: resource },
+      },
+      { alertLevel: "medium" },
+    );
   },
 
-  async logConfigurationChanged(changedBy: string, changes: Record<string, any>, context: AuditLogContext) {
-    return logAuditEvent("configuration_changed", {
-      ...context,
-      userId: changedBy,
-      newValues: changes
-    }, { alertLevel: "high" });
+  async logConfigurationChanged(
+    changedBy: string,
+    changes: Record<string, any>,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "configuration_changed",
+      {
+        ...context,
+        userId: changedBy,
+        newValues: changes,
+      },
+      { alertLevel: "high" },
+    );
   },
 
   // Security events
-  async logSuspiciousActivity(userId: string, activity: string, context: AuditLogContext) {
-    return logAuditEvent("suspicious_activity", {
-      ...context,
-      userId,
-      metadata: { ...context.metadata, suspiciousActivity: activity }
-    }, { alertLevel: "critical", notifyAdmins: true });
-  }
+  async logSuspiciousActivity(
+    userId: string,
+    activity: string,
+    context: AuditLogContext,
+  ) {
+    return logAuditEvent(
+      "suspicious_activity",
+      {
+        ...context,
+        userId,
+        metadata: { ...context.metadata, suspiciousActivity: activity },
+      },
+      { alertLevel: "critical", notifyAdmins: true },
+    );
+  },
 };
 
 /**
@@ -299,13 +407,13 @@ function shouldNotifyAdmins(action: AuditAction, alertLevel?: string): boolean {
     "user_deleted",
     "role_changed",
     "configuration_changed",
-    "suspicious_activity"
+    "suspicious_activity",
   ];
 
   const highAlertActions: AuditAction[] = [
     "failed_login",
     "data_deleted",
-    "system_access"
+    "system_access",
   ];
 
   if (alertLevel === "critical") return true;
@@ -315,7 +423,10 @@ function shouldNotifyAdmins(action: AuditAction, alertLevel?: string): boolean {
   return false;
 }
 
-function isSuspiciousActivity(action: AuditAction, context: AuditLogContext): boolean {
+function isSuspiciousActivity(
+  action: AuditAction,
+  _context: AuditLogContext,
+): boolean {
   // TODO: Implement suspicious activity detection logic
   const suspiciousPatterns = [
     "failed_login", // Multiple failed logins
@@ -356,7 +467,15 @@ export async function queryAuditLogs(filters: {
   // TODO: Add pagination and sorting
   // TODO: Add search functionality
 
-  const { userId, action, resourceId, startDate, endDate, limit = 50, offset = 0 } = filters;
+  const {
+    userId,
+    action,
+    resourceId,
+    startDate,
+    endDate,
+    limit = 50,
+    offset = 0,
+  } = filters;
 
   // TODO: Build query based on filters
   // const logs = await db.select().from(auditLog)
@@ -368,7 +487,7 @@ export async function queryAuditLogs(filters: {
   return {
     logs: [], // TODO: Return actual logs
     total: 0, // TODO: Return total count
-    hasMore: false // TODO: Check if more results available
+    hasMore: false, // TODO: Check if more results available
   };
 }
 
@@ -389,15 +508,17 @@ export async function cleanupAuditLogs(retentionDays: number = 90) {
       metadata: {
         retentionDays,
         cutoffDate: cutoffDate.toISOString(),
-        action: "audit_cleanup"
+        action: "audit_cleanup",
         // deletedCount: deleted.length
-      }
+      },
     });
 
     return { success: true, deletedCount: 0 }; // TODO: Return actual count
-
   } catch (error) {
     console.error("Failed to cleanup audit logs:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }

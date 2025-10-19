@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ errorInfo });
 
     // Log error for debugging
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
 
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -45,11 +45,11 @@ export class ErrorBoundary extends Component<Props, State> {
   private logErrorToService = (error: Error, errorInfo: ErrorInfo) => {
     // This is where you would integrate with your error reporting service
     // For now, we'll just log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.group('🚨 Error Boundary - Detailed Error Info');
-      console.error('Error:', error);
-      console.error('Error Info:', errorInfo);
-      console.error('Component Stack:', errorInfo.componentStack);
+    if (process.env.NODE_ENV === "development") {
+      console.group("🚨 Error Boundary - Detailed Error Info");
+      console.error("Error:", error);
+      console.error("Error Info:", errorInfo);
+      console.error("Component Stack:", errorInfo.componentStack);
       console.groupEnd();
     }
   };
@@ -84,11 +84,12 @@ export class ErrorBoundary extends Component<Props, State> {
                 Something went wrong
               </h2>
               <p className="text-sm text-muted-foreground">
-                An unexpected error occurred. This has been logged and we're working to fix it.
+                An unexpected error occurred. This has been logged and we're
+                working to fix it.
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="text-left bg-muted/50 p-4 rounded-lg border">
                 <summary className="cursor-pointer font-medium text-sm mb-2">
                   Error Details (Development Only)
@@ -118,10 +119,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw className="h-4 w-4" />
                 Try Again
               </Button>
-              <Button
-                onClick={this.handleReload}
-                className="gap-2"
-              >
+              <Button onClick={this.handleReload} className="gap-2">
                 Reload Page
               </Button>
             </div>

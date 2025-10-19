@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 /**
  * TODO: Admin Dashboard Implementation Checklist
@@ -79,7 +85,9 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invitations</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Invitations
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">23</div>
@@ -91,13 +99,13 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Events</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Security Events
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">3</div>
-            <p className="text-xs text-muted-foreground">
-              Requires attention
-            </p>
+            <p className="text-xs text-muted-foreground">Requires attention</p>
           </CardContent>
         </Card>
       </div>
@@ -117,21 +125,27 @@ export default function AdminDashboard() {
               <span className="text-sm text-muted-foreground">
                 john.doe@example.com invited as Manager
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">2m ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                2m ago
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline">System Update</Badge>
               <span className="text-sm text-muted-foreground">
                 Database backup completed successfully
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">15m ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                15m ago
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline">Security</Badge>
               <span className="text-sm text-muted-foreground">
                 Failed login attempts detected
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">1h ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                1h ago
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -139,9 +153,7 @@ export default function AdminDashboard() {
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>
-              Common administrative tasks
-            </CardDescription>
+            <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button className="w-full justify-start" variant="outline">

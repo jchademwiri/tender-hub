@@ -1,18 +1,17 @@
-"use client"
+"use client";
 
-import * as React from "react"
 import {
-  BookOpen,
+  CheckCircle,
   Command,
+  FileText,
   Home,
   Settings2,
-  Users,
-  CheckCircle,
-  FileText,
   UserCheck,
-} from "lucide-react"
+  Users,
+} from "lucide-react";
+import type * as React from "react";
 
-import { NavUser } from "@/components/nav-user"
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -21,49 +20,50 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-const data = {
+interface ManagerSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
-    name: "Manager",
-    email: "manager@tenderhub.com",
-    avatar: "/avatars/manager.jpg",
-  },
-  navMain: [
-    {
-      title: "Back to Site",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Command,
-    },
-    {
-      title: "Team Management",
-      url: "/manager/team",
-      icon: Users,
-    },
-    {
-      title: "Approvals",
-      url: "/manager/approvals",
-      icon: CheckCircle,
-    },
-    {
-      title: "Reports",
-      url: "/manager/reports",
-      icon: FileText,
-    },
-    {
-      title: "Admin Panel",
-      url: "/admin",
-      icon: Settings2,
-    },
-  ],
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }
 
-export function ManagerSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+const navMain = [
+  {
+    title: "Back to Site",
+    url: "/",
+    icon: Home,
+  },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Command,
+  },
+  {
+    title: "Team Management",
+    url: "/manager/team",
+    icon: Users,
+  },
+  {
+    title: "Approvals",
+    url: "/manager/approvals",
+    icon: CheckCircle,
+  },
+  {
+    title: "Reports",
+    url: "/manager/reports",
+    icon: FileText,
+  },
+  {
+    title: "Admin Panel",
+    url: "/admin",
+    icon: Settings2,
+  },
+];
+
+export function ManagerSidebar({ user, ...props }: ManagerSidebarProps) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -85,7 +85,7 @@ export function ManagerSidebar({ ...props }: React.ComponentProps<typeof Sidebar
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {data.navMain.map((item) => (
+          {navMain.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <a href={item.url}>
@@ -98,8 +98,8 @@ export function ManagerSidebar({ ...props }: React.ComponentProps<typeof Sidebar
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

@@ -1,8 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireManager } from "@/lib/auth-utils";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
 
 /**
  * TODO: Manager Team API Implementation Checklist
@@ -36,26 +34,28 @@ export async function GET(request: NextRequest) {
     // await requireManager();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
     const status = searchParams.get("status"); // active, suspended, pending
     const search = searchParams.get("search");
 
     // TODO: Get current manager's user ID
-    const currentUserId = "manager-id"; // TODO: Get from session
+    const _currentUserId = "manager-id"; // TODO: Get from session
 
     // TODO: Build team members query
     // Query should only return users that this manager oversees
-    let query = db.select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-      createdAt: user.createdAt,
-      lastLogin: user.updatedAt, // TODO: Use actual last login field
-      // TODO: Add team relationship fields
-    }).from(user);
+    const query = db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        createdAt: user.createdAt,
+        lastLogin: user.updatedAt, // TODO: Use actual last login field
+        // TODO: Add team relationship fields
+      })
+      .from(user);
 
     // TODO: Add manager relationship filtering
     // This would depend on how team relationships are structured
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     // query = query.orderBy(asc(user.name));
 
     // TODO: Add pagination
-    const offset = (page - 1) * limit;
+    const _offset = (page - 1) * limit;
     // query = query.limit(limit).offset(offset);
 
     // TODO: Execute query
@@ -95,15 +95,14 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: teamMembers.length, // TODO: Get actual count
-        pages: Math.ceil(teamMembers.length / limit)
-      }
+        pages: Math.ceil(teamMembers.length / limit),
+      },
     });
-
   } catch (error) {
     console.error("Manager team API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { requireAdmin } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { requireAdmin } from "@/lib/auth-utils";
 
 /**
  * TODO: Admin Role Implementation Checklist
@@ -41,18 +52,27 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // TODO: Enable admin authentication check
-  // await requireAdmin();
+  // Enable admin authentication check
+  const user = await requireAdmin();
+
+  const userData = {
+    name: user.name || "Admin",
+    email: user.email,
+    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
+  };
 
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <AdminSidebar />
+        <AdminSidebar user={userData} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
@@ -66,9 +86,7 @@ export default async function AdminLayout({
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
-            {children}
-          </div>
+          <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </ErrorBoundary>
