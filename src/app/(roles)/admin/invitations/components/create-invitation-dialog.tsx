@@ -76,9 +76,11 @@ export function CreateInvitationDialog({
 
     try {
       // Validate using the schema
+      console.log("🔍 Validating form data:", JSON.stringify(formData, null, 2));
       const validationResult = invitationValidationHelpers.safeValidateCreateInvitation(formData);
 
       if (!validationResult.success) {
+        console.error("❌ Validation failed:", validationResult.error.issues);
         const newErrors: Record<string, string> = {};
         validationResult.error.issues.forEach(issue => {
           if (issue.path[0]) {
@@ -88,9 +90,10 @@ export function CreateInvitationDialog({
         setErrors(newErrors);
         return;
       }
+      console.log("✅ Validation passed");
 
       // Submit the invitation
-      console.log("Sending invitation data:", JSON.stringify(validationResult.data, null, 2));
+      console.log("🚀 Sending invitation data:", JSON.stringify(validationResult.data, null, 2));
 
       // Include credentials to ensure cookies are sent
       const response = await fetch("/api/admin/invitations", {
@@ -101,6 +104,9 @@ export function CreateInvitationDialog({
         credentials: "include", // This ensures cookies are sent with the request
         body: JSON.stringify(validationResult.data),
       });
+
+      console.log("📡 Response status:", response.status);
+      console.log("📡 Response status text:", response.statusText);
 
       console.log("Response status:", response.status);
       console.log("Response headers:", Object.fromEntries(response.headers.entries()));

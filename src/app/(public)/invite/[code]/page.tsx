@@ -61,7 +61,7 @@ async function getInvitationDetails(code: string): Promise<InvitationDetails | n
 }
 
 // Server action for handling form submission
-async function handleInviteAcceptance(prevState: any, formData: FormData) {
+async function handleInviteAcceptance(prevState: any, formData: FormData): Promise<{ error: string } | { success: boolean; message: string; redirectTo: string }> {
   'use server'
 
   const name = formData.get('name') as string
@@ -84,14 +84,22 @@ async function handleInviteAcceptance(prevState: any, formData: FormData) {
 
   try {
     // Use the existing acceptInvitation function
-    await acceptInvitation({
+    const result = await acceptInvitation({
       invitationId,
       password,
       name,
     })
 
-    // Redirect to dashboard on success
-    redirect('/?message=invitation-accepted')
+    // Return success response instead of redirecting
+    if (result.success) {
+      return {
+        success: true,
+        message: 'Invitation accepted successfully',
+        redirectTo: result.redirectTo || '/?message=invitation-accepted'
+      }
+    } else {
+      return { error: 'Failed to accept invitation' }
+    }
   } catch (error) {
     // Return error message for display
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'

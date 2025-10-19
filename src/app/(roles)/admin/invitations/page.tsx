@@ -166,10 +166,12 @@ export default function AdminInvitationsPage() {
       if (action === "resend") {
         response = await fetch(`/api/admin/invitations/${invitationId}/resend`, {
           method: "POST",
+          credentials: "include",
         });
       } else if (action === "cancel") {
         response = await fetch(`/api/admin/invitations/${invitationId}/cancel`, {
           method: "POST",
+          credentials: "include",
         });
       } else {
         return;

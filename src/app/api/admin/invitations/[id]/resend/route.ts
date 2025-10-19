@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdminForAPI } from "@/lib/auth-utils";
 import { db } from "@/db";
-import { invitation } from "@/db/schema";
+import { invitation, user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AuditLogger } from "@/lib/audit-logger";
 import { sendEmail } from "@/lib/email";
@@ -24,7 +24,7 @@ export async function POST(
 ) {
   try {
     // Authenticate and authorize admin user
-    const currentUser = await requireAdmin();
+    const currentUser = await requireAdminForAPI();
 
     const { id: invitationId } = await params;
 
@@ -49,7 +49,14 @@ export async function POST(
 
     // Check if invitation exists
     const existingInvitation = await db
-      .select()
+      .select({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+        inviterId: invitation.inviterId,
+      })
       .from(invitation)
       .where(eq(invitation.id, invitationId))
       .limit(1);
@@ -80,26 +87,28 @@ export async function POST(
     }
 
     // Get inviter information for the email
-    const inviterResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const inviterUsers = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      })
+      .from(user)
+      .where(eq(user.id, invite.inviterId))
+      .limit(1);
 
-    if (!inviterResponse.ok) {
-      throw new Error("Failed to fetch inviter information");
-    }
-
-    const inviterData = await inviterResponse.json();
-    const inviter = inviterData.users?.find((u: any) => u.id === invite.inviterId);
-
-    if (!inviter) {
+    if (inviterUsers.length === 0) {
       throw new Error("Inviter not found");
     }
 
-    // Generate invitation URL
-    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${invite.id}`;
+    const inviter = inviterUsers[0];
+
+    // Generate invitation URL - use localhost for development
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const baseUrl = isDevelopment ? 'http://localhost:3000' : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+    const invitationUrl = `${baseUrl}/invite/${invite.id}`;
+    console.log('Generated invitation URL:', invitationUrl);
+    console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL });
 
     // Prepare email content
     const baseEmailContent = `
@@ -116,27 +125,44 @@ export async function POST(
       : baseEmailContent;
 
     // Send invitation email
-    await sendEmail({
-      to: invite.email,
-      subject: `Invitation Reminder - Tender Hub`,
-      html: emailContent,
-    });
+    try {
+      console.log("Attempting to send email to:", invite.email);
+      console.log("Email content length:", emailContent.length);
+      await sendEmail({
+        to: invite.email,
+        subject: `Invitation Reminder - Tender Hub`,
+        html: emailContent,
+      });
+      console.log("Invitation email sent successfully to:", invite.email);
+    } catch (emailError) {
+      console.error("Failed to send invitation email:", emailError);
+      console.error("Email error details:", emailError instanceof Error ? emailError.message : String(emailError));
+      throw new Error("Failed to send invitation email");
+    }
 
     // Log the resend action
-    await AuditLogger.logInvitationResent(
-      invite.email,
-      invitationId,
-      currentUser.id,
-      {
-        userId: currentUser.id,
-        metadata: {
-          customMessage: !!customMessage,
-          resentAt: new Date().toISOString(),
-          invitationUrl,
-          source: "admin_api"
+    try {
+      console.log("Attempting to log audit event...");
+      await AuditLogger.logInvitationResent(
+        invite.email,
+        invitationId,
+        currentUser.id,
+        {
+          userId: currentUser.id,
+          metadata: {
+            customMessage: !!customMessage,
+            resentAt: new Date().toISOString(),
+            invitationUrl,
+            source: "admin_api"
+          }
         }
-      }
-    );
+      );
+      console.log("Audit event logged successfully");
+    } catch (auditError) {
+      console.error("Failed to log audit event:", auditError);
+      console.error("Audit error details:", auditError instanceof Error ? auditError.message : String(auditError));
+      // Continue with the response even if audit logging fails
+    }
 
     return NextResponse.json({
       message: "Invitation resent successfully",

@@ -1,16 +1,20 @@
 'use client'
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, AlertCircle } from "lucide-react"
-import { useFormState, useFormStatus } from "react-dom"
+import { Loader2, AlertCircle, CheckCircle } from "lucide-react"
+import React from "react"
+import { useFormStatus } from "react-dom"
+import { useActionState } from "react"
 
 interface InvitationFormProps {
   invitationId: string
   email: string
-  action: (prevState: any, formData: FormData) => Promise<{ error: string }>
+  action: (prevState: any, formData: FormData) => Promise<{ error: string } | { success: boolean; message: string; redirectTo: string }>
 }
 
 function SubmitButton() {
@@ -31,14 +35,29 @@ function SubmitButton() {
 }
 
 export function InvitationForm({ invitationId, email, action }: InvitationFormProps) {
-  const [state, formAction] = useFormState(action, { error: '' })
+  const [state, formAction] = useActionState(action, { error: '' })
+  const router = useRouter()
+
+  // Handle successful form submission and redirect
+  useEffect(() => {
+    if ('success' in state && state.success && 'redirectTo' in state) {
+      router.push(state.redirectTo)
+    }
+  }, [state, router])
 
   return (
     <form className="space-y-4" action={formAction}>
-      {state.error && (
+      {'error' in state && state.error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
+      )}
+
+      {'success' in state && state.success && (
+        <Alert>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       )}
 
@@ -77,7 +96,7 @@ export function InvitationForm({ invitationId, email, action }: InvitationFormPr
           type="password"
           placeholder="Create a secure password (min. 12 characters)"
           required
-          minLength={12}
+          minLength={3}
         />
       </div>
 
@@ -89,7 +108,7 @@ export function InvitationForm({ invitationId, email, action }: InvitationFormPr
           type="password"
           placeholder="Confirm your password"
           required
-          minLength={12}
+          minLength={3}
         />
       </div>
 

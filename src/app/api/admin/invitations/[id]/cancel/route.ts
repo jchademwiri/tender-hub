@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdminForAPI } from "@/lib/auth-utils";
 import { db } from "@/db";
 import { invitation } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -25,7 +25,7 @@ export async function POST(
 ) {
   try {
     // Authenticate and authorize admin user
-    const currentUser = await requireAdmin();
+    const currentUser = await requireAdminForAPI();
 
     const { id: invitationId } = await params;
 
@@ -50,7 +50,13 @@ export async function POST(
 
     // Check if invitation exists
     const existingInvitation = await db
-      .select()
+      .select({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+      })
       .from(invitation)
       .where(eq(invitation.id, invitationId))
       .limit(1);

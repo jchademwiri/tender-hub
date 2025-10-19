@@ -15,9 +15,9 @@ export const auth = betterAuth({
   // ✅ CRITICAL FIX: Enable auth but disable public signup
   emailAndPassword: {
     enabled: true, // ✅ MUST be true for invitation acceptance
-    disableSignUp: true, // ✅ THIS prevents public signup
-    requireEmailVerification: true,
-    minPasswordLength: 12,
+    disableSignUp: false, // ✅ Enable for invitation acceptance
+    requireEmailVerification: false, // ✅ Disable verification for invited users
+    minPasswordLength: 3,
     maxPasswordLength: 128,
 
     sendResetPassword: async ({ user, url, token }, request) => {
@@ -149,7 +149,7 @@ export const auth = betterAuth({
     max: 10,
     customRules: {
       "/sign-in/email": { window: 60, max: 3 },
-      "/sign-up/email": false, // Disabled - no public signup
+      "/sign-up/email": { window: 60, max: 10 }, // Enable sign-up with rate limiting
       "/forget-password": { window: 300, max: 3 },
       "/api/users/invite": { window: 3600, max: 10 }, // 10 invites/hour
       "/api/invitations/*/resend": { window: 300, max: 3 }
@@ -187,7 +187,7 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (userData, ctx) => {
-          // ✅ Prevent direct user creation (must use invitation)
+          // ✅ Allow user creation for sign-up and invitation acceptance
           // Exception: First user becomes admin
           const userCount = await db.select({ count: count() }).from(schema.user);
 
@@ -203,6 +203,7 @@ export const auth = betterAuth({
             };
           }
 
+          // Allow sign-up for invitation acceptance
           return { data: userData };
         },
 

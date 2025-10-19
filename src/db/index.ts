@@ -10,7 +10,7 @@ import * as schema from "./schema";
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   try {
     // Use require for synchronous loading to ensure env vars are available before DB initialization
-    require('dotenv').config({ path: '.env.local' });
+    require('dotenv').config({ path: '.env.local',  debug: true });
   } catch (error) {
     // dotenv not available - continue with existing environment variables
   }
