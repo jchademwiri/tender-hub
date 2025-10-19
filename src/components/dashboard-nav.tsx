@@ -75,7 +75,8 @@ const DashboardNav = memo(() => {
       });
     }
 
-    if (isAdmin() || currentUser?.role === "manager") {
+    // Only show manager link if user is manager or admin
+    if (currentUser?.role === "manager" || isAdmin()) {
       items.push({
         href: "/manager",
         label: "Manager",

@@ -39,8 +39,8 @@ const navMain = [
     icon: Users,
   },
   {
-    title: "Users",
-    url: "/admin/users",
+    title: "Team Management",
+    url: "/admin/team",
     icon: Users,
   },
   {

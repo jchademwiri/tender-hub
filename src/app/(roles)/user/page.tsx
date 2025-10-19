@@ -49,7 +49,7 @@ import {
 
 export default function UserDashboard() {
   return (
-    <div className="space-y-8">
+    <div className="">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">
           Welcome back, John!
