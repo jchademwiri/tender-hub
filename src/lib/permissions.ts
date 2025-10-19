@@ -80,7 +80,7 @@ export class PermissionChecker {
   }
 
   canInviteManager(): boolean {
-    return this.hasRole("admin");
+    return this.hasRoleOrHigher("manager");
   }
 
   // User management permissions
