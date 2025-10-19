@@ -63,6 +63,7 @@ async function createFirstAdmin(
 
 }
 
-createFirstAdmin().catch(() => {
+createFirstAdmin().catch((error) => {
+  console.error("Failed to create admin:", error instanceof Error ? error.message : error);
   process.exit(1);
 });
