@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { TeamMemberTable, type TeamMember } from "@/components/team/TeamMemberTable";
 import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
@@ -50,7 +50,7 @@ export default function AdminTeamManagement() {
   const userPermissions = checkPermission(currentUser);
 
   // Fetch team members
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch("/api/team");
@@ -65,11 +65,11 @@ export default function AdminTeamManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [fetchMembers]);
 
   // Invite member
   const handleInviteMember = async (data: { email: string; name: string; role: string }) => {

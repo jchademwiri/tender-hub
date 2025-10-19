@@ -147,7 +147,7 @@ export function InvitationAnalyticsDashboard({
 
   useEffect(() => {
     fetchAnalytics();
-  }, [fetchAnalytics, timeRange]);
+  }, [fetchAnalytics]);
 
   if (loading) {
     return (

@@ -85,7 +85,7 @@ export function EditMemberDialog({
         status: canEditStatus ? member.status : undefined,
       });
     }
-  }, [member, form, canEditRole, canEditStatus]);
+  }, [member, canEditRole, canEditStatus]);
 
   const onSubmit = async (data: EditMemberForm) => {
     if (!member) return;
