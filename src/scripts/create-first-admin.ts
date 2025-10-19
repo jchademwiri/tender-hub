@@ -8,10 +8,6 @@ async function createFirstAdmin(
   name?: string,
   password?: string,
 ) {
-  console.log("=".repeat(50));
-  console.log("CREATE FIRST ADMIN - Tender Hub");
-  console.log("=".repeat(50));
-  console.log();
 
   // Check if any admin exists
   const adminCount = await db
@@ -20,7 +16,6 @@ async function createFirstAdmin(
     .where(eq(user.role, "admin"));
 
   if (adminCount[0].count > 0) {
-    console.log("❌ Admin already exists. Exiting.");
     process.exit(0);
   }
 
@@ -31,23 +26,15 @@ async function createFirstAdmin(
 
   // Validate required arguments
   if (!adminEmail || !adminName || !adminPassword) {
-    console.log(
-      "Usage: npx tsx src/scripts/create-first-admin.ts <email> <name> <password>",
-    );
-    console.log(
-      'Example: npx tsx src/scripts/create-first-admin.ts admin@test.com "John Doe" "securepassword123"',
-    );
     process.exit(1);
   }
 
   // Validate
   if (!adminEmail.includes("@")) {
-    console.error("❌ Invalid email address");
     process.exit(1);
   }
 
   if (adminPassword.length < 12) {
-    console.error("❌ Password must be at least 12 characters");
     process.exit(1);
   }
 
@@ -74,17 +61,8 @@ async function createFirstAdmin(
     createdAt: new Date(),
   });
 
-  console.log();
-  console.log("✅ First admin created successfully!");
-  console.log("Email:", adminEmail);
-  console.log("Name:", adminName);
-  console.log("Role: admin");
-  console.log();
-  console.log("⚠️  You can now sign in at:", process.env.NEXT_PUBLIC_APP_URL);
-  console.log();
 }
 
-createFirstAdmin().catch((error) => {
-  console.error("❌ Error:", error.message);
+createFirstAdmin().catch(() => {
   process.exit(1);
 });

@@ -17,7 +17,6 @@ import {
 } from "@/lib/invitation-tracking";
 
 async function processExpiredInvitations() {
-  console.log("🔄 Starting expired invitation processing...");
 
   try {
     const now = new Date();
@@ -30,10 +29,7 @@ async function processExpiredInvitations() {
         and(eq(invitation.status, "pending"), lte(invitation.expiresAt, now)),
       );
 
-    console.log(`📋 Found ${expiredInvitations.length} expired invitations`);
-
     if (expiredInvitations.length === 0) {
-      console.log("✅ No expired invitations to process");
       return { processed: 0, errors: 0 };
     }
 
@@ -43,10 +39,6 @@ async function processExpiredInvitations() {
     // Process each expired invitation
     for (const inv of expiredInvitations) {
       try {
-        console.log(
-          `⏰ Processing expired invitation: ${inv.email} (${inv.id})`,
-        );
-
         // Track the expiration event
         await invitationTracking.trackExpired({
           invitationId: inv.id,
@@ -65,16 +57,11 @@ async function processExpiredInvitations() {
         });
 
         processedCount++;
-        console.log(`✅ Processed invitation: ${inv.email}`);
       } catch (error) {
         errorCount++;
-        console.error(`❌ Failed to process invitation ${inv.email}:`, error);
       }
     }
 
-    console.log(
-      `🎉 Completed processing: ${processedCount} successful, ${errorCount} errors`,
-    );
 
     // Log the batch processing event
     await db.insert(events).values({
@@ -91,7 +78,6 @@ async function processExpiredInvitations() {
 
     return { processed: processedCount, errors: errorCount };
   } catch (error) {
-    console.error("💥 Fatal error processing expired invitations:", error);
 
     // Log the error event
     await db.insert(events).values({
@@ -111,12 +97,10 @@ async function processExpiredInvitations() {
 // Run the script if called directly
 if (require.main === module) {
   processExpiredInvitations()
-    .then((result) => {
-      console.log("🏁 Script completed successfully:", result);
+    .then(() => {
       process.exit(0);
     })
-    .catch((error) => {
-      console.error("💥 Script failed:", error);
+    .catch(() => {
       process.exit(1);
     });
 }
