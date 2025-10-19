@@ -105,9 +105,16 @@ export function canUser(action: string, _resource?: string): boolean {
  * Get redirect URL based on user role (Client-side)
  */
 export function getRoleBasedRedirectUrl(user: User | null): string {
-  if (!user) return "/";
+if (!user) return "/";
 
-  return user.role === "admin" || user.role === "owner"
-    ? "/admin"
-    : "/dashboard";
+  switch (user.role) {
+    case "admin":
+    case "owner":
+      return "/admin";
+    case "manager":
+      return "/manager";
+    case "user":
+    default:
+      return "/dashboard";
+  }
 }

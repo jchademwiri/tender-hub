@@ -81,7 +81,9 @@ export function InviteMemberDialog({
   };
 
   const availableRoles = [
-    { value: "user", label: "User", description: "Basic access to the platform" },
+    { value: "user", label: "User" },
+    ...(canInviteManager ? [{ value: "manager", label: "Manager" }] : []),
+    ...(canInviteAdmin ? [{ value: "admin", label: "Admin" }] : []),
   ];
 
   return (
@@ -146,10 +148,7 @@ export function InviteMemberDialog({
                     <SelectContent>
                       {availableRoles.map((role) => (
                         <SelectItem key={role.value} value={role.value}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{role.label}</span>
-                            <span className="text-xs text-gray-500">{role.description}</span>
-                          </div>
+                          {role.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

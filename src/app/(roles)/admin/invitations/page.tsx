@@ -14,8 +14,9 @@ import {
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { BulkCreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/bulk-create-invitation-dialog";
-import { CreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/create-invitation-dialog";
+import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { InvitationAnalyticsDashboard } from "@/app/(roles)/admin/invitations/components/invitation-analytics-dashboard";
+import { invitationValidationHelpers } from "@/lib/validations/invitations";
 import { InvitationTable } from "@/app/(roles)/admin/invitations/components/invitation-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +92,7 @@ export default function AdminInvitationsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showBulkCreateDialog, setShowBulkCreateDialog] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   // Fetch invitations data
@@ -241,6 +243,69 @@ export default function AdminInvitationsPage() {
       } else {
         toast.error(`Failed to ${action} invitation`);
       }
+    }
+  };
+
+  // Handle invite member for single invitations
+  const handleInviteMember = async (data: { email: string; name: string; role: "admin" | "manager" | "user" }) => {
+    try {
+      setIsInviting(true);
+
+      // Validate using the schema
+      const validationResult = invitationValidationHelpers.safeValidateCreateInvitation({
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        sendEmail: true,
+      });
+
+      if (!validationResult.success) {
+        console.error("❌ Validation failed:", validationResult.error.issues);
+        const newErrors: Record<string, string> = {};
+        validationResult.error.issues.forEach((issue) => {
+          if (issue.path[0]) {
+            newErrors[issue.path[0] as string] = issue.message;
+          }
+        });
+        throw new Error(Object.values(newErrors)[0] || "Validation failed");
+      }
+
+      // Submit the invitation
+      const response = await fetch("/api/admin/invitations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(validationResult.data),
+      });
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          errorData = { error: "Invalid response from server" };
+        }
+
+        if (response.status === 409) {
+          throw new Error(errorData.error || "User with this email already exists");
+        }
+
+        if (response.status === 429) {
+          throw new Error(errorData.error || "Daily invitation limit reached");
+        }
+
+        throw new Error(errorData.error || "Failed to create invitation");
+      }
+
+      toast.success("Invitation created successfully!");
+      handleSearch(); // Refresh the list
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      throw error;
+    } finally {
+      setIsInviting(false);
     }
   };
 
@@ -530,13 +595,13 @@ export default function AdminInvitationsPage() {
           />
 
           {/* Create Invitation Dialog */}
-          <CreateInvitationDialog
+          <InviteMemberDialog
             open={showCreateDialog}
             onOpenChange={setShowCreateDialog}
-            onSuccess={() => {
-              setShowCreateDialog(false);
-              handleSearch(); // Refresh the list
-            }}
+            onInvite={handleInviteMember}
+            isInviting={isInviting}
+            canInviteAdmin={true}
+            canInviteManager={true}
           />
 
           {/* Bulk Create Invitation Dialog */}

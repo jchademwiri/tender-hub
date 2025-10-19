@@ -8,6 +8,7 @@ import { emailSchema } from "./common";
 // Single invitation creation schema
 export const createInvitationSchema = z.object({
   email: emailSchema,
+  name: z.string().min(2, "Name must be at least 2 characters"),
   role: z.enum(["admin", "manager", "user"], {
     message: "Please select a valid role",
   }),
@@ -88,6 +89,7 @@ export const invitationValidationHelpers = {
   transformForCreateInvitation: (data: CreateInvitationData) => {
     return {
       email: data.email.toLowerCase().trim(),
+      name: data.name?.trim(),
       role: data.role,
       sendEmail: data.sendEmail,
     };
@@ -116,6 +118,7 @@ export const invitationValidationHelpers = {
 export const invitationDefaultValues = {
   createInvitation: {
     email: "",
+    name: "",
     role: "user" as const,
     sendEmail: true,
   },
