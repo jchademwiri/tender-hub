@@ -1,5 +1,7 @@
 "use client"
 
+import { useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
   Bell,
@@ -29,6 +31,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { authClient } from "@/lib/auth-client"
 
 export function NavUser({
   user,
@@ -40,6 +43,17 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await authClient.signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Logout failed:', error)
+      router.push('/')
+    }
+  }, [router])
 
   return (
     <SidebarMenu>
@@ -102,7 +116,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

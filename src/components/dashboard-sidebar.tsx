@@ -21,47 +21,48 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
+interface DashboardSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
-    name: "User",
-    email: "user@tenderhub.com",
-    avatar: "/avatars/user.jpg",
-  },
-  navMain: [
-    {
-      title: "Back to Site",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Command,
-    },
-    {
-      title: "Publishers",
-      url: "/publishers",
-      icon: BookOpen,
-    },
-    {
-      title: "Profile",
-      url: "/profile",
-      icon: User,
-    },
-    {
-      title: "Admin",
-      url: "/admin",
-      icon: Settings2,
-    },
-    {
-      title: "Manager",
-      url: "/manager",
-      icon: Users,
-    },
-  ],
+    name: string
+    email: string
+    avatar: string
+  }
 }
 
-export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+const navMain = [
+  {
+    title: "Back to Site",
+    url: "/",
+    icon: Home,
+  },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Command,
+  },
+  {
+    title: "Publishers",
+    url: "/publishers",
+    icon: BookOpen,
+  },
+  {
+    title: "Profile",
+    url: "/profile",
+    icon: User,
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: Settings2,
+  },
+  {
+    title: "Manager",
+    url: "/manager",
+    icon: Users,
+  },
+]
+
+export function DashboardSidebar({ user, ...props }: DashboardSidebarProps) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -83,7 +84,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {data.navMain.map((item) => (
+          {navMain.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <a href={item.url}>
@@ -96,7 +97,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

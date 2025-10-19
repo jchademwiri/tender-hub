@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 // import { requireAuth } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAuth, getCurrentUser, getUserInitials } from "@/lib/auth-utils";
 
 export const metadata: Metadata = {
   title: "Tender Hub | Dashboard",
@@ -18,12 +18,18 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   // Enable authentication for dashboard
-  await requireAuth();
+  const user = await requireAuth();
+
+  const userData = {
+    name: user.name || "User",
+    email: user.email,
+    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
+  };
 
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <DashboardSidebar />
+        <DashboardSidebar user={userData} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

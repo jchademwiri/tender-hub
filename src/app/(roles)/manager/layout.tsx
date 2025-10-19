@@ -48,13 +48,20 @@ export default async function ManagerLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // TODO: Enable manager authentication check
-  // await requireManager();
+  // Enable manager authentication check
+  const { requireManager } = await import("@/lib/auth-utils");
+  const user = await requireManager();
+
+  const userData = {
+    name: user.name || "Manager",
+    email: user.email,
+    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
+  };
 
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <ManagerSidebar />
+        <ManagerSidebar user={userData} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

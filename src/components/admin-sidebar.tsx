@@ -22,52 +22,53 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
+interface AdminSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
-    name: "Admin",
-    email: "admin@tenderhub.com",
-    avatar: "/avatars/admin.jpg",
-  },
-  navMain: [
-    {
-      title: "Back to Site",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Command,
-    },
-    {
-      title: "Manager",
-      url: "/manager",
-      icon: Users,
-    },
-    {
-      title: "Users",
-      url: "/admin/users",
-      icon: Users,
-    },
-    {
-      title: "Provinces",
-      url: "/admin/provinces",
-      icon: Map,
-    },
-    {
-      title: "Publishers",
-      url: "/publishers",
-      icon: BookOpen,
-    },
-    {
-      title: "Invitations",
-      url: "/admin/invitations",
-      icon: Mail,
-    },
-  ],
+    name: string
+    email: string
+    avatar: string
+  }
 }
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+const navMain = [
+  {
+    title: "Back to Site",
+    url: "/",
+    icon: Home,
+  },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Command,
+  },
+  {
+    title: "Manager",
+    url: "/manager",
+    icon: Users,
+  },
+  {
+    title: "Users",
+    url: "/admin/users",
+    icon: Users,
+  },
+  {
+    title: "Provinces",
+    url: "/admin/provinces",
+    icon: Map,
+  },
+  {
+    title: "Publishers",
+    url: "/publishers",
+    icon: BookOpen,
+  },
+  {
+    title: "Invitations",
+    url: "/admin/invitations",
+    icon: Mail,
+  },
+]
+
+export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -89,7 +90,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {data.navMain.map((item) => (
+          {navMain.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
                 <a href={item.url}>
@@ -102,7 +103,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

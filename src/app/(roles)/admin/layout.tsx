@@ -42,12 +42,18 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }>) {
   // Enable admin authentication check
-  await requireAdmin();
+  const user = await requireAdmin();
+
+  const userData = {
+    name: user.name || "Admin",
+    email: user.email,
+    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
+  };
 
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <AdminSidebar />
+        <AdminSidebar user={userData} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

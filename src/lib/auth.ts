@@ -48,7 +48,7 @@ export const auth = betterAuth({
       const { sendEmailVerification } = await import("@/lib/email");
       await sendEmailVerification(user.email, url);
     },
-    sendOnSignUp: true,
+    sendOnSignUp: false, // Disable automatic verification emails on signup - handle manually for invitations
     autoSignInAfterVerification: true,
     expiresIn: 3600
   },
