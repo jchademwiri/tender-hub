@@ -8,10 +8,13 @@
  * 3. Track the expiration event for analytics
  */
 
+import { and, eq, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { invitation, events } from "@/db/schema";
-import { eq, and, sql, lte } from "drizzle-orm";
-import { invitationTracking, invitationTrackingUtils } from "@/lib/invitation-tracking";
+import { events, invitation } from "@/db/schema";
+import {
+  invitationTracking,
+  invitationTrackingUtils,
+} from "@/lib/invitation-tracking";
 
 async function processExpiredInvitations() {
   console.log("🔄 Starting expired invitation processing...");
@@ -24,10 +27,7 @@ async function processExpiredInvitations() {
       .select()
       .from(invitation)
       .where(
-        and(
-          eq(invitation.status, "pending"),
-          lte(invitation.expiresAt, now)
-        )
+        and(eq(invitation.status, "pending"), lte(invitation.expiresAt, now)),
       );
 
     console.log(`📋 Found ${expiredInvitations.length} expired invitations`);
@@ -43,7 +43,9 @@ async function processExpiredInvitations() {
     // Process each expired invitation
     for (const inv of expiredInvitations) {
       try {
-        console.log(`⏰ Processing expired invitation: ${inv.email} (${inv.id})`);
+        console.log(
+          `⏰ Processing expired invitation: ${inv.email} (${inv.id})`,
+        );
 
         // Track the expiration event
         await invitationTracking.trackExpired({
@@ -56,21 +58,23 @@ async function processExpiredInvitations() {
             expiredAt: now.toISOString(),
             expiresAt: inv.expiresAt,
             daysSinceCreation: Math.floor(
-              (now.getTime() - new Date(inv.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-            )
-          })
+              (now.getTime() - new Date(inv.createdAt).getTime()) /
+                (1000 * 60 * 60 * 24),
+            ),
+          }),
         });
 
         processedCount++;
         console.log(`✅ Processed invitation: ${inv.email}`);
-
       } catch (error) {
         errorCount++;
         console.error(`❌ Failed to process invitation ${inv.email}:`, error);
       }
     }
 
-    console.log(`🎉 Completed processing: ${processedCount} successful, ${errorCount} errors`);
+    console.log(
+      `🎉 Completed processing: ${processedCount} successful, ${errorCount} errors`,
+    );
 
     // Log the batch processing event
     await db.insert(events).values({
@@ -80,13 +84,12 @@ async function processExpiredInvitations() {
         processedCount,
         errorCount,
         totalFound: expiredInvitations.length,
-        processedAt: now.toISOString()
+        processedAt: now.toISOString(),
       },
-      timestamp: now
+      timestamp: now,
     });
 
     return { processed: processedCount, errors: errorCount };
-
   } catch (error) {
     console.error("💥 Fatal error processing expired invitations:", error);
 
@@ -96,9 +99,9 @@ async function processExpiredInvitations() {
       eventName: "batch_process_error",
       properties: {
         error: error instanceof Error ? error.message : "Unknown error",
-        processedAt: new Date().toISOString()
+        processedAt: new Date().toISOString(),
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     throw error;

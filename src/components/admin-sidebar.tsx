@@ -1,17 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import {
-  BookOpen,
-  Command,
-  Home,
-  Mail,
-  Map,
-  Settings2,
-  Users,
-} from "lucide-react"
+import { BookOpen, Command, Home, Mail, Map, Users } from "lucide-react";
+import type * as React from "react";
 
-import { NavUser } from "@/components/nav-user"
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -20,14 +12,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 interface AdminSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }
 
 const navMain = [
@@ -66,7 +58,7 @@ const navMain = [
     url: "/admin/invitations",
     icon: Mail,
   },
-]
+];
 
 export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
   return (
@@ -106,5 +98,5 @@ export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

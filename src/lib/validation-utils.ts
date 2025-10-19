@@ -1,20 +1,27 @@
-import { z } from 'zod';
-import { createAppError, logError, classifyError, getUserFriendlyMessage } from './error-utils';
-import { formatValidationErrors, hasFieldError, getFieldError } from './validations/common';
+import { z } from "zod";
+import {
+  classifyError,
+  createAppError,
+  getUserFriendlyMessage,
+  logError,
+} from "./error-utils";
+import { formatValidationErrors, getFieldError } from "./validations/common";
 
 /**
  * Validation utilities for forms and server actions
  */
 
 // Generic validation result type
-export type ValidationResult<T> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  errors: Record<string, string>;
-  error: z.ZodError;
-};
+export type ValidationResult<T> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      errors: Record<string, string>;
+      error: z.ZodError;
+    };
 
 // Form field validation state
 export interface FieldValidationState {
@@ -39,7 +46,7 @@ export interface FormValidationState {
 export function validateWithSchema<T>(
   schema: z.ZodSchema<T>,
   data: unknown,
-  context?: string
+  context?: string,
 ): ValidationResult<T> {
   try {
     const result = schema.parse(data);
@@ -50,22 +57,22 @@ export function validateWithSchema<T>(
 
       // Log validation errors for debugging
       logError(
-        createAppError(`Validation failed${context ? ` for ${context}` : ''}`, {
-          code: 'VALIDATION_ERROR',
+        createAppError(`Validation failed${context ? ` for ${context}` : ""}`, {
+          code: "VALIDATION_ERROR",
           statusCode: 400,
           details: {
             errors: formattedErrors,
             context,
-            originalError: error
-          }
+            originalError: error,
+          },
         }),
-        'medium'
+        "medium",
       );
 
       return {
         success: false,
         errors: formattedErrors,
-        error
+        error,
       };
     }
     throw error;
@@ -78,21 +85,21 @@ export function validateWithSchema<T>(
 export function validateOrThrow<T>(
   schema: z.ZodSchema<T>,
   data: unknown,
-  context?: string
+  context?: string,
 ): T {
   const result = validateWithSchema(schema, data, context);
 
   if (!result.success) {
     const error = createAppError(
-      `Validation failed${context ? ` for ${context}` : ''}`,
+      `Validation failed${context ? ` for ${context}` : ""}`,
       {
-        code: 'VALIDATION_ERROR',
+        code: "VALIDATION_ERROR",
         statusCode: 400,
         details: {
           errors: result.errors,
-          context
-        }
-      }
+          context,
+        },
+      },
     );
     logError(error, classifyError(error));
     throw error;
@@ -107,7 +114,7 @@ export function validateOrThrow<T>(
 export function createFieldState(
   fieldName: string,
   formErrors: Record<string, string>,
-  touchedFields: Set<string>
+  touchedFields: Set<string>,
 ): FieldValidationState {
   const error = getFieldError(formErrors, fieldName);
   const isTouched = touchedFields.has(fieldName);
@@ -127,7 +134,7 @@ export function createFormState(
   isDirty: boolean,
   isSubmitting: boolean,
   errors: Record<string, string>,
-  touchedFields: Set<string>
+  touchedFields: Set<string>,
 ): FormValidationState {
   return {
     isValid: Object.keys(errors).length === 0,
@@ -161,7 +168,9 @@ export function getFormValidationErrors(formState: {
 export function hasFormErrors(formState: {
   errors: Record<string, string[]>;
 }): boolean {
-  return Object.values(formState.errors).some(errors => errors && errors.length > 0);
+  return Object.values(formState.errors).some(
+    (errors) => errors && errors.length > 0,
+  );
 }
 
 /**
@@ -171,7 +180,7 @@ export function getAllErrorMessages(formState: {
   errors: Record<string, string[]>;
 }): string[] {
   return Object.values(formState.errors)
-    .filter(errors => errors && errors.length > 0)
+    .filter((errors) => errors && errors.length > 0)
     .flat();
 }
 
@@ -181,13 +190,14 @@ export function getAllErrorMessages(formState: {
 export function validateServerAction<T>(
   schema: z.ZodSchema<T>,
   formData: FormData | Record<string, any>,
-  context?: string
+  context?: string,
 ): { success: true; data: T } | { success: false; error: string } {
   try {
     // Convert FormData to plain object if needed
-    const data = formData instanceof FormData
-      ? Object.fromEntries(formData.entries())
-      : formData;
+    const data =
+      formData instanceof FormData
+        ? Object.fromEntries(formData.entries())
+        : formData;
 
     const result = validateWithSchema(schema, data, context);
 
@@ -197,28 +207,28 @@ export function validateServerAction<T>(
       return {
         success: false,
         error: getUserFriendlyMessage(
-          createAppError('Validation failed', {
-            code: 'VALIDATION_ERROR',
+          createAppError("Validation failed", {
+            code: "VALIDATION_ERROR",
             statusCode: 400,
-            details: { errors: result.errors }
-          })
-        )
+            details: { errors: result.errors },
+          }),
+        ),
       };
     }
   } catch (error) {
     const appError = createAppError(
-      `Server validation error${context ? ` for ${context}` : ''}`,
+      `Server validation error${context ? ` for ${context}` : ""}`,
       {
-        code: 'VALIDATION_ERROR',
+        code: "VALIDATION_ERROR",
         statusCode: 400,
-        details: { originalError: error, context }
-      }
+        details: { originalError: error, context },
+      },
     );
     logError(appError, classifyError(appError));
 
     return {
       success: false,
-      error: getUserFriendlyMessage(appError)
+      error: getUserFriendlyMessage(appError),
     };
   }
 }
@@ -231,7 +241,7 @@ export function transformFormData(formData: FormData): Record<string, any> {
 
   for (const [key, value] of formData.entries()) {
     // Handle empty strings
-    if (value === '') {
+    if (value === "") {
       transformed[key] = null;
       continue;
     }
@@ -243,8 +253,8 @@ export function transformFormData(formData: FormData): Record<string, any> {
     }
 
     // Handle boolean values
-    if (value === 'true' || value === 'false') {
-      transformed[key] = value === 'true';
+    if (value === "true" || value === "false") {
+      transformed[key] = value === "true";
       continue;
     }
 
@@ -269,15 +279,15 @@ export function transformFormData(formData: FormData): Record<string, any> {
 export function withValidation<TInput, TOutput>(
   schema: z.ZodSchema<TInput>,
   handler: (data: TInput) => Promise<TOutput>,
-  context?: string
+  context?: string,
 ) {
   return async (formData: FormData | Record<string, any>): Promise<TOutput> => {
     const validation = validateServerAction(schema, formData, context);
 
     if (!validation.success) {
       throw createAppError(validation.error, {
-        code: 'VALIDATION_ERROR',
-        statusCode: 400
+        code: "VALIDATION_ERROR",
+        statusCode: 400,
       });
     }
 
@@ -290,7 +300,7 @@ export function withValidation<TInput, TOutput>(
  */
 export function createDebouncedValidator<T>(
   schema: z.ZodSchema<T>,
-  delay: number = 300
+  delay: number = 300,
 ) {
   let timeoutId: NodeJS.Timeout;
 
@@ -310,8 +320,13 @@ export function createDebouncedValidator<T>(
 export function validateArray<T>(
   schema: z.ZodSchema<T>,
   items: unknown[],
-  context?: string
-): { success: true; data: T[] } | { success: false; errors: Array<{ index: number; errors: Record<string, string> }> } {
+  context?: string,
+):
+  | { success: true; data: T[] }
+  | {
+      success: false;
+      errors: Array<{ index: number; errors: Record<string, string> }>;
+    } {
   const results: T[] = [];
   const errors: Array<{ index: number; errors: Record<string, string> }> = [];
 
@@ -336,7 +351,7 @@ export function validateArray<T>(
  * Merge multiple validation results
  */
 export function mergeValidationResults<T>(
-  results: ValidationResult<T>[]
+  results: ValidationResult<T>[],
 ): ValidationResult<T[]> {
   const data: T[] = [];
   const allErrors: Record<string, string> = {};
@@ -353,7 +368,11 @@ export function mergeValidationResults<T>(
   });
 
   if (Object.keys(allErrors).length > 0) {
-    return { success: false, errors: allErrors, error: results.find(r => !r.success)?.error! };
+    return {
+      success: false,
+      errors: allErrors,
+      error: results.find((r) => !r.success)?.error!,
+    };
   }
 
   return { success: true, data };
@@ -362,34 +381,39 @@ export function mergeValidationResults<T>(
 /**
  * Create validation schema for partial updates (optional fields)
  */
-export function createPartialSchema<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
+export function createPartialSchema<T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+) {
   return schema.partial();
 }
 
 /**
  * Validate and sanitize HTML content (basic protection against XSS)
  */
-export function validateHtmlContent(content: string, maxLength: number = 10000): string {
-  if (typeof content !== 'string') {
-    throw createAppError('Content must be a string', {
-      code: 'VALIDATION_ERROR',
-      statusCode: 400
+export function validateHtmlContent(
+  content: string,
+  maxLength: number = 10000,
+): string {
+  if (typeof content !== "string") {
+    throw createAppError("Content must be a string", {
+      code: "VALIDATION_ERROR",
+      statusCode: 400,
     });
   }
 
   if (content.length > maxLength) {
     throw createAppError(`Content must be ${maxLength} characters or less`, {
-      code: 'VALIDATION_ERROR',
-      statusCode: 400
+      code: "VALIDATION_ERROR",
+      statusCode: 400,
     });
   }
 
   // Basic HTML sanitization - remove script tags and dangerous attributes
   return content
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
-    .replace(/on\w+\s*=\s*'[^']*'/gi, '')
-    .replace(/javascript:/gi, '');
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/on\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/on\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
 }
 
 /**
@@ -401,12 +425,16 @@ export function validateFileUpload(
     maxSize?: number; // in bytes
     allowedTypes?: string[];
     required?: boolean;
-  } = {}
+  } = {},
 ): { success: true; file: File } | { success: false; error: string } {
-  const { maxSize = 5 * 1024 * 1024, allowedTypes = [], required = false } = options;
+  const {
+    maxSize = 5 * 1024 * 1024,
+    allowedTypes = [],
+    required = false,
+  } = options;
 
   if (required && !file) {
-    return { success: false, error: 'File is required' };
+    return { success: false, error: "File is required" };
   }
 
   if (!file) {
@@ -416,14 +444,14 @@ export function validateFileUpload(
   if (maxSize && file.size > maxSize) {
     return {
       success: false,
-      error: `File size must be ${Math.round(maxSize / 1024 / 1024)}MB or less`
+      error: `File size must be ${Math.round(maxSize / 1024 / 1024)}MB or less`,
     };
   }
 
   if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
     return {
       success: false,
-      error: `File type must be one of: ${allowedTypes.join(', ')}`
+      error: `File type must be one of: ${allowedTypes.join(", ")}`,
     };
   }
 

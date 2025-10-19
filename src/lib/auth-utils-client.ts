@@ -86,7 +86,7 @@ export function formatUserRole(role: string | null): string {
 /**
  * Check if user can perform an action based on permissions (Client-side)
  */
-export function canUser(action: string, resource?: string): boolean {
+export function canUser(action: string, _resource?: string): boolean {
   if (!currentUser?.role) return false;
 
   // Define permissions based on roles
@@ -107,5 +107,7 @@ export function canUser(action: string, resource?: string): boolean {
 export function getRoleBasedRedirectUrl(user: User | null): string {
   if (!user) return "/";
 
-  return user.role === "admin" || user.role === "owner" ? "/admin" : "/dashboard";
+  return user.role === "admin" || user.role === "owner"
+    ? "/admin"
+    : "/dashboard";
 }

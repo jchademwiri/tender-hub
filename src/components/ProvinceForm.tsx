@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Province } from '@/db/schema';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FileText, Hash, MapPin } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -10,21 +12,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+} from "@/components/ui/form";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group';
-import { MapPin, Hash, FileText } from 'lucide-react';
+} from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
+import type { Province } from "@/db/schema";
 import {
-  provinceFormSchema,
   type ProvinceFormData,
   provinceDefaultValues,
-} from '@/lib/validations/province';
-import { toast } from 'sonner';
+  provinceFormSchema,
+} from "@/lib/validations/province";
 
 interface ProvinceFormProps {
   province?: Province;
@@ -38,7 +38,7 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
       ? {
           name: province.name,
           code: province.code,
-          description: province.description || '',
+          description: province.description || "",
         }
       : provinceDefaultValues,
   });
@@ -46,20 +46,26 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
   const onSubmit = async (data: ProvinceFormData) => {
     try {
       const formData = new FormData();
-      formData.append('name', data.name.trim());
-      formData.append('code', data.code.trim().toUpperCase());
-      if (data.description) formData.append('description', data.description.trim());
-      if (province?.id) formData.append('id', province.id);
+      formData.append("name", data.name.trim());
+      formData.append("code", data.code.trim().toUpperCase());
+      if (data.description)
+        formData.append("description", data.description.trim());
+      if (province?.id) formData.append("id", province.id);
 
       const result = await action({}, formData);
-      
+
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success(province ? 'Province updated successfully' : 'Province created successfully');
+        toast.success(
+          province
+            ? "Province updated successfully"
+            : "Province created successfully",
+        );
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
     }
   };
@@ -78,7 +84,10 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
                   <InputGroupAddon>
                     <MapPin className="size-4" />
                   </InputGroupAddon>
-                  <InputGroupInput placeholder="Enter province name" {...field} />
+                  <InputGroupInput
+                    placeholder="Enter province name"
+                    {...field}
+                  />
                 </InputGroup>
               </FormControl>
               <FormMessage />
@@ -96,10 +105,10 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
                   <InputGroupAddon>
                     <Hash className="size-4" />
                   </InputGroupAddon>
-                  <InputGroupInput 
-                    placeholder="Enter province code (e.g., GP, WC)" 
+                  <InputGroupInput
+                    placeholder="Enter province code (e.g., GP, WC)"
                     maxLength={3}
-                    {...field} 
+                    {...field}
                   />
                 </InputGroup>
               </FormControl>
@@ -118,7 +127,10 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
                   <InputGroupAddon>
                     <FileText className="size-4" />
                   </InputGroupAddon>
-                  <InputGroupInput placeholder="Enter description (optional)" {...field} />
+                  <InputGroupInput
+                    placeholder="Enter description (optional)"
+                    {...field}
+                  />
                 </InputGroup>
               </FormControl>
               <FormMessage />
@@ -127,7 +139,7 @@ export default function ProvinceForm({ province, action }: ProvinceFormProps) {
         />
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Spinner className="mr-2" />}
-          {province ? 'Update' : 'Create'} Province
+          {province ? "Update" : "Create"} Province
         </Button>
       </form>
     </Form>

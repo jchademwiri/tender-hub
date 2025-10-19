@@ -1,17 +1,16 @@
-import * as React from 'react';
 import {
   Body,
   Button,
   Container,
-  Section,
-  Text,
+  Head,
   Hr,
   Html,
-  Head,
-  Preview,
-  Tailwind,
   Link,
-} from '@react-email/components';
+  Preview,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
 
 interface InvitationEmailProps {
   inviteeEmail?: string;
@@ -35,21 +34,23 @@ const InvitationEmail = (props: InvitationEmailProps) => {
     companyName = "Tender Hub",
     invitationUrl = "https://tenderhub.com/invite/accept?token=abc123xyz",
     expirationTime = "7 days",
-    invitedDate = new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Africa/Johannesburg'
-    })
+    invitedDate = new Date().toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Africa/Johannesburg",
+    }),
   } = props;
 
   return (
     <Html lang="en" dir="ltr">
       <Tailwind>
         <Head />
-        <Preview>You've been invited to join {companyName} as a {role}</Preview>
+        <Preview>
+          You've been invited to join {companyName} as a {role}
+        </Preview>
         <Body className="bg-gray-100 font-sans py-[40px]">
           <Container className="bg-white rounded-[8px] shadow-sm max-w-[600px] mx-auto">
             <Section className="p-[40px]">
@@ -62,11 +63,15 @@ const InvitationEmail = (props: InvitationEmailProps) => {
               </Text>
 
               <Text className="text-[16px] text-gray-700 leading-[24px] mb-[24px] m-0">
-                <strong>{inviterName}</strong> ({inviterEmail}) has invited you to join <strong>{companyName}</strong> as a <strong>{role}</strong>.
+                <strong>{inviterName}</strong> ({inviterEmail}) has invited you
+                to join <strong>{companyName}</strong> as a{" "}
+                <strong>{role}</strong>.
               </Text>
 
               <Text className="text-[16px] text-gray-700 leading-[24px] mb-[32px] m-0">
-                Click the button below to accept your invitation and set up your account. Once accepted, you'll have access to all the features and tools available to {role}s.
+                Click the button below to accept your invitation and set up your
+                account. Once accepted, you'll have access to all the features
+                and tools available to {role}s.
               </Text>
 
               <Section className="text-center mb-[32px]">
@@ -119,7 +124,8 @@ const InvitationEmail = (props: InvitationEmailProps) => {
                   🔒 Security Information
                 </Text>
                 <Text className="text-[14px] text-amber-700 leading-[20px] m-0 mb-[8px]">
-                  • This invitation link will expire in {expirationTime} for security reasons
+                  • This invitation link will expire in {expirationTime} for
+                  security reasons
                 </Text>
                 <Text className="text-[14px] text-amber-700 leading-[20px] m-0 mb-[8px]">
                   • The link can only be used once
@@ -132,19 +138,29 @@ const InvitationEmail = (props: InvitationEmailProps) => {
               <Hr className="border-gray-200 my-[32px]" />
 
               <Text className="text-[14px] text-gray-600 leading-[20px] mb-[16px] m-0">
-                If you're having trouble clicking the button, copy and paste this URL into your browser:{' '}
-                <Link href={invitationUrl} className="text-blue-600 underline break-all">
+                If you're having trouble clicking the button, copy and paste
+                this URL into your browser:{" "}
+                <Link
+                  href={invitationUrl}
+                  className="text-blue-600 underline break-all"
+                >
                   {invitationUrl}
                 </Link>
               </Text>
 
               <Text className="text-[14px] text-gray-600 leading-[20px] mb-[32px] m-0">
-                Questions about this invitation? Contact {inviterName} at{' '}
-                <Link href={`mailto:${inviterEmail}`} className="text-blue-600 underline">
+                Questions about this invitation? Contact {inviterName} at{" "}
+                <Link
+                  href={`mailto:${inviterEmail}`}
+                  className="text-blue-600 underline"
+                >
                   {inviterEmail}
-                </Link>{' '}
-                or our support team at{' '}
-                <Link href="mailto:support@tenderhub.com" className="text-blue-600 underline">
+                </Link>{" "}
+                or our support team at{" "}
+                <Link
+                  href="mailto:support@tenderhub.com"
+                  className="text-blue-600 underline"
+                >
                   support@tenderhub.com
                 </Link>
               </Text>
@@ -158,11 +174,17 @@ const InvitationEmail = (props: InvitationEmailProps) => {
                   Tender Hub, 123 Business District, Sandton, Johannesburg, 2196
                 </Text>
                 <Text className="text-[12px] text-gray-500 text-center leading-[16px] m-0 mb-[8px]">
-                  <Link href="mailto:support@tenderhub.com" className="text-gray-500 underline">
+                  <Link
+                    href="mailto:support@tenderhub.com"
+                    className="text-gray-500 underline"
+                  >
                     support@tenderhub.com
-                  </Link>{' '}
-                  |{' '}
-                  <Link href="https://tenderhub.com/privacy" className="text-gray-500 underline">
+                  </Link>{" "}
+                  |{" "}
+                  <Link
+                    href="https://tenderhub.com/privacy"
+                    className="text-gray-500 underline"
+                  >
                     Privacy Policy
                   </Link>
                 </Text>

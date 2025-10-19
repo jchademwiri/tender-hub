@@ -4,10 +4,10 @@ const nextConfig: NextConfig = {
   // Configure App Router-related experimental options
   experimental: {
     // Optimize package imports for better performance
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-slot'],
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-slot"],
   },
   // Enable standalone build for containerized/Docker deployments
-  output: 'standalone',
+  output: "standalone",
 };
 
 export default nextConfig;

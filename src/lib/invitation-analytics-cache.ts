@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { useCallback, useEffect, useState } from "react";
 import { db } from "@/db";
 import { analyticsCache } from "@/db/schema";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
 
 export interface CacheEntry<T = any> {
   key: string;
@@ -30,11 +30,13 @@ export class InvitationAnalyticsCache {
     this.options = {
       ttl: options.ttl || 300, // 5 minutes default
       maxSize: options.maxSize || 100,
-      enableCompression: options.enableCompression || false
+      enableCompression: options.enableCompression || false,
     };
   }
 
-  static getInstance(options?: AnalyticsCacheOptions): InvitationAnalyticsCache {
+  static getInstance(
+    options?: AnalyticsCacheOptions,
+  ): InvitationAnalyticsCache {
     if (!InvitationAnalyticsCache.instance) {
       InvitationAnalyticsCache.instance = new InvitationAnalyticsCache(options);
     }
@@ -44,11 +46,14 @@ export class InvitationAnalyticsCache {
   /**
    * Generate cache key for analytics data
    */
-  private generateCacheKey(type: string, params: Record<string, any> = {}): string {
+  private generateCacheKey(
+    type: string,
+    params: Record<string, any> = {},
+  ): string {
     const sortedParams = Object.keys(params)
       .sort()
-      .map(key => `${key}:${params[key]}`)
-      .join('|');
+      .map((key) => `${key}:${params[key]}`)
+      .join("|");
 
     return `invitation_analytics:${type}:${sortedParams}`;
   }
@@ -56,7 +61,10 @@ export class InvitationAnalyticsCache {
   /**
    * Get data from cache
    */
-  async get<T>(type: string, params: Record<string, any> = {}): Promise<T | null> {
+  async get<T>(
+    type: string,
+    params: Record<string, any> = {},
+  ): Promise<T | null> {
     const key = this.generateCacheKey(type, params);
 
     try {
@@ -77,8 +85,8 @@ export class InvitationAnalyticsCache {
         .where(
           and(
             eq(analyticsCache.cacheKey, key),
-            gte(analyticsCache.expiresAt, new Date())
-          )
+            gte(analyticsCache.expiresAt, new Date()),
+          ),
         )
         .limit(1);
 
@@ -91,7 +99,7 @@ export class InvitationAnalyticsCache {
           .update(analyticsCache)
           .set({
             hitCount: (entry.hitCount || 0) + 1,
-            lastAccessed: new Date()
+            lastAccessed: new Date(),
           })
           .where(eq(analyticsCache.cacheKey, key));
 
@@ -102,7 +110,7 @@ export class InvitationAnalyticsCache {
           expiresAt: entry.expiresAt,
           createdAt: entry.createdAt,
           hitCount: (entry.hitCount || 0) + 1,
-          lastAccessed: new Date()
+          lastAccessed: new Date(),
         });
 
         return data as T;
@@ -118,10 +126,14 @@ export class InvitationAnalyticsCache {
   /**
    * Set data in cache
    */
-  async set<T>(type: string, params: Record<string, any>, data: T): Promise<void> {
+  async set<T>(
+    type: string,
+    params: Record<string, any>,
+    data: T,
+  ): Promise<void> {
     const key = this.generateCacheKey(type, params);
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + (this.options.ttl * 1000));
+    const expiresAt = new Date(now.getTime() + this.options.ttl * 1000);
 
     try {
       // Prepare data for storage
@@ -132,7 +144,7 @@ export class InvitationAnalyticsCache {
         expiresAt,
         hitCount: 0,
         lastAccessed: now,
-        createdAt: now
+        createdAt: now,
       };
 
       // Store in database
@@ -145,12 +157,11 @@ export class InvitationAnalyticsCache {
         expiresAt,
         createdAt: now,
         hitCount: 0,
-        lastAccessed: now
+        lastAccessed: now,
       });
 
       // Manage memory cache size
       this.enforceMemoryCacheSize();
-
     } catch (error) {
       console.error("Error storing in cache:", error);
       throw error;
@@ -165,13 +176,10 @@ export class InvitationAnalyticsCache {
 
     try {
       // Remove from database
-      await db
-        .delete(analyticsCache)
-        .where(eq(analyticsCache.cacheKey, key));
+      await db.delete(analyticsCache).where(eq(analyticsCache.cacheKey, key));
 
       // Remove from memory
       this.memoryCache.delete(key);
-
     } catch (error) {
       console.error("Error deleting from cache:", error);
       throw error;
@@ -199,7 +207,7 @@ export class InvitationAnalyticsCache {
       const now = new Date();
 
       // Clean database
-      const deletedEntries = await db
+      const _deletedEntries = await db
         .delete(analyticsCache)
         .where(lte(analyticsCache.expiresAt, now));
 
@@ -232,7 +240,7 @@ export class InvitationAnalyticsCache {
       const dbStats = await db
         .select({
           count: sql<number>`count(*)`,
-          totalHits: sql<number>`sum(${analyticsCache.hitCount})`
+          totalHits: sql<number>`sum(${analyticsCache.hitCount})`,
         })
         .from(analyticsCache);
 
@@ -243,7 +251,9 @@ export class InvitationAnalyticsCache {
         memoryEntries: this.memoryCache.size,
         dbEntries: totalEntries,
         hitRate: totalEntries > 0 ? (totalHits / totalEntries) * 100 : 0,
-        memoryUsage: Math.round((this.memoryCache.size / this.options.maxSize) * 100)
+        memoryUsage: Math.round(
+          (this.memoryCache.size / this.options.maxSize) * 100,
+        ),
       };
     } catch (error) {
       console.error("Error getting cache stats:", error);
@@ -251,7 +261,7 @@ export class InvitationAnalyticsCache {
         memoryEntries: 0,
         dbEntries: 0,
         hitRate: 0,
-        memoryUsage: 0
+        memoryUsage: 0,
       };
     }
   }
@@ -264,7 +274,7 @@ export class InvitationAnalyticsCache {
     let hash = 0;
     for (let i = 0; i < queryString.length; i++) {
       const char = queryString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36);
@@ -276,8 +286,9 @@ export class InvitationAnalyticsCache {
   private enforceMemoryCacheSize(): void {
     if (this.memoryCache.size >= this.options.maxSize) {
       // Remove least recently used entries
-      const entries = Array.from(this.memoryCache.entries())
-        .sort((a, b) => a[1].lastAccessed.getTime() - b[1].lastAccessed.getTime());
+      const entries = Array.from(this.memoryCache.entries()).sort(
+        (a, b) => a[1].lastAccessed.getTime() - b[1].lastAccessed.getTime(),
+      );
 
       const toRemove = Math.floor(this.options.maxSize * 0.2); // Remove 20%
       for (let i = 0; i < toRemove && i < entries.length; i++) {
@@ -291,9 +302,9 @@ export class InvitationAnalyticsCache {
  * Real-time analytics update hook for React components
  */
 export function useRealtimeAnalytics<T>(
-  cacheKey: string,
+  _cacheKey: string,
   fetcher: () => Promise<T>,
-  interval: number = 30000 // 30 seconds default
+  interval: number = 30000, // 30 seconds default
 ): {
   data: T | null;
   loading: boolean;
@@ -314,9 +325,8 @@ export function useRealtimeAnalytics<T>(
       const result = await fetcher();
       setData(result);
       setLastUpdated(new Date());
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      setError(err instanceof Error ? err.message : "Failed to fetch data");
     } finally {
       setLoading(false);
     }
@@ -343,14 +353,12 @@ export function useRealtimeAnalytics<T>(
  */
 export const cacheKeys = {
   invitationAnalytics: (period?: string, filters?: Record<string, any>) =>
-    `invitation_analytics:${period || '30d'}:${JSON.stringify(filters || {})}`,
+    `invitation_analytics:${period || "30d"}:${JSON.stringify(filters || {})}`,
 
   performanceMetrics: (from: Date, to: Date) =>
     `performance_metrics:${from.toISOString()}:${to.toISOString()}`,
 
-  invitationTrends: (days: number) =>
-    `invitation_trends:${days}`,
+  invitationTrends: (days: number) => `invitation_trends:${days}`,
 
-  rolePerformance: (period: string) =>
-    `role_performance:${period}`
+  rolePerformance: (period: string) => `role_performance:${period}`,
 };

@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 /**
  * TODO: Manager Dashboard Implementation Checklist
@@ -59,15 +65,15 @@ export default function ManagerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              +2 new this month
-            </p>
+            <p className="text-xs text-muted-foreground">+2 new this month</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Approvals
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">5</div>
@@ -79,19 +85,21 @@ export default function ManagerDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Projects
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">
-              3 due this week
-            </p>
+            <p className="text-xs text-muted-foreground">3 due this week</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Performance</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Team Performance
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">94%</div>
@@ -117,21 +125,27 @@ export default function ManagerDashboard() {
               <span className="text-sm text-muted-foreground">
                 Sarah Johnson requested profile update
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">1h ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                1h ago
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline">New Login</Badge>
               <span className="text-sm text-muted-foreground">
                 Mike Chen logged in from new device
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">2h ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                2h ago
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline">Project Complete</Badge>
               <span className="text-sm text-muted-foreground">
                 Q4 Budget Analysis completed by team
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">4h ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                4h ago
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -139,9 +153,7 @@ export default function ManagerDashboard() {
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Manager Actions</CardTitle>
-            <CardDescription>
-              Quick access to management tools
-            </CardDescription>
+            <CardDescription>Quick access to management tools</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button className="w-full justify-start" variant="outline">
@@ -181,7 +193,9 @@ export default function ManagerDashboard() {
                 </p>
               </div>
               <div className="space-x-2">
-                <Button size="sm" variant="outline">Review</Button>
+                <Button size="sm" variant="outline">
+                  Review
+                </Button>
                 <Button size="sm">Approve</Button>
               </div>
             </div>
@@ -194,7 +208,9 @@ export default function ManagerDashboard() {
                 </p>
               </div>
               <div className="space-x-2">
-                <Button size="sm" variant="outline">Review</Button>
+                <Button size="sm" variant="outline">
+                  Review
+                </Button>
                 <Button size="sm">Approve</Button>
               </div>
             </div>

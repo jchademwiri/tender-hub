@@ -1,14 +1,26 @@
-'use client';
+"use client";
 
 /**
  * Visit Tracker Context Provider
  * Provides visit tracking state and functionality across the application
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { useVisitTracker, useVisitStats, useVisitedPages } from '@/hooks/use-visit-tracker';
-import { VisitStats, DailyVisits } from '@/lib/visit-utils';
-import { getCachedLocalStorage } from '@/lib/performance-utils';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  useVisitedPages,
+  useVisitStats,
+  useVisitTracker,
+} from "@/hooks/use-visit-tracker";
+import { getCachedLocalStorage } from "@/lib/performance-utils";
+import type { DailyVisits, VisitStats } from "@/lib/visit-utils";
 
 interface VisitTrackerContextType {
   // Core tracking functions
@@ -35,7 +47,9 @@ interface VisitTrackerContextType {
   setEnabled: (enabled: boolean) => void;
 }
 
-const VisitTrackerContext = createContext<VisitTrackerContextType | undefined>(undefined);
+const VisitTrackerContext = createContext<VisitTrackerContextType | undefined>(
+  undefined,
+);
 
 /**
  * Props for VisitTrackerProvider
@@ -52,7 +66,7 @@ interface VisitTrackerProviderProps {
 export function VisitTrackerProvider({
   children,
   enabled = true,
-  autoTrack = true
+  autoTrack = true,
 }: VisitTrackerProviderProps) {
   const [isEnabled, setIsEnabled] = useState(enabled);
 
@@ -76,64 +90,72 @@ export function VisitTrackerProvider({
   const [todayVisits, setTodayVisits] = useState<DailyVisits | null>(null);
 
   // State for forcing refresh of visited pages
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [_refreshTrigger, setRefreshTrigger] = useState(0);
 
   /**
-    * Refresh today's visits data with caching
-    */
-   const refreshTodayVisits = useCallback(() => {
-     try {
-       // Use cached data first to improve performance
-       const cachedVisits = getCachedLocalStorage('visit-tracker-visits', 10000) as any[]; // 10 second cache
-       if (cachedVisits && Array.isArray(cachedVisits)) {
-         const today = new Date().toISOString().split('T')[0];
-         const todayVisitsData = cachedVisits.find((day: any) => day.date === today);
-         if (todayVisitsData) {
-           setTodayVisits(todayVisitsData);
-           return;
-         }
-       }
+   * Refresh today's visits data with caching
+   */
+  const refreshTodayVisits = useCallback(() => {
+    try {
+      // Use cached data first to improve performance
+      const cachedVisits = getCachedLocalStorage(
+        "visit-tracker-visits",
+        10000,
+      ) as any[]; // 10 second cache
+      if (cachedVisits && Array.isArray(cachedVisits)) {
+        const today = new Date().toISOString().split("T")[0];
+        const todayVisitsData = cachedVisits.find(
+          (day: any) => day.date === today,
+        );
+        if (todayVisitsData) {
+          setTodayVisits(todayVisitsData);
+          return;
+        }
+      }
 
-       // Import the function dynamically to avoid SSR issues
-       import('@/lib/visit-utils').then(({ getTodayVisits }) => {
-         const visits = getTodayVisits();
-         setTodayVisits(visits);
-       });
-     } catch (err) {
-       console.warn('Failed to refresh today\'s visits:', err);
-     }
-   }, []);
+      // Import the function dynamically to avoid SSR issues
+      import("@/lib/visit-utils").then(({ getTodayVisits }) => {
+        const visits = getTodayVisits();
+        setTodayVisits(visits);
+      });
+    } catch (err) {
+      console.warn("Failed to refresh today's visits:", err);
+    }
+  }, []);
 
   /**
-    * Refresh visit statistics
-    */
-   const refreshStats = useCallback(() => {
-     // The useVisitStats hook handles its own refresh
-     // We can force a re-render by updating a dummy state if needed
-     refreshTodayVisits();
-   }, [refreshTodayVisits]);
+   * Refresh visit statistics
+   */
+  const refreshStats = useCallback(() => {
+    // The useVisitStats hook handles its own refresh
+    // We can force a re-render by updating a dummy state if needed
+    refreshTodayVisits();
+  }, [refreshTodayVisits]);
 
-   /**
-    * Refresh visited pages by triggering a refresh of the underlying data
-    */
-   const refreshVisitedPages = useCallback(() => {
-     // Force refresh by updating the refresh trigger
-     // This will cause the useVisitedPages hook to refetch data
-     setRefreshTrigger(prev => prev + 1);
+  /**
+   * Refresh visited pages by triggering a refresh of the underlying data
+   */
+  const refreshVisitedPages = useCallback(() => {
+    // Force refresh by updating the refresh trigger
+    // This will cause the useVisitedPages hook to refetch data
+    setRefreshTrigger((prev) => prev + 1);
 
-     // Also refresh today's visits as they are related
-     refreshTodayVisits();
-   }, [refreshTodayVisits]);
+    // Also refresh today's visits as they are related
+    refreshTodayVisits();
+  }, [refreshTodayVisits]);
 
   /**
    * Enhanced track visit function that respects enabled state
    */
-  const contextTrackVisit = useCallback((url: string): boolean => {
-    if (!isEnabled) {
-      return false;
-    }
-    return trackVisit(url);
-  }, [isEnabled, trackVisit]);
+  const contextTrackVisit = useCallback(
+    (url: string): boolean => {
+      if (!isEnabled) {
+        return false;
+      }
+      return trackVisit(url);
+    },
+    [isEnabled, trackVisit],
+  );
 
   /**
    * Enhanced track current page function that respects enabled state
@@ -173,7 +195,7 @@ export function VisitTrackerProvider({
    * Auto-tracking effect
    */
   useEffect(() => {
-    if (autoTrack && isEnabled && typeof window !== 'undefined') {
+    if (autoTrack && isEnabled && typeof window !== "undefined") {
       // Track initial page load
       contextTrackCurrentPage();
 
@@ -192,7 +214,7 @@ export function VisitTrackerProvider({
    * Listen for browser navigation events
    */
   useEffect(() => {
-    if (!autoTrack || !isEnabled || typeof window === 'undefined') {
+    if (!autoTrack || !isEnabled || typeof window === "undefined") {
       return;
     }
 
@@ -201,52 +223,54 @@ export function VisitTrackerProvider({
     };
 
     // Listen for browser back/forward navigation
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [autoTrack, isEnabled, contextTrackCurrentPage]);
 
   // Memoize context value to prevent unnecessary re-renders
-  const contextValue: VisitTrackerContextType = useMemo(() => ({
-    // Core functions
-    trackVisit: contextTrackVisit,
-    trackCurrentPage: contextTrackCurrentPage,
+  const contextValue: VisitTrackerContextType = useMemo(
+    () => ({
+      // Core functions
+      trackVisit: contextTrackVisit,
+      trackCurrentPage: contextTrackCurrentPage,
 
-    // Data
-    stats,
-    todayVisits,
-    visitedPages,
+      // Data
+      stats,
+      todayVisits,
+      visitedPages,
 
-    // Utility functions
-    clearAllData: contextClearAllData,
-    refreshStats,
-    refreshVisitedPages,
+      // Utility functions
+      clearAllData: contextClearAllData,
+      refreshStats,
+      refreshVisitedPages,
 
-    // State
-    isTracking,
-    lastTrackedUrl,
-    error,
+      // State
+      isTracking,
+      lastTrackedUrl,
+      error,
 
-    // Settings
-    isEnabled,
-    setEnabled: setIsEnabled,
-  }), [
-    contextTrackVisit,
-    contextTrackCurrentPage,
-    stats,
-    todayVisits,
-    visitedPages,
-    contextClearAllData,
-    refreshStats,
-    refreshVisitedPages,
-    isTracking,
-    lastTrackedUrl,
-    error,
-    isEnabled,
-    setIsEnabled,
-  ]);
+      // Settings
+      isEnabled,
+      setEnabled: setIsEnabled,
+    }),
+    [
+      contextTrackVisit,
+      contextTrackCurrentPage,
+      stats,
+      todayVisits,
+      visitedPages,
+      contextClearAllData,
+      refreshStats,
+      refreshVisitedPages,
+      isTracking,
+      lastTrackedUrl,
+      error,
+      isEnabled,
+    ],
+  );
 
   return (
     <VisitTrackerContext.Provider value={contextValue}>
@@ -263,7 +287,9 @@ export function useVisitTrackerContext(): VisitTrackerContextType {
   const context = useContext(VisitTrackerContext);
 
   if (context === undefined) {
-    throw new Error('useVisitTrackerContext must be used within a VisitTrackerProvider');
+    throw new Error(
+      "useVisitTrackerContext must be used within a VisitTrackerProvider",
+    );
   }
 
   return context;

@@ -1,34 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  InvitationTrendsChart,
-  ConversionRateChart,
-  RolePerformanceChart,
-  InvitationStatusChart,
-  ResponseTimeChart
-} from "./invitation-charts";
-import {
-  Mail,
-  Clock,
-  CheckCircle,
+  Activity,
   AlertCircle,
-  XCircle,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Download,
   Calendar,
-  BarChart3,
-  PieChart,
-  Activity
+  Clock,
+  Download,
+  Mail,
+  TrendingUp,
+  Users,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ConversionRateChart,
+  InvitationStatusChart,
+  InvitationTrendsChart,
+  ResponseTimeChart,
+  RolePerformanceChart,
+} from "./invitation-charts";
 
 interface InvitationAnalytics {
   totalInvitations: number;
@@ -74,11 +80,13 @@ interface InvitationAnalyticsDashboardProps {
   className?: string;
 }
 
-export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsDashboardProps) {
+export function InvitationAnalyticsDashboard({
+  className,
+}: InvitationAnalyticsDashboardProps) {
   const [analytics, setAnalytics] = useState<InvitationAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("30d");
-  const [exportFormat, setExportFormat] = useState("csv");
+  const [exportFormat, _setExportFormat] = useState("csv");
 
   // Fetch analytics data
   const fetchAnalytics = async (range = timeRange) => {
@@ -86,7 +94,7 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       setLoading(true);
       const params = new URLSearchParams({
         analytics: "true",
-        period: range
+        period: range,
       });
 
       const response = await fetch(`/api/admin/invitations/enhanced?${params}`);
@@ -110,7 +118,7 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       const params = new URLSearchParams({
         analytics: "true",
         export: format,
-        period: timeRange
+        period: timeRange,
       });
 
       const response = await fetch(`/api/admin/invitations/enhanced?${params}`);
@@ -119,12 +127,12 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       }
 
       // For CSV, trigger download
-      if (format === 'csv') {
+      if (format === "csv") {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `invitation-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `invitation-analytics-${new Date().toISOString().split("T")[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -139,7 +147,7 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
 
   useEffect(() => {
     fetchAnalytics();
-  }, [timeRange]);
+  }, [fetchAnalytics]);
 
   if (loading) {
     return (
@@ -177,9 +185,12 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       {/* Header with controls */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Invitation Analytics</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Invitation Analytics
+          </h2>
           <p className="text-muted-foreground">
-            Insights into invitation system performance and user onboarding metrics
+            Insights into invitation system performance and user onboarding
+            metrics
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -204,11 +215,15 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Invitations</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Invitations
+            </CardTitle>
             <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(analytics.totalInvitations)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(analytics.totalInvitations)}
+            </div>
             <p className="text-xs text-muted-foreground">
               {formatNumber(analytics.recentInvitations)} in last 30 days
             </p>
@@ -217,24 +232,33 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Conversion Rate
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPercentage(analytics.conversionRate)}</div>
+            <div className="text-2xl font-bold">
+              {formatPercentage(analytics.conversionRate)}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {formatNumber(analytics.acceptedInvitations)} of {formatNumber(analytics.totalInvitations)} accepted
+              {formatNumber(analytics.acceptedInvitations)} of{" "}
+              {formatNumber(analytics.totalInvitations)} accepted
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Avg Response Time
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatHours(analytics.averageResponseTime)}</div>
+            <div className="text-2xl font-bold">
+              {formatHours(analytics.averageResponseTime)}
+            </div>
             <p className="text-xs text-muted-foreground">
               Time to accept invitation
             </p>
@@ -247,10 +271,10 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(analytics.pendingInvitations)}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting response
-            </p>
+            <div className="text-2xl font-bold">
+              {formatNumber(analytics.pendingInvitations)}
+            </div>
+            <p className="text-xs text-muted-foreground">Awaiting response</p>
           </CardContent>
         </Card>
       </div>
@@ -272,12 +296,21 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
               <div key={role} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-medium capitalize">{role}</span>
-                  <Badge variant={stats.rate > 50 ? "default" : stats.rate > 25 ? "secondary" : "destructive"}>
+                  <Badge
+                    variant={
+                      stats.rate > 50
+                        ? "default"
+                        : stats.rate > 25
+                          ? "secondary"
+                          : "destructive"
+                    }
+                  >
                     {formatPercentage(stats.rate)}
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {formatNumber(stats.accepted)} of {formatNumber(stats.sent)} accepted
+                  {formatNumber(stats.accepted)} of {formatNumber(stats.sent)}{" "}
+                  accepted
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
                   <div
@@ -295,9 +328,9 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       <div className="grid gap-6 md:grid-cols-2">
         <InvitationTrendsChart data={analytics.trends} />
         <ConversionRateChart
-          data={analytics.trends.map(trend => ({
+          data={analytics.trends.map((trend) => ({
             date: trend.date,
-            conversionRate: trend.conversionRate
+            conversionRate: trend.conversionRate,
           }))}
         />
       </div>
@@ -314,11 +347,11 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
       </div>
 
       {/* Response Time Chart - only show if we have data */}
-      {analytics.trends.some(trend => trend.total > 0) && (
+      {analytics.trends.some((trend) => trend.total > 0) && (
         <ResponseTimeChart
-          data={analytics.trends.map(trend => ({
+          data={analytics.trends.map((trend) => ({
             date: trend.date,
-            averageResponseTime: analytics.averageResponseTime // Using overall average for now
+            averageResponseTime: analytics.averageResponseTime, // Using overall average for now
           }))}
         />
       )}
@@ -336,8 +369,11 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {analytics.weeklyStats.slice(0, 5).map((week, index) => (
-              <div key={week.week} className="flex items-center justify-between p-3 border rounded-lg">
+            {analytics.weeklyStats.slice(0, 5).map((week, _index) => (
+              <div
+                key={week.week}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div className="flex-1">
                   <div className="font-medium">
                     Week of {new Date(week.week).toLocaleDateString()}
@@ -347,7 +383,9 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold">{formatPercentage(week.conversionRate)}</div>
+                  <div className="font-bold">
+                    {formatPercentage(week.conversionRate)}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     {formatNumber(week.accepted)} accepted
                   </div>
@@ -372,11 +410,14 @@ export function InvitationAnalyticsDashboard({ className }: InvitationAnalyticsD
         <CardContent>
           <div className="space-y-3">
             {analytics.events.slice(0, 5).map((event, index) => (
-              <div key={`${event.type}-${index}`} className="flex items-center justify-between p-2 border-l-2 border-muted pl-3">
+              <div
+                key={`${event.type}-${index}`}
+                className="flex items-center justify-between p-2 border-l-2 border-muted pl-3"
+              >
                 <div>
                   <div className="font-medium">{event.name}</div>
                   <div className="text-sm text-muted-foreground capitalize">
-                    {event.type.replace('_', ' ')}
+                    {event.type.replace("_", " ")}
                   </div>
                 </div>
                 <Badge variant="outline">

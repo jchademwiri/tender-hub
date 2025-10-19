@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireManager, getCurrentUser } from "@/lib/auth-utils";
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { profileUpdateRequest, user } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { z } from "zod";
+import { getCurrentUser, requireManager } from "@/lib/auth-utils";
 
 /**
  * TODO: Manager Approvals API Implementation Checklist
@@ -34,24 +34,26 @@ export async function GET(request: NextRequest) {
     // await requireManager();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
     const status = searchParams.get("status") || "pending"; // pending, approved, rejected
     const type = searchParams.get("type"); // profile_update, role_change, etc.
 
     // TODO: Get current manager's user ID
-    const currentUserId = "manager-id"; // TODO: Get from session
+    const _currentUserId = "manager-id"; // TODO: Get from session
 
     // TODO: Build approvals query
-    let query = db.select({
-      id: profileUpdateRequest.id,
-      userId: profileUpdateRequest.userId,
-      requestedChanges: profileUpdateRequest.requestedChanges,
-      status: profileUpdateRequest.status,
-      requestedAt: profileUpdateRequest.requestedAt,
-      // TODO: Join with user table to get requester details
-      // TODO: Add manager assignment logic
-    }).from(profileUpdateRequest);
+    const query = db
+      .select({
+        id: profileUpdateRequest.id,
+        userId: profileUpdateRequest.userId,
+        requestedChanges: profileUpdateRequest.requestedChanges,
+        status: profileUpdateRequest.status,
+        requestedAt: profileUpdateRequest.requestedAt,
+        // TODO: Join with user table to get requester details
+        // TODO: Add manager assignment logic
+      })
+      .from(profileUpdateRequest);
 
     // TODO: Add status filtering
     if (status) {
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
     // query = query.orderBy(desc(profileUpdateRequest.requestedAt));
 
     // TODO: Add pagination
-    const offset = (page - 1) * limit;
+    const _offset = (page - 1) * limit;
     // query = query.limit(limit).offset(offset);
 
     // TODO: Execute query
@@ -82,15 +84,14 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: approvals.length, // TODO: Get actual count
-        pages: Math.ceil(approvals.length / limit)
-      }
+        pages: Math.ceil(approvals.length / limit),
+      },
     });
-
   } catch (error) {
     console.error("Manager approvals API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -104,44 +105,47 @@ export async function POST(request: NextRequest) {
     const { approvalId, action, reason } = body;
 
     // Validate input using Zod schema
-    const validation = z.object({
-      approvalId: z.string().uuid("Invalid approval ID format"),
-      action: z.enum(["approve", "reject"]),
-      reason: z.string().optional()
-    }).safeParse({ approvalId, action, reason });
+    const validation = z
+      .object({
+        approvalId: z.string().uuid("Invalid approval ID format"),
+        action: z.enum(["approve", "reject"]),
+        reason: z.string().optional(),
+      })
+      .safeParse({ approvalId, action, reason });
 
     if (!validation.success) {
       return NextResponse.json(
         {
           error: "Validation failed",
-          details: validation.error.format()
+          details: validation.error.format(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const validatedData = validation.data;
 
     // Get the approval request with user details
-    const approval = await db.select({
-      id: profileUpdateRequest.id,
-      userId: profileUpdateRequest.userId,
-      requestedChanges: profileUpdateRequest.requestedChanges,
-      status: profileUpdateRequest.status,
-      requestedAt: profileUpdateRequest.requestedAt,
-      // Join with user table to get requester details
-      userEmail: user.email,
-      userName: user.name
-    })
-    .from(profileUpdateRequest)
-    .leftJoin(user, eq(profileUpdateRequest.userId, user.id))
-    .where(eq(profileUpdateRequest.id, validatedData.approvalId))
-    .limit(1);
+    const approval = await db
+      .select({
+        id: profileUpdateRequest.id,
+        userId: profileUpdateRequest.userId,
+        requestedChanges: profileUpdateRequest.requestedChanges,
+        status: profileUpdateRequest.status,
+        requestedAt: profileUpdateRequest.requestedAt,
+        // Join with user table to get requester details
+        userEmail: user.email,
+        userName: user.name,
+      })
+      .from(profileUpdateRequest)
+      .leftJoin(user, eq(profileUpdateRequest.userId, user.id))
+      .where(eq(profileUpdateRequest.id, validatedData.approvalId))
+      .limit(1);
 
     if (approval.length === 0) {
       return NextResponse.json(
         { error: "Approval request not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -150,7 +154,7 @@ export async function POST(request: NextRequest) {
     if (approvalRequest.status !== "pending") {
       return NextResponse.json(
         { error: "Approval request has already been processed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -163,19 +167,21 @@ export async function POST(request: NextRequest) {
       const changes = approvalRequest.requestedChanges as Record<string, any>;
 
       // Update user record with approved changes
-      await db.update(user)
+      await db
+        .update(user)
         .set({
           ...changes,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(user.id, approvalRequest.userId));
 
       // Update approval request status
-      await db.update(profileUpdateRequest)
+      await db
+        .update(profileUpdateRequest)
         .set({
           status: "approved",
           reviewedBy: currentUser.id,
-          reviewedAt: new Date()
+          reviewedAt: new Date(),
         })
         .where(eq(profileUpdateRequest.id, validatedData.approvalId));
 
@@ -190,9 +196,9 @@ export async function POST(request: NextRequest) {
             metadata: {
               approvedChanges: changes,
               approverName: currentUser.name,
-              approverEmail: currentUser.email
-            }
-          }
+              approverEmail: currentUser.email,
+            },
+          },
         );
       });
 
@@ -202,26 +208,26 @@ export async function POST(request: NextRequest) {
         approvedBy: {
           id: currentUser.id,
           name: currentUser.name,
-          email: currentUser.email
-        }
+          email: currentUser.email,
+        },
       });
-
     } else if (validatedData.action === "reject") {
       // Validate rejection reason if required
       if (!validatedData.reason || validatedData.reason.trim() === "") {
         return NextResponse.json(
           { error: "Rejection reason is required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       // Update approval request status
-      await db.update(profileUpdateRequest)
+      await db
+        .update(profileUpdateRequest)
         .set({
           status: "rejected",
           reviewedBy: currentUser.id,
           reviewedAt: new Date(),
-          rejectionReason: validatedData.reason.trim()
+          rejectionReason: validatedData.reason.trim(),
         })
         .where(eq(profileUpdateRequest.id, validatedData.approvalId));
 
@@ -237,9 +243,9 @@ export async function POST(request: NextRequest) {
             metadata: {
               rejectedByName: currentUser.name,
               rejectedByEmail: currentUser.email,
-              rejectionReason: validatedData.reason || "No reason provided"
-            }
-          }
+              rejectionReason: validatedData.reason || "No reason provided",
+            },
+          },
         );
       });
 
@@ -248,12 +254,11 @@ export async function POST(request: NextRequest) {
         rejectedBy: {
           id: currentUser.id,
           name: currentUser.name,
-          email: currentUser.email
+          email: currentUser.email,
         },
-        reason: validatedData.reason
+        reason: validatedData.reason,
       });
     }
-
   } catch (error) {
     console.error("Manager approval action API error:", error);
 
@@ -270,9 +275,9 @@ export async function POST(request: NextRequest) {
             {
               userId: currentUser.id,
               metadata: {
-                error: error instanceof Error ? error.message : "Unknown error"
-              }
-            }
+                error: error instanceof Error ? error.message : "Unknown error",
+              },
+            },
           );
         });
       }
@@ -282,7 +287,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

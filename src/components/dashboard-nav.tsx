@@ -1,28 +1,29 @@
-"use client"
+"use client";
 
-import React, { memo, useMemo, useCallback, useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import {
+  Building2,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Settings2,
+  User,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import type React from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { NavItemWithIndicator } from "@/components/nav-item-with-indicator";
 import { useVisitTrackerContext } from "@/contexts/visit-tracker-context";
-import { authClient } from "@/lib/auth-client";
-import { getCurrentUser, isAdmin, setCurrentUser } from "@/lib/auth-utils-client";
 import type { User as DatabaseUser } from "@/db/schema";
-import {
-  LayoutDashboard,
-  Building2,
-  User,
-  LogOut,
-  Home,
-  Settings2,
-  Users
-} from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { isAdmin } from "@/lib/auth-utils-client";
 
 const DashboardNav = memo(() => {
   const pathname = usePathname();
   const router = useRouter();
   const { isEnabled } = useVisitTrackerContext();
-  const [currentUser, setCurrentUser] = useState<DatabaseUser | null>(null);
+  const [currentUser, _setCurrentUser] = useState<DatabaseUser | null>(null);
 
   // Initialize current user on component mount
   useEffect(() => {
@@ -44,20 +45,20 @@ const DashboardNav = memo(() => {
       href: "/dashboard",
       label: "Dashboard",
       icon: <LayoutDashboard className="w-4 h-4" />,
-      ariaLabel: "Go to Dashboard"
+      ariaLabel: "Go to Dashboard",
     },
     {
       href: "/publishers",
       label: "Publishers",
       icon: <Building2 className="w-4 h-4" />,
-      ariaLabel: "Go to Publishers"
+      ariaLabel: "Go to Publishers",
     },
     {
       href: "/profile",
       label: "Profile",
       icon: <User className="w-4 h-4" />,
-      ariaLabel: "Go to Profile"
-    }
+      ariaLabel: "Go to Profile",
+    },
   ];
 
   // Memoize navigation items to prevent recreation on every render
@@ -70,7 +71,7 @@ const DashboardNav = memo(() => {
         href: "/admin",
         label: "Admin",
         icon: <Settings2 className="w-4 h-4" />,
-        ariaLabel: "Go to Admin Panel"
+        ariaLabel: "Go to Admin Panel",
       });
     }
 
@@ -79,7 +80,7 @@ const DashboardNav = memo(() => {
         href: "/manager",
         label: "Manager",
         icon: <Users className="w-4 h-4" />,
-        ariaLabel: "Go to Manager Panel"
+        ariaLabel: "Go to Manager Panel",
       });
     }
 
@@ -87,28 +88,35 @@ const DashboardNav = memo(() => {
   }, [currentUser]);
 
   // Memoize logout handler to prevent unnecessary re-renders of logout button
-  const handleLogout = useCallback(async (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
+  const handleLogout = useCallback(
+    async (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
 
-    try {
-      // Call Better Auth signOut method
-      await authClient.signOut();
+      try {
+        // Call Better Auth signOut method
+        await authClient.signOut();
 
-      // Clear any client-side state if needed
-      // (Better Auth handles session cleanup automatically)
+        // Clear any client-side state if needed
+        // (Better Auth handles session cleanup automatically)
 
-      // Redirect to home page or login page
-      router.push('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Optionally show error message to user
-      // For now, we'll still redirect even if signOut fails
-      router.push('/');
-    }
-  }, [router]);
+        // Redirect to home page or login page
+        router.push("/");
+      } catch (error) {
+        console.error("Logout failed:", error);
+        // Optionally show error message to user
+        // For now, we'll still redirect even if signOut fails
+        router.push("/");
+      }
+    },
+    [router],
+  );
 
   // Show only on dashboard and publishers paths
-  if (!pathname.startsWith('/dashboard') && pathname !== '/publishers' && pathname !== '/profile') {
+  if (
+    !pathname.startsWith("/dashboard") &&
+    pathname !== "/publishers" &&
+    pathname !== "/profile"
+  ) {
     return null;
   }
 
@@ -154,6 +162,6 @@ const DashboardNav = memo(() => {
   );
 });
 
-DashboardNav.displayName = 'DashboardNav';
+DashboardNav.displayName = "DashboardNav";
 
 export default DashboardNav;

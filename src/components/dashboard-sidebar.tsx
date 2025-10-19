@@ -1,16 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import {
-  BookOpen,
-  Command,
-  Home,
-  Settings2,
-  User,
-  Users,
-} from "lucide-react"
+import { BookOpen, Command, Home, Settings2, User, Users } from "lucide-react";
+import type * as React from "react";
 
-import { NavUser } from "@/components/nav-user"
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -19,14 +12,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 interface DashboardSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }
 
 const navMain = [
@@ -60,7 +53,7 @@ const navMain = [
     url: "/manager",
     icon: Users,
   },
-]
+];
 
 export function DashboardSidebar({ user, ...props }: DashboardSidebarProps) {
   return (
@@ -100,5 +93,5 @@ export function DashboardSidebar({ user, ...props }: DashboardSidebarProps) {
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

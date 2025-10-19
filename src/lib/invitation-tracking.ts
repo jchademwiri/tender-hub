@@ -1,6 +1,6 @@
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { events, invitation } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
 import { AuditLogger } from "@/lib/audit-logger";
 
 export interface InvitationEventData {
@@ -13,13 +13,23 @@ export interface InvitationEventData {
 
 export interface InvitationTrackingService {
   trackSent(data: InvitationEventData): Promise<void>;
-  trackOpened(data: InvitationEventData & { ipAddress?: string; userAgent?: string }): Promise<void>;
-  trackAccepted(data: InvitationEventData & { userId: string; acceptedAt?: Date }): Promise<void>;
+  trackOpened(
+    data: InvitationEventData & { ipAddress?: string; userAgent?: string },
+  ): Promise<void>;
+  trackAccepted(
+    data: InvitationEventData & { userId: string; acceptedAt?: Date },
+  ): Promise<void>;
   trackExpired(data: InvitationEventData): Promise<void>;
-  trackCancelled(data: InvitationEventData & { cancelledBy: string }): Promise<void>;
+  trackCancelled(
+    data: InvitationEventData & { cancelledBy: string },
+  ): Promise<void>;
   trackDeclined(data: InvitationEventData): Promise<void>;
   trackResent(data: InvitationEventData & { resentBy: string }): Promise<void>;
-  updateInvitationStatus(invitationId: string, status: string, additionalData?: Record<string, any>): Promise<void>;
+  updateInvitationStatus(
+    invitationId: string,
+    status: string,
+    additionalData?: Record<string, any>,
+  ): Promise<void>;
 }
 
 /**
@@ -38,7 +48,7 @@ export const invitationTracking: InvitationTrackingService = {
           invitationId: data.invitationId,
           email: data.email,
           role: data.role,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
@@ -50,34 +60,40 @@ export const invitationTracking: InvitationTrackingService = {
         country: data.metadata?.country,
         region: data.metadata?.region,
         city: data.metadata?.city,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "sent", {
         sentAt: new Date(),
         emailSubject: data.metadata?.emailSubject,
-        emailTemplate: data.metadata?.emailTemplate
+        emailTemplate: data.metadata?.emailTemplate,
       });
 
       // Log audit event
-      await AuditLogger.logInvitationCreated(data.email, data.role || "user", data.inviterId || "system", {
-        userId: data.inviterId,
-        resourceId: data.invitationId,
-        metadata: {
-          action: "invitation_sent",
-          invitationId: data.invitationId,
-          ...data.metadata
-        }
-      });
-
+      await AuditLogger.logInvitationCreated(
+        data.email,
+        data.role || "user",
+        data.inviterId || "system",
+        {
+          userId: data.inviterId,
+          resourceId: data.invitationId,
+          metadata: {
+            action: "invitation_sent",
+            invitationId: data.invitationId,
+            ...data.metadata,
+          },
+        },
+      );
     } catch (error) {
       console.error("Failed to track invitation sent event:", error);
       throw error;
     }
   },
 
-  async trackOpened(data: InvitationEventData & { ipAddress?: string; userAgent?: string }): Promise<void> {
+  async trackOpened(
+    data: InvitationEventData & { ipAddress?: string; userAgent?: string },
+  ): Promise<void> {
     try {
       // Track the event
       await db.insert(events).values({
@@ -88,7 +104,7 @@ export const invitationTracking: InvitationTrackingService = {
           invitationId: data.invitationId,
           email: data.email,
           role: data.role,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
@@ -100,21 +116,22 @@ export const invitationTracking: InvitationTrackingService = {
         country: data.metadata?.country,
         region: data.metadata?.region,
         city: data.metadata?.city,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "opened", {
-        openedAt: new Date()
+        openedAt: new Date(),
       });
-
     } catch (error) {
       console.error("Failed to track invitation opened event:", error);
       throw error;
     }
   },
 
-  async trackAccepted(data: InvitationEventData & { userId: string; acceptedAt?: Date }): Promise<void> {
+  async trackAccepted(
+    data: InvitationEventData & { userId: string; acceptedAt?: Date },
+  ): Promise<void> {
     try {
       const acceptedAt = data.acceptedAt || new Date();
 
@@ -122,7 +139,9 @@ export const invitationTracking: InvitationTrackingService = {
       let responseTime: number | undefined;
       if (data.metadata?.createdAt) {
         const createdAt = new Date(data.metadata.createdAt);
-        responseTime = Math.floor((acceptedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60)); // hours
+        responseTime = Math.floor(
+          (acceptedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60),
+        ); // hours
       }
 
       // Track the event
@@ -137,7 +156,7 @@ export const invitationTracking: InvitationTrackingService = {
           role: data.role,
           newUserId: data.userId,
           responseTime,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
@@ -149,13 +168,13 @@ export const invitationTracking: InvitationTrackingService = {
         country: data.metadata?.country,
         region: data.metadata?.region,
         city: data.metadata?.city,
-        timestamp: acceptedAt
+        timestamp: acceptedAt,
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "accepted", {
         acceptedAt,
-        responseTime
+        responseTime,
       });
 
       // Log audit event
@@ -166,10 +185,9 @@ export const invitationTracking: InvitationTrackingService = {
           action: "invitation_accepted",
           invitationId: data.invitationId,
           responseTime,
-          ...data.metadata
-        }
+          ...data.metadata,
+        },
       });
-
     } catch (error) {
       console.error("Failed to track invitation accepted event:", error);
       throw error;
@@ -188,27 +206,28 @@ export const invitationTracking: InvitationTrackingService = {
           invitationId: data.invitationId,
           email: data.email,
           role: data.role,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
         userAgent: data.metadata?.userAgent,
         ipAddress: data.metadata?.ipAddress,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "expired", {
-        expiredAt: new Date()
+        expiredAt: new Date(),
       });
-
     } catch (error) {
       console.error("Failed to track invitation expired event:", error);
       throw error;
     }
   },
 
-  async trackCancelled(data: InvitationEventData & { cancelledBy: string }): Promise<void> {
+  async trackCancelled(
+    data: InvitationEventData & { cancelledBy: string },
+  ): Promise<void> {
     try {
       // Track the event
       await db.insert(events).values({
@@ -221,31 +240,35 @@ export const invitationTracking: InvitationTrackingService = {
           email: data.email,
           role: data.role,
           cancelledBy: data.cancelledBy,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
         userAgent: data.metadata?.userAgent,
         ipAddress: data.metadata?.ipAddress,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "cancelled", {
-        cancelledAt: new Date()
+        cancelledAt: new Date(),
       });
 
       // Log audit event
-      await AuditLogger.logInvitationCancelled(data.email, data.invitationId, data.cancelledBy, {
-        userId: data.cancelledBy,
-        resourceId: data.invitationId,
-        metadata: {
-          action: "invitation_cancelled",
-          invitationId: data.invitationId,
-          ...data.metadata
-        }
-      });
-
+      await AuditLogger.logInvitationCancelled(
+        data.email,
+        data.invitationId,
+        data.cancelledBy,
+        {
+          userId: data.cancelledBy,
+          resourceId: data.invitationId,
+          metadata: {
+            action: "invitation_cancelled",
+            invitationId: data.invitationId,
+            ...data.metadata,
+          },
+        },
+      );
     } catch (error) {
       console.error("Failed to track invitation cancelled event:", error);
       throw error;
@@ -263,27 +286,28 @@ export const invitationTracking: InvitationTrackingService = {
           invitationId: data.invitationId,
           email: data.email,
           role: data.role,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
         userAgent: data.metadata?.userAgent,
         ipAddress: data.metadata?.ipAddress,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "declined", {
-        declinedAt: new Date()
+        declinedAt: new Date(),
       });
-
     } catch (error) {
       console.error("Failed to track invitation declined event:", error);
       throw error;
     }
   },
 
-  async trackResent(data: InvitationEventData & { resentBy: string }): Promise<void> {
+  async trackResent(
+    data: InvitationEventData & { resentBy: string },
+  ): Promise<void> {
     try {
       // Track the event
       await db.insert(events).values({
@@ -296,43 +320,51 @@ export const invitationTracking: InvitationTrackingService = {
           email: data.email,
           role: data.role,
           resentBy: data.resentBy,
-          ...data.metadata
+          ...data.metadata,
         },
         pageUrl: data.metadata?.pageUrl,
         pagePath: data.metadata?.pagePath,
         userAgent: data.metadata?.userAgent,
         ipAddress: data.metadata?.ipAddress,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // Update invitation record
       await this.updateInvitationStatus(data.invitationId, "sent", {
         sentAt: new Date(),
-        resentAt: new Date()
+        resentAt: new Date(),
       });
 
       // Log audit event
-      await AuditLogger.logInvitationResent(data.email, data.invitationId, data.resentBy, {
-        userId: data.resentBy,
-        resourceId: data.invitationId,
-        metadata: {
-          action: "invitation_resent",
-          invitationId: data.invitationId,
-          ...data.metadata
-        }
-      });
-
+      await AuditLogger.logInvitationResent(
+        data.email,
+        data.invitationId,
+        data.resentBy,
+        {
+          userId: data.resentBy,
+          resourceId: data.invitationId,
+          metadata: {
+            action: "invitation_resent",
+            invitationId: data.invitationId,
+            ...data.metadata,
+          },
+        },
+      );
     } catch (error) {
       console.error("Failed to track invitation resent event:", error);
       throw error;
     }
   },
 
-  async updateInvitationStatus(invitationId: string, status: string, additionalData?: Record<string, any>): Promise<void> {
+  async updateInvitationStatus(
+    invitationId: string,
+    status: string,
+    additionalData?: Record<string, any>,
+  ): Promise<void> {
     try {
       const updateData: Record<string, any> = {
         status,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Map status to specific timestamp fields
@@ -366,12 +398,11 @@ export const invitationTracking: InvitationTrackingService = {
         .update(invitation)
         .set(updateData)
         .where(eq(invitation.id, invitationId));
-
     } catch (error) {
       console.error("Failed to update invitation status:", error);
       throw error;
     }
-  }
+  },
 };
 
 /**
@@ -390,11 +421,14 @@ export const invitationTrackingUtils = {
   } {
     const url = new URL(request.url);
     return {
-      ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+      ipAddress:
+        request.headers.get("x-forwarded-for") ||
+        request.headers.get("x-real-ip") ||
+        "unknown",
       userAgent: request.headers.get("user-agent") || undefined,
       sessionId: request.headers.get("x-session-id") || undefined,
       pageUrl: url.href,
-      pagePath: url.pathname
+      pagePath: url.pathname,
     };
   },
 
@@ -405,7 +439,7 @@ export const invitationTrackingUtils = {
     return {
       timestamp: new Date().toISOString(),
       source: "invitation_system",
-      ...additionalData
+      ...additionalData,
     };
   },
 
@@ -421,8 +455,8 @@ export const invitationTrackingUtils = {
         .where(
           and(
             eq(invitation.status, "pending"),
-            sql`${invitation.expiresAt} < ${now.toISOString()}`
-          )
+            sql`${invitation.expiresAt} < ${now.toISOString()}`,
+          ),
         );
 
       let processedCount = 0;
@@ -435,8 +469,8 @@ export const invitationTrackingUtils = {
           inviterId: inv.inviterId || undefined,
           metadata: invitationTrackingUtils.generateMetadata({
             originalStatus: inv.status,
-            expiredAt: now.toISOString()
-          })
+            expiredAt: now.toISOString(),
+          }),
         });
         processedCount++;
       }
@@ -446,5 +480,5 @@ export const invitationTrackingUtils = {
       console.error("Failed to process expired invitations:", error);
       throw error;
     }
-  }
+  },
 };

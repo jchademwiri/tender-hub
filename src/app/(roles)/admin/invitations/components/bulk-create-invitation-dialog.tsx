@@ -1,22 +1,50 @@
 "use client";
 
-import { useState, useRef } from "react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Download,
+  FileText,
+  Loader2,
+  Plus,
+  Trash2,
+  Upload,
+  Users,
+  XCircle,
+} from "lucide-react";
+import Papa, { type ParseResult } from "papaparse";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, Mail, AlertCircle, Upload, Plus, Trash2, Download, Users, FileText, CheckCircle, XCircle } from "lucide-react";
-import { toast } from "sonner";
-import { invitationValidationHelpers, invitationErrorMessages } from "@/lib/validations/invitations";
-import Papa, { ParseResult } from "papaparse";
+import { invitationValidationHelpers } from "@/lib/validations/invitations";
 
 interface BulkInvitationData {
   email: string;
@@ -45,11 +73,13 @@ export function BulkCreateInvitationDialog({
 }: BulkCreateInvitationDialogProps) {
   const [activeTab, setActiveTab] = useState("manual");
   const [invitations, setInvitations] = useState<BulkInvitationData[]>([
-    { email: "", role: "user" }
+    { email: "", role: "user" },
   ]);
-  const [globalRole, setGlobalRole] = useState<"admin" | "manager" | "user">("user");
+  const [globalRole, setGlobalRole] = useState<"admin" | "manager" | "user">(
+    "user",
+  );
   const [sendEmail, setSendEmail] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ProcessingResult | null>(null);
@@ -58,24 +88,28 @@ export function BulkCreateInvitationDialog({
 
   // Add new invitation row
   const addInvitation = () => {
-    setInvitations(prev => [...prev, { email: "", role: globalRole }]);
+    setInvitations((prev) => [...prev, { email: "", role: globalRole }]);
   };
 
   // Remove invitation row
   const removeInvitation = (index: number) => {
     if (invitations.length > 1) {
-      setInvitations(prev => prev.filter((_, i) => i !== index));
+      setInvitations((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
   // Update invitation data
-  const updateInvitation = (index: number, field: keyof BulkInvitationData, value: string) => {
-    setInvitations(prev => prev.map((inv, i) =>
-      i === index ? { ...inv, [field]: value } : inv
-    ));
+  const updateInvitation = (
+    index: number,
+    field: keyof BulkInvitationData,
+    value: string,
+  ) => {
+    setInvitations((prev) =>
+      prev.map((inv, i) => (i === index ? { ...inv, [field]: value } : inv)),
+    );
     // Clear errors when user starts typing
     if (errors[`invitation-${index}-${field}`]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [`invitation-${index}-${field}`]: "",
       }));
@@ -87,7 +121,7 @@ export function BulkCreateInvitationDialog({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.csv')) {
+    if (!file.name.endsWith(".csv")) {
       toast.error("Please select a CSV file");
       return;
     }
@@ -108,13 +142,15 @@ export function BulkCreateInvitationDialog({
           if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             parsedInvitations.push({
               email: email.trim(),
-              role: ['admin', 'manager', 'user'].includes(role) ? role as "admin" | "manager" | "user" : globalRole,
+              role: ["admin", "manager", "user"].includes(role)
+                ? (role as "admin" | "manager" | "user")
+                : globalRole,
               name: name.trim() || undefined,
               department: department.trim() || undefined,
               customMessage: customMessage.trim() || undefined,
             });
           } else {
-            setErrors(prev => ({
+            setErrors((prev) => ({
               ...prev,
               [`csv-${index}`]: `Invalid email format: ${email}`,
             }));
@@ -123,7 +159,9 @@ export function BulkCreateInvitationDialog({
 
         if (parsedInvitations.length > 0) {
           setInvitations(parsedInvitations);
-          toast.success(`Imported ${parsedInvitations.length} invitations from CSV`);
+          toast.success(
+            `Imported ${parsedInvitations.length} invitations from CSV`,
+          );
         } else {
           toast.error("No valid invitations found in CSV file");
         }
@@ -131,18 +169,19 @@ export function BulkCreateInvitationDialog({
       error: (error: Papa.ParseError) => {
         toast.error("Failed to parse CSV file");
         console.error("CSV parse error:", error);
-      }
+      },
     } as any);
   };
 
   // Download CSV template
   const downloadTemplate = () => {
-    const csvContent = "email,role,name,department,customMessage\nuser@example.com,user,John Doe,Engineering,Welcome to our platform!";
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent =
+      "email,role,name,department,customMessage\nuser@example.com,user,John Doe,Engineering,Welcome to our platform!";
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'invitation-template.csv';
+    a.download = "invitation-template.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -157,7 +196,8 @@ export function BulkCreateInvitationDialog({
       if (!invitation.email.trim()) {
         newErrors[`invitation-${index}-email`] = "Email is required";
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invitation.email)) {
-        newErrors[`invitation-${index}-email`] = "Please enter a valid email address";
+        newErrors[`invitation-${index}-email`] =
+          "Please enter a valid email address";
       }
 
       if (!invitation.role) {
@@ -166,10 +206,13 @@ export function BulkCreateInvitationDialog({
     });
 
     // Check for duplicate emails
-    const emailCounts = invitations.reduce((acc, inv) => {
-      acc[inv.email] = (acc[inv.email] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const emailCounts = invitations.reduce(
+      (acc, inv) => {
+        acc[inv.email] = (acc[inv.email] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     Object.entries(emailCounts).forEach(([email, count]) => {
       if (count > 1) {
@@ -207,11 +250,12 @@ export function BulkCreateInvitationDialog({
 
         const batchPromises = batch.map(async (invitation) => {
           try {
-            const validationResult = invitationValidationHelpers.safeValidateCreateInvitation({
-              email: invitation.email,
-              role: invitation.role,
-              sendEmail,
-            });
+            const validationResult =
+              invitationValidationHelpers.safeValidateCreateInvitation({
+                email: invitation.email,
+                role: invitation.role,
+                sendEmail,
+              });
 
             if (!validationResult.success) {
               throw new Error("Validation failed");
@@ -235,19 +279,22 @@ export function BulkCreateInvitationDialog({
             return {
               success: false,
               email: invitation.email,
-              error: error instanceof Error ? error.message : "Unknown error"
+              error: error instanceof Error ? error.message : "Unknown error",
             } as const;
           }
         });
 
         const batchResults = await Promise.all(batchPromises);
 
-        batchResults.forEach(result => {
+        batchResults.forEach((result) => {
           if (result.success) {
             successCount++;
           } else {
             failedCount++;
-            processErrors.push({ email: result.email, error: result.error || "Unknown error" });
+            processErrors.push({
+              email: result.email,
+              error: result.error || "Unknown error",
+            });
           }
         });
 
@@ -263,13 +310,16 @@ export function BulkCreateInvitationDialog({
       });
 
       if (successCount > 0) {
-        toast.success(`Successfully created ${successCount} invitation${successCount !== 1 ? 's' : ''}`);
+        toast.success(
+          `Successfully created ${successCount} invitation${successCount !== 1 ? "s" : ""}`,
+        );
       }
 
       if (failedCount > 0) {
-        toast.error(`Failed to create ${failedCount} invitation${failedCount !== 1 ? 's' : ''}`);
+        toast.error(
+          `Failed to create ${failedCount} invitation${failedCount !== 1 ? "s" : ""}`,
+        );
       }
-
     } catch (error) {
       console.error("Bulk invitation processing error:", error);
       toast.error("Failed to process invitations");
@@ -344,7 +394,12 @@ export function BulkCreateInvitationDialog({
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                   <div className="space-y-2">
                     <Label htmlFor="globalRole">Default Role</Label>
-                    <Select value={globalRole} onValueChange={(value: "admin" | "manager" | "user") => setGlobalRole(value)}>
+                    <Select
+                      value={globalRole}
+                      onValueChange={(value: "admin" | "manager" | "user") =>
+                        setGlobalRole(value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -358,7 +413,10 @@ export function BulkCreateInvitationDialog({
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label htmlFor="sendEmail" className="text-sm font-medium">
+                      <Label
+                        htmlFor="sendEmail"
+                        className="text-sm font-medium"
+                      >
                         Send Email Notifications
                       </Label>
                       <div className="text-sm text-muted-foreground">
@@ -376,13 +434,22 @@ export function BulkCreateInvitationDialog({
                 {/* Invitation Rows */}
                 <div className="space-y-3">
                   {invitations.map((invitation, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-3 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <Input
                           placeholder="user@example.com"
                           value={invitation.email}
-                          onChange={(e) => updateInvitation(index, "email", e.target.value)}
-                          className={errors[`invitation-${index}-email`] ? "border-destructive" : ""}
+                          onChange={(e) =>
+                            updateInvitation(index, "email", e.target.value)
+                          }
+                          className={
+                            errors[`invitation-${index}-email`]
+                              ? "border-destructive"
+                              : ""
+                          }
                         />
                         {errors[`invitation-${index}-email`] && (
                           <p className="text-sm text-destructive mt-1">
@@ -394,9 +461,17 @@ export function BulkCreateInvitationDialog({
                       <div className="w-32">
                         <Select
                           value={invitation.role}
-                          onValueChange={(value: "admin" | "manager" | "user") => updateInvitation(index, "role", value)}
+                          onValueChange={(
+                            value: "admin" | "manager" | "user",
+                          ) => updateInvitation(index, "role", value)}
                         >
-                          <SelectTrigger className={errors[`invitation-${index}-role`] ? "border-destructive" : ""}>
+                          <SelectTrigger
+                            className={
+                              errors[`invitation-${index}-role`]
+                                ? "border-destructive"
+                                : ""
+                            }
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -425,7 +500,8 @@ export function BulkCreateInvitationDialog({
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                  {invitations.length} invitation{invitations.length !== 1 ? 's' : ''} ready to send
+                  {invitations.length} invitation
+                  {invitations.length !== 1 ? "s" : ""} ready to send
                 </div>
               </CardContent>
             </Card>
@@ -444,7 +520,8 @@ export function BulkCreateInvitationDialog({
                   <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      Upload a CSV file with columns: email, role, name, department, customMessage
+                      Upload a CSV file with columns: email, role, name,
+                      department, customMessage
                     </p>
                     <Button
                       variant="outline"
@@ -464,7 +541,11 @@ export function BulkCreateInvitationDialog({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadTemplate}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download Template
                   </Button>
@@ -474,15 +555,17 @@ export function BulkCreateInvitationDialog({
                 </div>
 
                 {/* Show CSV errors */}
-                {Object.keys(errors).some(key => key.startsWith('csv-')) && (
+                {Object.keys(errors).some((key) => key.startsWith("csv-")) && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
                       <div className="space-y-1">
                         {Object.entries(errors)
-                          .filter(([key]) => key.startsWith('csv-'))
+                          .filter(([key]) => key.startsWith("csv-"))
                           .map(([key, error]) => (
-                            <div key={key} className="text-sm">{error}</div>
+                            <div key={key} className="text-sm">
+                              {error}
+                            </div>
                           ))}
                       </div>
                     </AlertDescription>
@@ -497,8 +580,12 @@ export function BulkCreateInvitationDialog({
         {processing && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Processing invitations...</span>
-              <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+              <span className="text-sm font-medium">
+                Processing invitations...
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {Math.round(progress)}%
+              </span>
             </div>
             <Progress value={progress} className="w-full" />
           </div>
@@ -516,15 +603,11 @@ export function BulkCreateInvitationDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">
-                    {results.success} successful
-                  </span>
+                  <span className="text-sm">{results.success} successful</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4 text-red-600" />
-                  <span className="text-sm">
-                    {results.failed} failed
-                  </span>
+                  <span className="text-sm">{results.failed} failed</span>
                 </div>
               </div>
 
@@ -533,7 +616,10 @@ export function BulkCreateInvitationDialog({
                   <Label className="text-sm font-medium">Errors:</Label>
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {results.errors.map((error, index) => (
-                      <div key={index} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                      <div
+                        key={index}
+                        className="text-sm text-destructive bg-destructive/10 p-2 rounded"
+                      >
                         <strong>{error.email}:</strong> {error.error}
                       </div>
                     ))}
@@ -561,15 +647,13 @@ export function BulkCreateInvitationDialog({
               disabled={loading || processing || invitations.length === 0}
             >
               {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {processing ? "Processing..." : `Create ${invitations.length} Invitation${invitations.length !== 1 ? 's' : ''}`}
+              {processing
+                ? "Processing..."
+                : `Create ${invitations.length} Invitation${invitations.length !== 1 ? "s" : ""}`}
             </Button>
           )}
 
-          {results && (
-            <Button onClick={handleSuccess}>
-              Done
-            </Button>
-          )}
+          {results && <Button onClick={handleSuccess}>Done</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,15 +1,28 @@
 "use client";
 
+import { AlertCircle, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
 import { invitationValidationHelpers } from "@/lib/validations/invitations";
 
 interface CreateInvitationDialogProps {
@@ -33,13 +46,13 @@ export function CreateInvitationDialog({
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [field]: "",
       }));
@@ -76,13 +89,17 @@ export function CreateInvitationDialog({
 
     try {
       // Validate using the schema
-      console.log("🔍 Validating form data:", JSON.stringify(formData, null, 2));
-      const validationResult = invitationValidationHelpers.safeValidateCreateInvitation(formData);
+      console.log(
+        "🔍 Validating form data:",
+        JSON.stringify(formData, null, 2),
+      );
+      const validationResult =
+        invitationValidationHelpers.safeValidateCreateInvitation(formData);
 
       if (!validationResult.success) {
         console.error("❌ Validation failed:", validationResult.error.issues);
         const newErrors: Record<string, string> = {};
-        validationResult.error.issues.forEach(issue => {
+        validationResult.error.issues.forEach((issue) => {
           if (issue.path[0]) {
             newErrors[issue.path[0] as string] = issue.message;
           }
@@ -93,7 +110,10 @@ export function CreateInvitationDialog({
       console.log("✅ Validation passed");
 
       // Submit the invitation
-      console.log("🚀 Sending invitation data:", JSON.stringify(validationResult.data, null, 2));
+      console.log(
+        "🚀 Sending invitation data:",
+        JSON.stringify(validationResult.data, null, 2),
+      );
 
       // Include credentials to ensure cookies are sent
       const response = await fetch("/api/admin/invitations", {
@@ -109,13 +129,19 @@ export function CreateInvitationDialog({
       console.log("📡 Response status text:", response.statusText);
 
       console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries()),
+      );
 
       if (!response.ok) {
         let errorData;
         try {
           errorData = await response.json();
-          console.log("Error response data:", JSON.stringify(errorData, null, 2));
+          console.log(
+            "Error response data:",
+            JSON.stringify(errorData, null, 2),
+          );
         } catch (parseError) {
           console.error("Failed to parse error response:", parseError);
           // If we can't parse the error response, create a generic error
@@ -123,19 +149,23 @@ export function CreateInvitationDialog({
         }
 
         if (response.status === 409) {
-          setErrors({ email: errorData.error || "User with this email already exists" });
+          setErrors({
+            email: errorData.error || "User with this email already exists",
+          });
           return;
         }
 
         if (response.status === 429) {
-          setErrors({ email: errorData.error || "Daily invitation limit reached" });
+          setErrors({
+            email: errorData.error || "Daily invitation limit reached",
+          });
           return;
         }
 
         throw new Error(errorData.error || "Failed to create invitation");
       }
 
-      const result = await response.json();
+      const _result = await response.json();
 
       toast.success("Invitation created successfully!");
 
@@ -150,10 +180,11 @@ export function CreateInvitationDialog({
       // Close dialog and notify parent
       onOpenChange(false);
       onSuccess();
-
     } catch (error) {
       console.error("Error creating invitation:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create invitation");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create invitation",
+      );
     } finally {
       setLoading(false);
     }
@@ -181,7 +212,8 @@ export function CreateInvitationDialog({
             Create New Invitation
           </DialogTitle>
           <DialogDescription>
-            Send an invitation to a new user. They will receive an email with instructions to join the platform.
+            Send an invitation to a new user. They will receive an email with
+            instructions to join the platform.
           </DialogDescription>
         </DialogHeader>
 
@@ -216,7 +248,9 @@ export function CreateInvitationDialog({
               onValueChange={(value) => handleInputChange("role", value)}
               disabled={loading}
             >
-              <SelectTrigger className={errors.role ? "border-destructive" : ""}>
+              <SelectTrigger
+                className={errors.role ? "border-destructive" : ""}
+              >
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
@@ -248,7 +282,9 @@ export function CreateInvitationDialog({
             <Switch
               id="sendEmail"
               checked={formData.sendEmail}
-              onCheckedChange={(checked) => handleInputChange("sendEmail", checked)}
+              onCheckedChange={(checked) =>
+                handleInputChange("sendEmail", checked)
+              }
               disabled={loading}
             />
           </div>

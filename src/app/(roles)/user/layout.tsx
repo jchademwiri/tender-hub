@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import DashboardNav from "@/components/dashboard-nav";
-import { requireAuth } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 /**
@@ -52,9 +51,7 @@ export default async function UserLayout({
     <ErrorBoundary>
       <section className="antialiased py-20 overflow-x-hidden">
         <DashboardNav />
-        <section>
-          {children}
-        </section>
+        <section>{children}</section>
       </section>
     </ErrorBoundary>
   );

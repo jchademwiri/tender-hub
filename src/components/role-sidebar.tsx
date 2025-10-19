@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 /**
  * TODO: Role-Based Sidebar Implementation Checklist
@@ -67,7 +67,9 @@ export function RoleSidebar({ role, className }: SidebarProps) {
   const navigationItems = getNavigationItems(role);
 
   return (
-    <div className={cn("flex h-full flex-col border-r bg-background", className)}>
+    <div
+      className={cn("flex h-full flex-col border-r bg-background", className)}
+    >
       {/* Header */}
       <div className="flex h-16 items-center justify-between px-4">
         {!collapsed && (
@@ -128,7 +130,8 @@ interface SidebarNavItemProps {
 
 function SidebarNavItem({ item, pathname, collapsed }: SidebarNavItemProps) {
   const [expanded, setExpanded] = useState(false);
-  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+  const isActive =
+    pathname === item.href || pathname.startsWith(`${item.href}/`);
 
   if (item.children) {
     return (
@@ -137,7 +140,7 @@ function SidebarNavItem({ item, pathname, collapsed }: SidebarNavItemProps) {
           variant={isActive ? "secondary" : "ghost"}
           className={cn(
             "w-full justify-start h-10",
-            collapsed && "justify-center px-2"
+            collapsed && "justify-center px-2",
           )}
           onClick={() => setExpanded(!expanded)}
         >
@@ -183,7 +186,7 @@ function SidebarNavItem({ item, pathname, collapsed }: SidebarNavItemProps) {
         variant={isActive ? "secondary" : "ghost"}
         className={cn(
           "w-full justify-start h-10",
-          collapsed && "justify-center px-2"
+          collapsed && "justify-center px-2",
         )}
       >
         {item.icon && <item.icon className="mr-2 h-4 w-4" />}
@@ -202,7 +205,13 @@ function SidebarNavItem({ item, pathname, collapsed }: SidebarNavItemProps) {
   );
 }
 
-function RoleQuickActions({ role, collapsed }: { role: string; collapsed: boolean }) {
+function RoleQuickActions({
+  role,
+  collapsed,
+}: {
+  role: string;
+  collapsed: boolean;
+}) {
   const actions = getQuickActions(role);
 
   if (collapsed) {
@@ -227,10 +236,14 @@ function RoleQuickActions({ role, collapsed }: { role: string; collapsed: boolea
   return (
     <div className="space-y-1">
       {actions.map((action) => (
-        <Button key={action.label} variant="outline" size="sm" className="w-full justify-start" asChild>
-          <Link href={action.href}>
-            {action.label}
-          </Link>
+        <Button
+          key={action.label}
+          variant="outline"
+          size="sm"
+          className="w-full justify-start"
+          asChild
+        >
+          <Link href={action.href}>{action.label}</Link>
         </Button>
       ))}
     </div>
@@ -244,7 +257,7 @@ function getNavigationItems(role: string): NavigationItem[] {
       {
         title: "Dashboard",
         href: "/admin",
-        badge: "New"
+        badge: "New",
       },
       {
         title: "User Management",
@@ -252,8 +265,8 @@ function getNavigationItems(role: string): NavigationItem[] {
         children: [
           { title: "All Users", href: "/admin/users" },
           { title: "Invite Users", href: "/admin/users/invite" },
-          { title: "User Roles", href: "/admin/users/roles" }
-        ]
+          { title: "User Roles", href: "/admin/users/roles" },
+        ],
       },
       {
         title: "System",
@@ -261,9 +274,9 @@ function getNavigationItems(role: string): NavigationItem[] {
         children: [
           { title: "Health Monitor", href: "/admin/system/health" },
           { title: "Audit Logs", href: "/admin/system/audit" },
-          { title: "Settings", href: "/admin/system/settings" }
-        ]
-      }
+          { title: "Settings", href: "/admin/system/settings" },
+        ],
+      },
     ],
     manager: [
       {
@@ -276,14 +289,14 @@ function getNavigationItems(role: string): NavigationItem[] {
         children: [
           { title: "My Team", href: "/manager/team" },
           { title: "Team Analytics", href: "/manager/team/analytics" },
-          { title: "Team Reports", href: "/manager/team/reports" }
-        ]
+          { title: "Team Reports", href: "/manager/team/reports" },
+        ],
       },
       {
         title: "Approvals",
         href: "/manager/approvals",
-        badge: "3" // TODO: Get actual pending count
-      }
+        badge: "3", // TODO: Get actual pending count
+      },
     ],
     user: [
       {
@@ -296,14 +309,14 @@ function getNavigationItems(role: string): NavigationItem[] {
         children: [
           { title: "My Profile", href: "/user/profile" },
           { title: "Account Settings", href: "/user/profile/settings" },
-          { title: "Privacy", href: "/user/profile/privacy" }
-        ]
+          { title: "Privacy", href: "/user/profile/privacy" },
+        ],
       },
       {
         title: "Activity",
         href: "/user/activity",
-      }
-    ]
+      },
+    ],
   };
 
   return baseItems[role] || [];
@@ -313,7 +326,7 @@ function getRoleDisplayName(role: string): string {
   const displayNames: Record<string, string> = {
     admin: "Administrator",
     manager: "Manager",
-    user: "User"
+    user: "User",
   };
   return displayNames[role] || role;
 }
@@ -323,7 +336,7 @@ function getRoleStats(role: string): string {
   const stats: Record<string, string> = {
     admin: "5 users online • 2 pending invites",
     manager: "12 team members • 3 approvals pending",
-    user: "Profile 85% complete • 23 recent actions"
+    user: "Profile 85% complete • 23 recent actions",
   };
   return stats[role] || "";
 }
@@ -333,18 +346,18 @@ function getQuickActions(role: string): { label: string; href: string }[] {
     admin: [
       { label: "Invite User", href: "/admin/users/invite" },
       { label: "View Audit Log", href: "/admin/system/audit" },
-      { label: "System Health", href: "/admin/system/health" }
+      { label: "System Health", href: "/admin/system/health" },
     ],
     manager: [
       { label: "Review Approvals", href: "/manager/approvals" },
       { label: "Team Report", href: "/manager/team/reports" },
-      { label: "Invite Member", href: "/manager/team/invite" }
+      { label: "Invite Member", href: "/manager/team/invite" },
     ],
     user: [
       { label: "Update Profile", href: "/user/profile" },
       { label: "Download Data", href: "/user/profile/privacy" },
-      { label: "Get Help", href: "/user/help" }
-    ]
+      { label: "Get Help", href: "/user/help" },
+    ],
   };
   return actions[role] || [];
 }

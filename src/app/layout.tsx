@@ -2,13 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { VisitTrackerProvider } from "@/contexts/visit-tracker-context";
-import { VisitTrackerWithSuspense } from "@/components/visit-tracker";
 import { ErrorBoundary } from "@/components/error-boundary";
-
-
-
+import { Toaster } from "@/components/ui/sonner";
+import { VisitTrackerWithSuspense } from "@/components/visit-tracker";
+import { VisitTrackerProvider } from "@/contexts/visit-tracker-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,9 +44,7 @@ export default function RootLayout({
               trackUnload={true}
               enabled={true}
             />
-            <main className="">
-              {children}
-            </main>
+            <main className="">{children}</main>
             <Toaster />
           </VisitTrackerProvider>
         </ErrorBoundary>

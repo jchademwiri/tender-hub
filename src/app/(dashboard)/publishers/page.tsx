@@ -1,7 +1,6 @@
-import React from 'react';
-import { getAllPublishers } from '@/server/publisher';
-import Link from 'next/link';
-import { PublishersTableClient } from './publishers-table-client';
+import Link from "next/link";
+import { getAllPublishers } from "@/server/publisher";
+import { PublishersTableClient } from "./publishers-table-client";
 
 export default async function PublishersPage() {
   const publishers = await getAllPublishers();
@@ -10,7 +9,9 @@ export default async function PublishersPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tender Publishers</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Tender Publishers
+          </h1>
           <p className="text-muted-foreground">
             Manage and view all tender publishers in the system
           </p>

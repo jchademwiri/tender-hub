@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdminForAPI } from "@/lib/auth-utils";
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/db";
 import { invitation, user } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { AuditLogger } from "@/lib/audit-logger";
+import { requireAdminForAPI } from "@/lib/auth-utils";
 import { sendEmail } from "@/lib/email";
-import { z } from "zod";
 
 /**
  * Resend invitation validation schema
@@ -20,7 +20,7 @@ const resendInvitationSchema = z.object({
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate and authorize admin user
@@ -36,12 +36,12 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Invalid input data",
-          details: validationResult.error.issues.map(issue => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
+          details: validationResult.error.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          })),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +64,7 @@ export async function POST(
     if (existingInvitation.length === 0) {
       return NextResponse.json(
         { error: "Invitation not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -74,15 +74,18 @@ export async function POST(
     if (invite.status !== "pending") {
       return NextResponse.json(
         { error: "Can only resend pending invitations" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Check if invitation has expired
     if (new Date() > new Date(invite.expiresAt)) {
       return NextResponse.json(
-        { error: "Cannot resend expired invitation. Please create a new invitation." },
-        { status: 400 }
+        {
+          error:
+            "Cannot resend expired invitation. Please create a new invitation.",
+        },
+        { status: 400 },
       );
     }
 
@@ -104,11 +107,16 @@ export async function POST(
     const inviter = inviterUsers[0];
 
     // Generate invitation URL - use localhost for development
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const baseUrl = isDevelopment ? 'http://localhost:3000' : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const baseUrl = isDevelopment
+      ? "http://localhost:3000"
+      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const invitationUrl = `${baseUrl}/invite/${invite.id}`;
-    console.log('Generated invitation URL:', invitationUrl);
-    console.log('Environment:', { NODE_ENV: process.env.NODE_ENV, NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL });
+    console.log("Generated invitation URL:", invitationUrl);
+    console.log("Environment:", {
+      NODE_ENV: process.env.NODE_ENV,
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    });
 
     // Prepare email content
     const baseEmailContent = `
@@ -136,7 +144,10 @@ export async function POST(
       console.log("Invitation email sent successfully to:", invite.email);
     } catch (emailError) {
       console.error("Failed to send invitation email:", emailError);
-      console.error("Email error details:", emailError instanceof Error ? emailError.message : String(emailError));
+      console.error(
+        "Email error details:",
+        emailError instanceof Error ? emailError.message : String(emailError),
+      );
       throw new Error("Failed to send invitation email");
     }
 
@@ -153,14 +164,17 @@ export async function POST(
             customMessage: !!customMessage,
             resentAt: new Date().toISOString(),
             invitationUrl,
-            source: "admin_api"
-          }
-        }
+            source: "admin_api",
+          },
+        },
       );
       console.log("Audit event logged successfully");
     } catch (auditError) {
       console.error("Failed to log audit event:", auditError);
-      console.error("Audit error details:", auditError instanceof Error ? auditError.message : String(auditError));
+      console.error(
+        "Audit error details:",
+        auditError instanceof Error ? auditError.message : String(auditError),
+      );
       // Continue with the response even if audit logging fails
     }
 
@@ -173,56 +187,46 @@ export async function POST(
         status: invite.status,
         resentAt: new Date().toISOString(),
         expiresAt: invite.expiresAt,
-        customMessage: !!customMessage
-      }
+        customMessage: !!customMessage,
+      },
     });
-
   } catch (error) {
     console.error("Admin resend invitation API error:", error);
 
     // Handle specific invitation errors
     if (error instanceof Error) {
       if (error.message.includes("Invitation not found")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 404 });
       }
       if (error.message.includes("Can only resend pending invitations")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
       if (error.message.includes("Cannot resend expired invitation")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
       if (error.message.includes("Inviter not found")) {
         return NextResponse.json(
           { error: "Inviter information not found" },
-          { status: 500 }
+          { status: 500 },
         );
       }
       if (error.message.includes("Failed to send email")) {
         return NextResponse.json(
           { error: "Failed to send invitation email" },
-          { status: 500 }
+          { status: 500 },
         );
       }
-      if (error.message.includes("Unauthorized") || error.message.includes("Insufficient permissions")) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 403 }
-        );
+      if (
+        error.message.includes("Unauthorized") ||
+        error.message.includes("Insufficient permissions")
+      ) {
+        return NextResponse.json({ error: error.message }, { status: 403 });
       }
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

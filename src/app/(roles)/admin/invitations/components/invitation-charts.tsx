@@ -1,9 +1,32 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
-import { TrendingUp, Users, Mail, Clock } from "lucide-react";
+import { Clock, Mail, TrendingUp, Users } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface InvitationTrendsChartProps {
   data: Array<{
@@ -17,7 +40,10 @@ interface InvitationTrendsChartProps {
   className?: string;
 }
 
-export function InvitationTrendsChart({ data, className }: InvitationTrendsChartProps) {
+export function InvitationTrendsChart({
+  data,
+  className,
+}: InvitationTrendsChartProps) {
   const chartConfig = {
     total: {
       label: "Total Sent",
@@ -54,7 +80,12 @@ export function InvitationTrendsChart({ data, className }: InvitationTrendsChart
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              tickFormatter={(value) =>
+                new Date(value).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
             />
             <YAxis />
             <ChartTooltip content={<ChartTooltipContent />} />
@@ -89,7 +120,10 @@ interface ConversionRateChartProps {
   className?: string;
 }
 
-export function ConversionRateChart({ data, className }: ConversionRateChartProps) {
+export function ConversionRateChart({
+  data,
+  className,
+}: ConversionRateChartProps) {
   const chartConfig = {
     conversionRate: {
       label: "Conversion Rate",
@@ -114,20 +148,34 @@ export function ConversionRateChart({ data, className }: ConversionRateChartProp
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              tickFormatter={(value) =>
+                new Date(value).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
             />
             <YAxis tickFormatter={(value) => `${value}%`} />
             <ChartTooltip
-              content={<ChartTooltipContent
-                formatter={(value) => [`${Number(value).toFixed(1)}%`, "Conversion Rate"]}
-              />}
+              content={
+                <ChartTooltipContent
+                  formatter={(value) => [
+                    `${Number(value).toFixed(1)}%`,
+                    "Conversion Rate",
+                  ]}
+                />
+              }
             />
             <Line
               type="monotone"
               dataKey="conversionRate"
               stroke={chartConfig.conversionRate.color}
               strokeWidth={3}
-              dot={{ fill: chartConfig.conversionRate.color, strokeWidth: 2, r: 4 }}
+              dot={{
+                fill: chartConfig.conversionRate.color,
+                strokeWidth: 2,
+                r: 4,
+              }}
             />
           </LineChart>
         </ChartContainer>
@@ -145,7 +193,10 @@ interface RolePerformanceChartProps {
   className?: string;
 }
 
-export function RolePerformanceChart({ data, className }: RolePerformanceChartProps) {
+export function RolePerformanceChart({
+  data,
+  className,
+}: RolePerformanceChartProps) {
   const chartConfig = {
     sent: {
       label: "Sent",
@@ -158,9 +209,24 @@ export function RolePerformanceChart({ data, className }: RolePerformanceChartPr
   };
 
   const roleData = [
-    { role: "Admin", sent: data.admin.sent, accepted: data.admin.accepted, rate: data.admin.rate },
-    { role: "Manager", sent: data.manager.sent, accepted: data.manager.accepted, rate: data.manager.rate },
-    { role: "User", sent: data.user.sent, accepted: data.user.accepted, rate: data.user.rate },
+    {
+      role: "Admin",
+      sent: data.admin.sent,
+      accepted: data.admin.accepted,
+      rate: data.admin.rate,
+    },
+    {
+      role: "Manager",
+      sent: data.manager.sent,
+      accepted: data.manager.accepted,
+      rate: data.manager.rate,
+    },
+    {
+      role: "User",
+      sent: data.user.sent,
+      accepted: data.user.accepted,
+      rate: data.user.rate,
+    },
   ];
 
   return (
@@ -182,7 +248,11 @@ export function RolePerformanceChart({ data, className }: RolePerformanceChartPr
             <YAxis />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="sent" fill={chartConfig.sent.color} name="Sent" />
-            <Bar dataKey="accepted" fill={chartConfig.accepted.color} name="Accepted" />
+            <Bar
+              dataKey="accepted"
+              fill={chartConfig.accepted.color}
+              name="Accepted"
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>
@@ -205,7 +275,7 @@ export function InvitationStatusChart({
   acceptedInvitations,
   expiredInvitations,
   cancelledInvitations,
-  className
+  className,
 }: InvitationStatusChartProps) {
   const chartConfig = {
     pending: {
@@ -227,11 +297,27 @@ export function InvitationStatusChart({
   };
 
   const pieData = [
-    { name: "Pending", value: pendingInvitations, color: chartConfig.pending.color },
-    { name: "Accepted", value: acceptedInvitations, color: chartConfig.accepted.color },
-    { name: "Expired", value: expiredInvitations, color: chartConfig.expired.color },
-    { name: "Cancelled", value: cancelledInvitations, color: chartConfig.cancelled.color },
-  ].filter(item => item.value > 0);
+    {
+      name: "Pending",
+      value: pendingInvitations,
+      color: chartConfig.pending.color,
+    },
+    {
+      name: "Accepted",
+      value: acceptedInvitations,
+      color: chartConfig.accepted.color,
+    },
+    {
+      name: "Expired",
+      value: expiredInvitations,
+      color: chartConfig.expired.color,
+    },
+    {
+      name: "Cancelled",
+      value: cancelledInvitations,
+      color: chartConfig.cancelled.color,
+    },
+  ].filter((item) => item.value > 0);
 
   return (
     <Card className={className}>
@@ -253,7 +339,9 @@ export function InvitationStatusChart({
               cy="50%"
               outerRadius={80}
               dataKey="value"
-              label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
+              label={({ name, value, percent }) =>
+                `${name}: ${value} (${(percent * 100).toFixed(1)}%)`
+              }
             >
               {pieData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
@@ -300,20 +388,34 @@ export function ResponseTimeChart({ data, className }: ResponseTimeChartProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              tickFormatter={(value) =>
+                new Date(value).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
             />
             <YAxis tickFormatter={(value) => `${value}h`} />
             <ChartTooltip
-              content={<ChartTooltipContent
-                formatter={(value) => [`${Number(value).toFixed(1)}h`, "Avg Response Time"]}
-              />}
+              content={
+                <ChartTooltipContent
+                  formatter={(value) => [
+                    `${Number(value).toFixed(1)}h`,
+                    "Avg Response Time",
+                  ]}
+                />
+              }
             />
             <Line
               type="monotone"
               dataKey="averageResponseTime"
               stroke={chartConfig.averageResponseTime.color}
               strokeWidth={2}
-              dot={{ fill: chartConfig.averageResponseTime.color, strokeWidth: 2, r: 3 }}
+              dot={{
+                fill: chartConfig.averageResponseTime.color,
+                strokeWidth: 2,
+                r: 3,
+              }}
             />
           </LineChart>
         </ChartContainer>

@@ -1,24 +1,28 @@
-'use client'
+"use client";
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, AlertCircle, CheckCircle } from "lucide-react"
-import React from "react"
-import { useFormStatus } from "react-dom"
-import { useActionState } from "react"
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface InvitationFormProps {
-  invitationId: string
-  email: string
-  action: (prevState: any, formData: FormData) => Promise<{ error: string } | { success: boolean; message: string; redirectTo: string }>
+  invitationId: string;
+  email: string;
+  action: (
+    prevState: any,
+    formData: FormData,
+  ) => Promise<
+    | { error: string }
+    | { success: boolean; message: string; redirectTo: string }
+  >;
 }
 
 function SubmitButton() {
-  const { pending } = useFormStatus()
+  const { pending } = useFormStatus();
 
   return (
     <Button type="submit" className="w-full" disabled={pending}>
@@ -28,33 +32,37 @@ function SubmitButton() {
           Creating Account...
         </>
       ) : (
-        'Create Account & Accept Invitation'
+        "Create Account & Accept Invitation"
       )}
     </Button>
-  )
+  );
 }
 
-export function InvitationForm({ invitationId, email, action }: InvitationFormProps) {
-  const [state, formAction] = useActionState(action, { error: '' })
-  const router = useRouter()
+export function InvitationForm({
+  invitationId,
+  email,
+  action,
+}: InvitationFormProps) {
+  const [state, formAction] = useActionState(action, { error: "" });
+  const router = useRouter();
 
   // Handle successful form submission and redirect
   useEffect(() => {
-    if ('success' in state && state.success && 'redirectTo' in state) {
-      router.push(state.redirectTo)
+    if ("success" in state && state.success && "redirectTo" in state) {
+      router.push(state.redirectTo);
     }
-  }, [state, router])
+  }, [state, router]);
 
   return (
     <form className="space-y-4" action={formAction}>
-      {'error' in state && state.error && (
+      {"error" in state && state.error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
 
-      {'success' in state && state.success && (
+      {"success" in state && state.success && (
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>{state.message}</AlertDescription>
@@ -114,5 +122,5 @@ export function InvitationForm({ invitationId, email, action }: InvitationFormPr
 
       <SubmitButton />
     </form>
-  )
+  );
 }

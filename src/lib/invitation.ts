@@ -1,7 +1,10 @@
-import { sendEmail } from "@/lib/email";
-import { checkPermission } from "@/lib/permissions";
 import { auth } from "@/lib/auth";
-import { invitationTracking, invitationTrackingUtils } from "@/lib/invitation-tracking";
+import { sendEmail } from "@/lib/email";
+import {
+  invitationTracking,
+  invitationTrackingUtils,
+} from "@/lib/invitation-tracking";
+import { checkPermission } from "@/lib/permissions";
 
 export async function createInvitation({
   email,
@@ -16,7 +19,7 @@ export async function createInvitation({
     // Get current session to verify user exists and get their info
     const { headers } = await import("next/headers");
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: await headers(),
     });
 
     if (!session?.user?.id) {
@@ -71,21 +74,27 @@ export async function createInvitation({
     }
 
     // Create invitation via API
-    const invitationResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const invitationResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          role,
+          sendEmail: false, // We'll handle email sending manually
+        }),
       },
-      body: JSON.stringify({
-        email,
-        role,
-        sendEmail: false // We'll handle email sending manually
-      }),
-    });
+    );
 
     if (!invitationResponse.ok) {
       const errorData = await invitationResponse.json().catch(() => ({}));
-      throw new Error(errorData.error || `Failed to create invitation: ${invitationResponse.statusText}`);
+      throw new Error(
+        errorData.error ||
+          `Failed to create invitation: ${invitationResponse.statusText}`,
+      );
     }
 
     const invitationData = await invitationResponse.json();
@@ -122,8 +131,8 @@ export async function createInvitation({
           emailSubject: `You've been invited to Tender Hub`,
           emailTemplate: "default-invitation",
           invitationUrl,
-          expiresAt: newInvitation.expiresAt
-        })
+          expiresAt: newInvitation.expiresAt,
+        }),
       });
     } catch (trackingError) {
       console.error("Failed to track invitation sent event:", trackingError);
@@ -150,7 +159,10 @@ export async function acceptInvitation({
   name: string;
 }) {
   try {
-    console.log("🔍 DEBUG: Starting invitation acceptance for ID:", invitationId);
+    console.log(
+      "🔍 DEBUG: Starting invitation acceptance for ID:",
+      invitationId,
+    );
 
     // Get invitation details from database directly
     const { db } = await import("@/db");
@@ -183,7 +195,7 @@ export async function acceptInvitation({
       email: invite.email,
       role: invite.role,
       status: invite.status,
-      expiresAt: invite.expiresAt
+      expiresAt: invite.expiresAt,
     });
 
     if (invite.status !== "pending") {
@@ -209,7 +221,12 @@ export async function acceptInvitation({
 
     // Check if user already exists
     const existingUser = await db
-      .select({ id: user.id, email: user.email, role: user.role, status: user.status })
+      .select({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      })
       .from(user)
       .where(eq(user.email, invite.email))
       .limit(1);
@@ -229,7 +246,7 @@ export async function acceptInvitation({
 
       return {
         success: true,
-        redirectTo: `/sign-in?message=invitation-accepted&email=${encodeURIComponent(invite.email)}&info=account-exists`
+        redirectTo: `/sign-in?message=invitation-accepted&email=${encodeURIComponent(invite.email)}&info=account-exists`,
       };
     }
 
@@ -257,13 +274,17 @@ export async function acceptInvitation({
         throw new Error("User creation failed: No user returned from signUp");
       }
 
-      console.log("✅ DEBUG: User created successfully via Better Auth:", signUpResult.user.id);
+      console.log(
+        "✅ DEBUG: User created successfully via Better Auth:",
+        signUpResult.user.id,
+      );
 
       // Update the user with role and status (since Better Auth doesn't handle custom fields in signUp)
       await db
         .update(user)
         .set({
-          role: (invite.role as "owner" | "admin" | "manager" | "user") || "user",
+          role:
+            (invite.role as "owner" | "admin" | "manager" | "user") || "user",
           status: "active" as const,
           emailVerified: true, // Skip verification for invited users
           invitedBy: invite.inviterId,
@@ -286,9 +307,8 @@ export async function acceptInvitation({
 
       return {
         success: true,
-        redirectTo: `/sign-in?message=invitation-accepted&email=${encodeURIComponent(invite.email)}&info=account-created`
+        redirectTo: `/sign-in?message=invitation-accepted&email=${encodeURIComponent(invite.email)}&info=account-created`,
       };
-
     } catch (signUpError: any) {
       console.log("❌ DEBUG: Better Auth signUp exception:", signUpError);
       // Better Auth throws errors directly, so we need to handle them
@@ -297,7 +317,6 @@ export async function acceptInvitation({
       }
       throw signUpError;
     }
-
   } catch (error) {
     console.log("❌ DEBUG: acceptInvitation error:", error);
     // Re-throw with original message if it's already a proper error
@@ -308,22 +327,30 @@ export async function acceptInvitation({
   }
 }
 
-export async function resendInvitation(invitationId: string, requesterId: string) {
+export async function resendInvitation(
+  invitationId: string,
+  requesterId: string,
+) {
   try {
     // Get invitation details via API
-    const invitationResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+    const invitationResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!invitationResponse.ok) {
       throw new Error("Failed to fetch invitation details");
     }
 
     const invitationsData = await invitationResponse.json();
-    const invite = invitationsData.invitations?.find((inv: any) => inv.id === invitationId);
+    const invite = invitationsData.invitations?.find(
+      (inv: any) => inv.id === invitationId,
+    );
 
     if (!invite) {
       throw new Error("Invitation not found");
@@ -334,19 +361,24 @@ export async function resendInvitation(invitationId: string, requesterId: string
     }
 
     // Verify requester permissions
-    const requesterResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+    const requesterResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/users`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!requesterResponse.ok) {
       throw new Error("Failed to verify requester permissions");
     }
 
     const requesterData = await requesterResponse.json();
-    const requester = requesterData.users?.find((u: any) => u.id === requesterId);
+    const requester = requesterData.users?.find(
+      (u: any) => u.id === requesterId,
+    );
 
     if (!requester) {
       throw new Error("Requester not found");
@@ -358,12 +390,15 @@ export async function resendInvitation(invitationId: string, requesterId: string
     }
 
     // Resend invitation via API
-    const resendResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations/${invitationId}/resend`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const resendResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations/${invitationId}/resend`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!resendResponse.ok) {
       const errorData = await resendResponse.json().catch(() => ({}));
@@ -380,48 +415,63 @@ export async function resendInvitation(invitationId: string, requesterId: string
   }
 }
 
-export async function cancelInvitation(invitationId: string, requesterId: string) {
+export async function cancelInvitation(
+  invitationId: string,
+  requesterId: string,
+) {
   try {
     // Get invitation details via API
-    const invitationResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+    const invitationResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!invitationResponse.ok) {
       throw new Error("Failed to fetch invitation details");
     }
 
     const invitationsData = await invitationResponse.json();
-    const invite = invitationsData.invitations?.find((inv: any) => inv.id === invitationId);
+    const invite = invitationsData.invitations?.find(
+      (inv: any) => inv.id === invitationId,
+    );
 
     if (!invite) {
       throw new Error("Invitation not found");
     }
 
     // Verify requester permissions
-    const requesterResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+    const requesterResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/users`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!requesterResponse.ok) {
       throw new Error("Failed to verify requester permissions");
     }
 
     const requesterData = await requesterResponse.json();
-    const requester = requesterData.users?.find((u: any) => u.id === requesterId);
+    const requester = requesterData.users?.find(
+      (u: any) => u.id === requesterId,
+    );
 
     if (!requester) {
       throw new Error("Requester not found");
     }
 
     if (invite.inviterId !== requesterId && requester.role !== "admin") {
-      throw new Error("Only the inviter or an admin can cancel this invitation");
+      throw new Error(
+        "Only the inviter or an admin can cancel this invitation",
+      );
     }
 
     if (invite.status !== "pending") {
@@ -429,12 +479,15 @@ export async function cancelInvitation(invitationId: string, requesterId: string
     }
 
     // Cancel invitation via API
-    const cancelResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations/${invitationId}/cancel`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const cancelResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/invitations/${invitationId}/cancel`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!cancelResponse.ok) {
       const errorData = await cancelResponse.json().catch(() => ({}));

@@ -1,34 +1,43 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Loader2, CheckCircle, AlertCircle, Users, Shield, Settings } from "lucide-react"
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { db } from "@/db"
-import { invitation, user } from "@/db/schema"
-import { eq } from "drizzle-orm"
-import { acceptInvitation } from "@/lib/invitation"
-import { authValidationHelpers, authErrorMessages } from "@/lib/validations/auth"
-import { InvitationForm } from "./invitation-form"
+import { eq } from "drizzle-orm";
+import {
+  AlertCircle,
+  CheckCircle,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { db } from "@/db";
+import { invitation, user } from "@/db/schema";
+import { acceptInvitation } from "@/lib/invitation";
+import { InvitationForm } from "./invitation-form";
 
 // Types for invitation details
 interface InvitationDetails {
-  id: string
-  email: string
-  role: string | null
-  status: string
-  expiresAt: Date
-  inviterName?: string | null
-  inviterEmail?: string | null
+  id: string;
+  email: string;
+  role: string | null;
+  status: string;
+  expiresAt: Date;
+  inviterName?: string | null;
+  inviterEmail?: string | null;
 }
 
 // Server action for fetching invitation details
-async function getInvitationDetails(code: string): Promise<InvitationDetails | null> {
-  'use server'
+async function getInvitationDetails(
+  code: string,
+): Promise<InvitationDetails | null> {
+  "use server";
 
   try {
     const invite = await db
@@ -44,42 +53,47 @@ async function getInvitationDetails(code: string): Promise<InvitationDetails | n
       .from(invitation)
       .leftJoin(user, eq(invitation.inviterId, user.id))
       .where(eq(invitation.id, code))
-      .limit(1)
+      .limit(1);
 
     if (!invite[0]) {
-      return null
+      return null;
     }
 
     return {
       ...invite[0],
       expiresAt: invite[0].expiresAt,
-    }
+    };
   } catch (error) {
-    console.error('Error fetching invitation details:', error)
-    return null
+    console.error("Error fetching invitation details:", error);
+    return null;
   }
 }
 
 // Server action for handling form submission
-async function handleInviteAcceptance(prevState: any, formData: FormData): Promise<{ error: string } | { success: boolean; message: string; redirectTo: string }> {
-  'use server'
+async function handleInviteAcceptance(
+  _prevState: any,
+  formData: FormData,
+): Promise<
+  { error: string } | { success: boolean; message: string; redirectTo: string }
+> {
+  "use server";
 
-  const name = formData.get('name') as string
-  const password = formData.get('password') as string
-  const confirmPassword = formData.get('confirmPassword') as string
-  const invitationId = formData.get('invitationId') as string
+  const name = formData.get("name") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+  const invitationId = formData.get("invitationId") as string;
 
   // Basic validation
   if (!name || !password || !confirmPassword || !invitationId) {
-    return { error: 'All fields are required' }
+    return { error: "All fields are required" };
   }
 
   if (password !== confirmPassword) {
-    return { error: 'Passwords do not match' }
+    return { error: "Passwords do not match" };
   }
 
   if (password.length < 12) {
-    return { error: 'Password must be at least 12 characters long' }
+    return { error: "Password must be at least 12 characters long" };
   }
 
   try {
@@ -88,77 +102,94 @@ async function handleInviteAcceptance(prevState: any, formData: FormData): Promi
       invitationId,
       password,
       name,
-    })
+    });
 
     // Return success response instead of redirecting
     if (result.success) {
       return {
         success: true,
-        message: 'Invitation accepted successfully',
-        redirectTo: result.redirectTo || '/?message=invitation-accepted'
-      }
+        message: "Invitation accepted successfully",
+        redirectTo: result.redirectTo || "/?message=invitation-accepted",
+      };
     } else {
-      return { error: 'Failed to accept invitation' }
+      return { error: "Failed to accept invitation" };
     }
   } catch (error) {
     // Return error message for display
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
-    return { error: errorMessage }
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    return { error: errorMessage };
   }
 }
 
 // Helper function to get role display information
 function getRoleDisplayInfo(role: string | null) {
   switch (role) {
-    case 'admin':
+    case "admin":
       return {
-        name: 'Administrator',
-        description: 'Full system access with user management capabilities',
+        name: "Administrator",
+        description: "Full system access with user management capabilities",
         icon: Shield,
-        color: 'bg-red-100 text-red-800',
-        permissions: ['Manage users', 'Manage invitations', 'Access all data', 'System configuration']
-      }
-    case 'manager':
+        color: "bg-red-100 text-red-800",
+        permissions: [
+          "Manage users",
+          "Manage invitations",
+          "Access all data",
+          "System configuration",
+        ],
+      };
+    case "manager":
       return {
-        name: 'Manager',
-        description: 'Team management and reporting access',
+        name: "Manager",
+        description: "Team management and reporting access",
         icon: Settings,
-        color: 'bg-blue-100 text-blue-800',
-        permissions: ['Manage team members', 'View reports', 'Approve requests', 'Access team data']
-      }
-    case 'user':
+        color: "bg-blue-100 text-blue-800",
+        permissions: [
+          "Manage team members",
+          "View reports",
+          "Approve requests",
+          "Access team data",
+        ],
+      };
+    case "user":
       return {
-        name: 'User',
-        description: 'Standard user access with basic functionality',
+        name: "User",
+        description: "Standard user access with basic functionality",
         icon: Users,
-        color: 'bg-green-100 text-green-800',
-        permissions: ['View assigned data', 'Submit reports', 'Basic system access']
-      }
+        color: "bg-green-100 text-green-800",
+        permissions: [
+          "View assigned data",
+          "Submit reports",
+          "Basic system access",
+        ],
+      };
     default:
       return {
-        name: 'Unknown Role',
-        description: 'Role information not available',
+        name: "Unknown Role",
+        description: "Role information not available",
         icon: AlertCircle,
-        color: 'bg-gray-100 text-gray-800',
-        permissions: []
-      }
+        color: "bg-gray-100 text-gray-800",
+        permissions: [],
+      };
   }
 }
 
 // Helper function to check if invitation is expired
 function isInvitationExpired(expiresAt: Date): boolean {
-  return new Date() > expiresAt
+  return new Date() > expiresAt;
 }
 
 interface InvitePageProps {
-  params: Promise<{ code: string }>
+  params: Promise<{ code: string }>;
 }
 
-export default async function InviteAcceptancePage({ params }: InvitePageProps) {
-  const { code } = await params
+export default async function InviteAcceptancePage({
+  params,
+}: InvitePageProps) {
+  const { code } = await params;
 
   // Fetch invitation details
-  const invitationDetails = await getInvitationDetails(code)
+  const invitationDetails = await getInvitationDetails(code);
 
   // Handle invalid invitation
   if (!invitationDetails) {
@@ -186,11 +217,11 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   // Handle expired invitation
-  if (invitationDetails.status !== 'pending') {
+  if (invitationDetails.status !== "pending") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="max-w-md w-full">
@@ -198,14 +229,17 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
             <div className="mx-auto w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-6 h-6 text-yellow-600" />
             </div>
-            <CardTitle className="text-yellow-900">Invitation Already Used</CardTitle>
+            <CardTitle className="text-yellow-900">
+              Invitation Already Used
+            </CardTitle>
             <CardDescription>
               This invitation has already been accepted or cancelled.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 text-center mb-4">
-              If you believe this is an error, please contact your administrator.
+              If you believe this is an error, please contact your
+              administrator.
             </p>
             <div className="text-center">
               <Link href="/">
@@ -215,7 +249,7 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   // Handle expired invitation
@@ -227,9 +261,12 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
             <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-6 h-6 text-orange-600" />
             </div>
-            <CardTitle className="text-orange-900">Invitation Expired</CardTitle>
+            <CardTitle className="text-orange-900">
+              Invitation Expired
+            </CardTitle>
             <CardDescription>
-              This invitation expired on {invitationDetails.expiresAt.toLocaleDateString()}.
+              This invitation expired on{" "}
+              {invitationDetails.expiresAt.toLocaleDateString()}.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -244,11 +281,11 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   // Valid invitation - show acceptance form
-  const roleInfo = getRoleDisplayInfo(invitationDetails.role)
+  const roleInfo = getRoleDisplayInfo(invitationDetails.role);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -288,7 +325,9 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
               {invitationDetails.inviterName && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Invited by:</span>
-                  <span className="font-medium">{invitationDetails.inviterName}</span>
+                  <span className="font-medium">
+                    {invitationDetails.inviterName}
+                  </span>
                 </div>
               )}
             </div>
@@ -298,10 +337,14 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
             {/* Role Description */}
             <div>
               <h4 className="font-medium text-sm mb-2">Role Overview:</h4>
-              <p className="text-sm text-gray-600 mb-3">{roleInfo.description}</p>
+              <p className="text-sm text-gray-600 mb-3">
+                {roleInfo.description}
+              </p>
 
               <div className="space-y-1">
-                <h5 className="font-medium text-xs text-gray-700 uppercase tracking-wide">Permissions:</h5>
+                <h5 className="font-medium text-xs text-gray-700 uppercase tracking-wide">
+                  Permissions:
+                </h5>
                 <ul className="text-xs text-gray-600 space-y-1">
                   {roleInfo.permissions.map((permission, index) => (
                     <li key={index} className="flex items-center gap-1">
@@ -339,5 +382,5 @@ export default async function InviteAcceptancePage({ params }: InvitePageProps) 
         </div>
       </div>
     </div>
-  )
+  );
 }

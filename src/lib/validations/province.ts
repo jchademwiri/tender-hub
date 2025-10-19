@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
-  nameSchema,
   descriptionSchema,
-  uuidSchema,
-  provinceCodeSchema,
   errorMessages,
-  formDataTransforms
-} from './common';
+  formDataTransforms,
+  nameSchema,
+  provinceCodeSchema,
+  uuidSchema,
+} from "./common";
 
 /**
  * Province validation schemas
@@ -16,7 +16,7 @@ import {
 export const provinceFormSchema = z.object({
   name: nameSchema,
   code: provinceCodeSchema,
-  description: z.string().optional().or(z.literal('')),
+  description: z.string().optional().or(z.literal("")),
 });
 
 // Province creation schema (for server actions)
@@ -43,15 +43,16 @@ export const deleteProvinceSchema = z.object({
 export const provinceEnhancedSchema = z.object({
   id: uuidSchema.optional(),
   name: nameSchema
-    .min(2, errorMessages.tooShort('Province name', 2))
-    .max(100, errorMessages.tooLong('Province name', 100))
-    .regex(/^[a-zA-Z\s\-']+$/,
-      'Province name can only contain letters, spaces, hyphens, and apostrophes'),
+    .min(2, errorMessages.tooShort("Province name", 2))
+    .max(100, errorMessages.tooLong("Province name", 100))
+    .regex(
+      /^[a-zA-Z\s\-']+$/,
+      "Province name can only contain letters, spaces, hyphens, and apostrophes",
+    ),
   code: provinceCodeSchema,
-  description: descriptionSchema
-    .refine(val => !val || val.length >= 10, {
-      message: 'Description must be at least 10 characters if provided'
-    }),
+  description: descriptionSchema.refine((val) => !val || val.length >= 10, {
+    message: "Description must be at least 10 characters if provided",
+  }),
   createdAt: z.date().optional(),
 });
 
@@ -162,44 +163,49 @@ export const provinceValidationHelpers = {
   /**
    * Check if province code is unique (for server-side validation)
    */
-  validateUniqueCode: (code: string, excludeId?: string) => {
+  validateUniqueCode: (code: string, _excludeId?: string) => {
     // This would be used in server actions to check database uniqueness
-    return z.string()
-      .refine(async (val) => {
-        // This is a placeholder - actual implementation would check the database
-        // For now, we'll just validate the format
-        return true;
-      }, {
-        message: 'Province code must be unique'
-      })
+    return z
+      .string()
+      .refine(
+        async (_val) => {
+          // This is a placeholder - actual implementation would check the database
+          // For now, we'll just validate the format
+          return true;
+        },
+        {
+          message: "Province code must be unique",
+        },
+      )
       .parse(code);
   },
 };
 
 // Default values for forms
 export const provinceDefaultValues: Partial<ProvinceFormData> = {
-  name: '',
-  code: '',
-  description: '',
+  name: "",
+  code: "",
+  description: "",
 };
 
 // Error messages specific to provinces
 export const provinceErrorMessages = {
-  nameRequired: 'Province name is required',
-  nameTooShort: 'Province name must be at least 2 characters',
-  nameTooLong: 'Province name must be less than 100 characters',
-  nameInvalid: 'Province name contains invalid characters',
-  codeRequired: 'Province code is required',
-  codeInvalid: 'Province code must be 2-3 uppercase letters',
-  codeTooShort: 'Province code must be at least 2 characters',
-  codeTooLong: 'Province code must be no more than 3 characters',
-  codeNotUnique: 'Province code must be unique',
-  descriptionTooShort: 'Description must be at least 10 characters if provided',
-  provinceNotFound: 'Province not found',
-  duplicateName: 'A province with this name already exists',
-  duplicateCode: 'A province with this code already exists',
-  creationFailed: 'Failed to create province',
-  updateFailed: 'Failed to update province',
-  deleteFailed: 'Failed to delete province',
-  cannotDeleteWithPublishers: 'Cannot delete province that has associated publishers',
+  nameRequired: "Province name is required",
+  nameTooShort: "Province name must be at least 2 characters",
+  nameTooLong: "Province name must be less than 100 characters",
+  nameInvalid: "Province name contains invalid characters",
+  codeRequired: "Province code is required",
+  codeInvalid: "Province code must be 2-3 uppercase letters",
+  codeTooShort: "Province code must be at least 2 characters",
+  codeTooLong: "Province code must be no more than 3 characters",
+  codeNotUnique: "Province code must be unique",
+  descriptionTooShort: "Description must be at least 10 characters if provided",
+  provinceNotFound: "Province not found",
+  duplicateName: "A province with this name already exists",
+  duplicateCode: "A province with this code already exists",
+  creationFailed: "Failed to create province",
+  updateFailed: "Failed to update province",
+  deleteFailed: "Failed to delete province",
+  cannotDeleteWithPublishers:
+    "Cannot delete province that has associated publishers",
 };

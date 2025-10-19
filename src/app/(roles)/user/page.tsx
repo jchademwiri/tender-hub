@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 /**
  * TODO: User Dashboard Implementation Checklist
@@ -45,7 +51,9 @@ export default function UserDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Welcome back, John!</h2>
+        <h2 className="text-3xl font-bold tracking-tight">
+          Welcome back, John!
+        </h2>
         <p className="text-muted-foreground">
           Here's your personal workspace overview
         </p>
@@ -55,7 +63,9 @@ export default function UserDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Account Status</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Account Status
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">Active</div>
@@ -67,31 +77,33 @@ export default function UserDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profile Complete</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Profile Complete
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">85%</div>
-            <p className="text-xs text-muted-foreground">
-              +5% from last week
-            </p>
+            <p className="text-xs text-muted-foreground">+5% from last week</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Recent Activity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">
-              Actions this week
-            </p>
+            <p className="text-xs text-muted-foreground">Actions this week</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Security Score
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">A+</div>
@@ -123,7 +135,9 @@ export default function UserDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">john.doe@example.com</p>
+                <p className="text-sm text-muted-foreground">
+                  john.doe@example.com
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium">Member Since</p>
@@ -180,21 +194,27 @@ export default function UserDashboard() {
               <span className="text-sm text-muted-foreground">
                 Logged in from Chrome on Windows
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">2h ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                2h ago
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline">Profile View</Badge>
               <span className="text-sm text-muted-foreground">
                 Viewed publisher information
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">1d ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                1d ago
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="outline">Data Export</Badge>
               <span className="text-sm text-muted-foreground">
                 Downloaded personal activity data
               </span>
-              <span className="text-xs text-muted-foreground ml-auto">3d ago</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                3d ago
+              </span>
             </div>
           </div>
         </CardContent>

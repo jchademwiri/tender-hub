@@ -1,7 +1,5 @@
-"use client"
+"use client";
 
-import { useCallback } from "react"
-import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
   Bell,
@@ -9,13 +7,11 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
-} from "lucide-react"
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,36 +20,36 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { authClient } from "@/lib/auth-client"
+} from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }) {
-  const { isMobile } = useSidebar()
-  const router = useRouter()
+  const { isMobile } = useSidebar();
+  const router = useRouter();
 
   const handleLogout = useCallback(async () => {
     try {
-      await authClient.signOut()
-      router.push('/')
+      await authClient.signOut();
+      router.push("/");
     } catch (error) {
-      console.error('Logout failed:', error)
-      router.push('/')
+      console.error("Logout failed:", error);
+      router.push("/");
     }
-  }, [router])
+  }, [router]);
 
   return (
     <SidebarMenu>
@@ -124,5 +120,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

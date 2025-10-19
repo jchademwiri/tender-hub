@@ -1,16 +1,48 @@
 "use client";
 
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Eye,
+  Loader2,
+  Mail,
+  MoreHorizontal,
+  RefreshCw,
+  X,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, RefreshCw, X, Eye, Clock, CheckCircle, AlertCircle, XCircle, Mail, Trash2, Users, Loader2 } from "lucide-react";
-import Table from "@/components/Table";
 import { toast } from "sonner";
+import Table from "@/components/Table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Invitation {
   id: string;
@@ -46,8 +78,12 @@ export function InvitationTable({
 }: InvitationTableProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState<string | null>(null);
-  const [selectedInvitations, setSelectedInvitations] = useState<Set<string>>(new Set());
-  const [bulkActionLoading, setBulkActionLoading] = useState<string | null>(null);
+  const [selectedInvitations, setSelectedInvitations] = useState<Set<string>>(
+    new Set(),
+  );
+  const [bulkActionLoading, setBulkActionLoading] = useState<string | null>(
+    null,
+  );
   const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
 
   // Handle invitation actions
@@ -93,7 +129,7 @@ export function InvitationTable({
     if (selectedInvitations.size === invitations.length) {
       setSelectedInvitations(new Set());
     } else {
-      setSelectedInvitations(new Set(invitations.map(inv => inv.id)));
+      setSelectedInvitations(new Set(invitations.map((inv) => inv.id)));
     }
   };
 
@@ -184,11 +220,16 @@ export function InvitationTable({
       key: "select" as keyof Invitation,
       header: onBulkAction ? (
         <Checkbox
-          checked={selectedInvitations.size === invitations.length && invitations.length > 0}
+          checked={
+            selectedInvitations.size === invitations.length &&
+            invitations.length > 0
+          }
           onCheckedChange={toggleSelectAll}
         />
-      ) : "Select",
-      render: (value: any, invitation: Invitation) => (
+      ) : (
+        "Select"
+      ),
+      render: (_value: any, invitation: Invitation) => (
         <Checkbox
           checked={selectedInvitations.has(invitation.id)}
           onCheckedChange={() => toggleInvitationSelection(invitation.id)}
@@ -198,9 +239,7 @@ export function InvitationTable({
     {
       key: "email" as keyof Invitation,
       header: "Email",
-      render: (email: string) => (
-        <div className="font-medium">{email}</div>
-      ),
+      render: (email: string) => <div className="font-medium">{email}</div>,
     },
     {
       key: "role" as keyof Invitation,
@@ -246,8 +285,9 @@ export function InvitationTable({
 
   // Actions for each invitation
   const renderActions = (invitation: Invitation) => {
-    const isLoading = actionLoading === `resend-${invitation.id}` ||
-                     actionLoading === `cancel-${invitation.id}`;
+    const isLoading =
+      actionLoading === `resend-${invitation.id}` ||
+      actionLoading === `cancel-${invitation.id}`;
 
     return (
       <DropdownMenu>
@@ -266,30 +306,32 @@ export function InvitationTable({
             View Details
           </DropdownMenuItem>
 
-          {invitation.status === "pending" && !isExpired(invitation.expiresAt) && (
-            <DropdownMenuItem
-              onClick={() => handleAction("resend", invitation.id)}
-              disabled={isLoading}
-              className="cursor-pointer"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Resend Invitation
-            </DropdownMenuItem>
-          )}
-
-          {invitation.status === "pending" && !isExpired(invitation.expiresAt) && (
-            <>
-              <DropdownMenuSeparator />
+          {invitation.status === "pending" &&
+            !isExpired(invitation.expiresAt) && (
               <DropdownMenuItem
-                onClick={() => handleAction("cancel", invitation.id)}
+                onClick={() => handleAction("resend", invitation.id)}
                 disabled={isLoading}
-                className="cursor-pointer text-destructive focus:text-destructive"
+                className="cursor-pointer"
               >
-                <X className="mr-2 h-4 w-4" />
-                Cancel Invitation
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Resend Invitation
               </DropdownMenuItem>
-            </>
-          )}
+            )}
+
+          {invitation.status === "pending" &&
+            !isExpired(invitation.expiresAt) && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleAction("cancel", invitation.id)}
+                  disabled={isLoading}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel Invitation
+                </DropdownMenuItem>
+              </>
+            )}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -347,7 +389,8 @@ export function InvitationTable({
             <div>
               <CardTitle>Invitations</CardTitle>
               <CardDescription>
-                {invitations.length} invitation{invitations.length !== 1 ? "s" : ""} found
+                {invitations.length} invitation
+                {invitations.length !== 1 ? "s" : ""} found
               </CardDescription>
             </div>
 
@@ -363,7 +406,9 @@ export function InvitationTable({
                   onClick={() => handleBulkAction("resend")}
                   disabled={bulkActionLoading !== null}
                 >
-                  {bulkActionLoading === "resend" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {bulkActionLoading === "resend" && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Resend Selected
                 </Button>
@@ -373,7 +418,9 @@ export function InvitationTable({
                   onClick={() => handleBulkAction("cancel")}
                   disabled={bulkActionLoading !== null}
                 >
-                  {bulkActionLoading === "cancel" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {bulkActionLoading === "cancel" && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   <X className="mr-2 h-4 w-4" />
                   Cancel Selected
                 </Button>
@@ -382,11 +429,7 @@ export function InvitationTable({
           </div>
         </CardHeader>
         <CardContent>
-          <Table
-            data={invitations}
-            columns={columns}
-            actions={renderActions}
-          />
+          <Table data={invitations} columns={columns} actions={renderActions} />
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -418,12 +461,16 @@ export function InvitationTable({
       </Card>
 
       {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={!!showCancelDialog} onOpenChange={() => setShowCancelDialog(null)}>
+      <AlertDialog
+        open={!!showCancelDialog}
+        onOpenChange={() => setShowCancelDialog(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel this invitation? This action cannot be undone.
+              Are you sure you want to cancel this invitation? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -439,12 +486,17 @@ export function InvitationTable({
       </AlertDialog>
 
       {/* Bulk Cancel Confirmation Dialog */}
-      <AlertDialog open={showBulkCancelDialog} onOpenChange={setShowBulkCancelDialog}>
+      <AlertDialog
+        open={showBulkCancelDialog}
+        onOpenChange={setShowBulkCancelDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Selected Invitations</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel {selectedInvitations.size} selected invitation{selectedInvitations.size !== 1 ? 's' : ''}? This action cannot be undone.
+              Are you sure you want to cancel {selectedInvitations.size}{" "}
+              selected invitation{selectedInvitations.size !== 1 ? "s" : ""}?
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

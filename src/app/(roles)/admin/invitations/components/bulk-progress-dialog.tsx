@@ -1,15 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertCircle,
+  CheckCircle,
+  Download,
+  Loader2,
+  RefreshCw,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, CheckCircle, XCircle, AlertCircle, Download, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 interface BulkOperationProgress {
   total: number;
@@ -38,7 +49,8 @@ export function BulkProgressDialog({
 }: BulkProgressDialogProps) {
   const [showErrors, setShowErrors] = useState(false);
 
-  const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
+  const percentage =
+    progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
   const isComplete = progress.completed === progress.total;
   const hasErrors = progress.errors.length > 0;
 
@@ -62,12 +74,12 @@ export function BulkProgressDialog({
 
     const csvContent = [
       "Email,Error",
-      ...progress.errors.map(error => `"${error.email}","${error.error}"`)
+      ...progress.errors.map((error) => `"${error.email}","${error.error}"`),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `bulk-${operation}-errors.csv`;
     document.body.appendChild(a);
@@ -81,15 +93,17 @@ export function BulkProgressDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Loader2 className={`h-5 w-5 ${isComplete ? 'hidden' : 'animate-spin'}`} />
+            <Loader2
+              className={`h-5 w-5 ${isComplete ? "hidden" : "animate-spin"}`}
+            />
             {isComplete && <CheckCircle className="h-5 w-5 text-green-600" />}
-            Bulk {operation.charAt(0).toUpperCase() + operation.slice(1)} Progress
+            Bulk {operation.charAt(0).toUpperCase() + operation.slice(1)}{" "}
+            Progress
           </DialogTitle>
           <DialogDescription>
             {isComplete
               ? `Completed processing ${progress.total} invitations`
-              : `Processing ${progress.total} invitations...`
-            }
+              : `Processing ${progress.total} invitations...`}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,21 +121,27 @@ export function BulkProgressDialog({
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-4">
-                <div className="text-2xl font-bold text-blue-600">{progress.completed}</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {progress.completed}
+                </div>
                 <p className="text-xs text-muted-foreground">Processed</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="pt-4">
-                <div className="text-2xl font-bold text-green-600">{progress.successful}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {progress.successful}
+                </div>
                 <p className="text-xs text-muted-foreground">Successful</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="pt-4">
-                <div className="text-2xl font-bold text-red-600">{progress.failed}</div>
+                <div className="text-2xl font-bold text-red-600">
+                  {progress.failed}
+                </div>
                 <p className="text-xs text-muted-foreground">Failed</p>
               </CardContent>
             </Card>
@@ -164,7 +184,9 @@ export function BulkProgressDialog({
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="text-sm">
                           <div className="font-medium">{error.email}</div>
-                          <div className="text-xs mt-1 opacity-90">{error.error}</div>
+                          <div className="text-xs mt-1 opacity-90">
+                            {error.error}
+                          </div>
                         </AlertDescription>
                       </Alert>
                     ))}
@@ -179,7 +201,8 @@ export function BulkProgressDialog({
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                All {progress.total} invitations were {operation}ed successfully!
+                All {progress.total} invitations were {operation}ed
+                successfully!
               </AlertDescription>
             </Alert>
           )}

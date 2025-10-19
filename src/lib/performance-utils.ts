@@ -3,7 +3,8 @@
  * Provides memoization helpers, performance monitoring, and optimization utilities
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import type React from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 /**
  * Performance monitoring utilities
@@ -18,7 +19,9 @@ export interface PerformanceMetrics {
 /**
  * Hook to monitor component performance
  */
-export function usePerformanceMonitor(componentName: string): PerformanceMetrics {
+export function usePerformanceMonitor(
+  componentName: string,
+): PerformanceMetrics {
   const metricsRef = useRef<PerformanceMetrics>({
     renderCount: 0,
     lastRenderTime: 0,
@@ -35,10 +38,11 @@ export function usePerformanceMonitor(componentName: string): PerformanceMetrics
   metricsRef.current.renderCount++;
   metricsRef.current.lastRenderTime = renderTime;
   metricsRef.current.totalRenderTime += renderTime;
-  metricsRef.current.averageRenderTime = metricsRef.current.totalRenderTime / metricsRef.current.renderCount;
+  metricsRef.current.averageRenderTime =
+    metricsRef.current.totalRenderTime / metricsRef.current.renderCount;
 
   // Log slow renders in development
-  if (process.env.NODE_ENV === 'development' && renderTime > 16) {
+  if (process.env.NODE_ENV === "development" && renderTime > 16) {
     console.warn(`${componentName} slow render: ${renderTime.toFixed(2)}ms`);
   }
 
@@ -48,20 +52,26 @@ export function usePerformanceMonitor(componentName: string): PerformanceMetrics
 /**
  * Memoization utilities for localStorage operations
  */
-const localStorageCache = new Map<string, { value: any; timestamp: number; ttl: number }>();
+const localStorageCache = new Map<
+  string,
+  { value: any; timestamp: number; ttl: number }
+>();
 
 /**
  * Get cached value from localStorage with TTL support
  */
-export function getCachedLocalStorage<T>(key: string, ttl: number = 5000): T | null {
+export function getCachedLocalStorage<T>(
+  key: string,
+  ttl: number = 5000,
+): T | null {
   // Check if we're in a browser environment
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
 
   const cached = localStorageCache.get(key);
 
-  if (cached && (Date.now() - cached.timestamp) < cached.ttl) {
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
     return cached.value;
   }
 
@@ -77,7 +87,7 @@ export function getCachedLocalStorage<T>(key: string, ttl: number = 5000): T | n
 
     return value;
   } catch (error) {
-    console.warn('Failed to read from localStorage:', error);
+    console.warn("Failed to read from localStorage:", error);
     return null;
   }
 }
@@ -85,9 +95,13 @@ export function getCachedLocalStorage<T>(key: string, ttl: number = 5000): T | n
 /**
  * Set cached value to localStorage
  */
-export function setCachedLocalStorage(key: string, value: any, ttl: number = 5000): boolean {
+export function setCachedLocalStorage(
+  key: string,
+  value: any,
+  ttl: number = 5000,
+): boolean {
   // Check if we're in a browser environment
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return false;
   }
 
@@ -102,7 +116,7 @@ export function setCachedLocalStorage(key: string, value: any, ttl: number = 500
 
     return true;
   } catch (error) {
-    console.warn('Failed to save to localStorage:', error);
+    console.warn("Failed to save to localStorage:", error);
     return false;
   }
 }
@@ -113,7 +127,7 @@ export function setCachedLocalStorage(key: string, value: any, ttl: number = 500
 export function clearExpiredCache(): void {
   const now = Date.now();
   for (const [key, cached] of localStorageCache.entries()) {
-    if ((now - cached.timestamp) >= cached.ttl) {
+    if (now - cached.timestamp >= cached.ttl) {
       localStorageCache.delete(key);
     }
   }
@@ -124,19 +138,22 @@ export function clearExpiredCache(): void {
  */
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  return useCallback((...args: Parameters<T>) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    timeoutRef.current = setTimeout(() => {
-      callback(...args);
-    }, delay);
-  }, [callback, delay]);
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay],
+  );
 }
 
 /**
@@ -144,28 +161,34 @@ export function useDebounce<T extends (...args: any[]) => any>(
  */
 export function useThrottle<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   const lastCallRef = useRef<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  return useCallback((...args: Parameters<T>) => {
-    const now = Date.now();
+  return useCallback(
+    (...args: Parameters<T>) => {
+      const now = Date.now();
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-    if (now - lastCallRef.current >= delay) {
-      lastCallRef.current = now;
-      callback(...args);
-    } else {
-      timeoutRef.current = setTimeout(() => {
-        lastCallRef.current = Date.now();
+      if (now - lastCallRef.current >= delay) {
+        lastCallRef.current = now;
         callback(...args);
-      }, delay - (now - lastCallRef.current));
-    }
-  }, [callback, delay]);
+      } else {
+        timeoutRef.current = setTimeout(
+          () => {
+            lastCallRef.current = Date.now();
+            callback(...args);
+          },
+          delay - (now - lastCallRef.current),
+        );
+      }
+    },
+    [callback, delay],
+  );
 }
 
 /**
@@ -173,7 +196,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
  */
 export function useMemoizedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  deps: React.DependencyList
+  deps: React.DependencyList,
 ): T {
   return useCallback(callback, deps);
 }
@@ -181,7 +204,10 @@ export function useMemoizedCallback<T extends (...args: any[]) => any>(
 /**
  * Memoized value that prevents unnecessary recalculations
  */
-export function useMemoizedValue<T>(factory: () => T, deps: React.DependencyList): T {
+export function useMemoizedValue<T>(
+  factory: () => T,
+  deps: React.DependencyList,
+): T {
   return useMemo(factory, deps);
 }
 
@@ -192,7 +218,9 @@ export function useStableValue<T extends Record<string, any>>(value: T): T {
   const ref = useRef<T>(value);
 
   // Update ref if value has actually changed
-  const hasChanged = Object.keys(value).some(key => ref.current[key] !== value[key]);
+  const hasChanged = Object.keys(value).some(
+    (key) => ref.current[key] !== value[key],
+  );
   if (hasChanged) {
     ref.current = value;
   }
@@ -210,11 +238,16 @@ export function createOptimizedHandler<T extends Event = Event>(
     throttle?: number;
     preventDefault?: boolean;
     stopPropagation?: boolean;
-  }
+  },
 ) {
-  const { debounce, throttle, preventDefault = false, stopPropagation = false } = options || {};
+  const {
+    debounce,
+    throttle,
+    preventDefault = false,
+    stopPropagation = false,
+  } = options || {};
 
-  let optimizedHandler = (event: T) => {
+  const optimizedHandler = (event: T) => {
     if (preventDefault) event.preventDefault();
     if (stopPropagation) event.stopPropagation();
     handler(event);
@@ -237,13 +270,13 @@ export function createOptimizedHandler<T extends Event = Event>(
  * Batch multiple state updates to prevent cascading re-renders
  */
 export function useBatchedState<T>(
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void, () => void] {
   const [state, setState] = useState(initialValue);
   const pendingUpdatesRef = useRef<Array<(prev: T) => T>>([]);
 
   const batchedSetState = useCallback((value: T | ((prev: T) => T)) => {
-    if (typeof value === 'function') {
+    if (typeof value === "function") {
       pendingUpdatesRef.current.push(value as (prev: T) => T);
     } else {
       // Clear pending updates and set final value
@@ -254,8 +287,11 @@ export function useBatchedState<T>(
 
   const flushUpdates = useCallback(() => {
     if (pendingUpdatesRef.current.length > 0) {
-      setState(prev => {
-        return pendingUpdatesRef.current.reduce((acc, update) => update(acc), prev);
+      setState((prev) => {
+        return pendingUpdatesRef.current.reduce(
+          (acc, update) => update(acc),
+          prev,
+        );
       });
       pendingUpdatesRef.current = [];
     }

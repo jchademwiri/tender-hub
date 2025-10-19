@@ -1,26 +1,41 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-
-import { updateProfileFormSchema, type UpdateProfileFormData, authDefaultValues } from "@/lib/validations/auth";
-import { getCurrentUser, getUserInitials, formatUserRole } from "@/lib/auth-utils-client";
+import { formatUserRole, getUserInitials } from "@/lib/auth-utils-client";
 import { cn } from "@/lib/utils";
+import {
+  authDefaultValues,
+  type UpdateProfileFormData,
+  updateProfileFormSchema,
+} from "@/lib/validations/auth";
 
 interface UserProfile {
   id: string;
@@ -49,30 +64,30 @@ interface PendingRequest {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(null);
-  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(
+    null,
+  );
+  const [pendingRequests, _setPendingRequests] = useState<PendingRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [saveMethod, setSaveMethod] = useState<"direct" | "approval">("direct");
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const form = useForm<UpdateProfileFormData>({
     resolver: zodResolver(updateProfileFormSchema),
     defaultValues: authDefaultValues.updateProfile,
   });
 
-  // Fetch user profile data
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
       const response = await fetch("/api/user/profile");
       if (response.ok) {
-        const data = await fetch("/api/user/profile").then(res => res.json());
+        const data = await response.json();
         setProfile(data.profile);
         setCompleteness(data.completeness);
 
@@ -86,7 +101,7 @@ export default function ProfilePage() {
       } else {
         setMessage({ type: "error", text: "Failed to load profile data" });
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: "error", text: "Error loading profile" });
     } finally {
       setIsLoading(false);
@@ -106,12 +121,18 @@ export default function ProfilePage() {
     }
   };
 
+  // Fetch user profile data
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
   const onSubmit = async (data: UpdateProfileFormData) => {
     try {
       setIsSaving(true);
       setMessage(null);
 
-      const endpoint = saveMethod === "approval" ? "/api/user/profile" : "/api/user/profile";
+      const endpoint =
+        saveMethod === "approval" ? "/api/user/profile" : "/api/user/profile";
       const method = saveMethod === "approval" ? "POST" : "PUT";
 
       const response = await fetch(endpoint, {
@@ -122,17 +143,18 @@ export default function ProfilePage() {
         body: JSON.stringify(
           method === "POST"
             ? { changes: data, reason: "Profile update request" }
-            : data
+            : data,
         ),
       });
 
       if (response.ok) {
-        const result = await response.json();
+        const _result = await response.json();
         setMessage({
           type: "success",
-          text: method === "POST"
-            ? "Profile update request submitted successfully"
-            : "Profile updated successfully"
+          text:
+            method === "POST"
+              ? "Profile update request submitted successfully"
+              : "Profile updated successfully",
         });
 
         if (method === "PUT") {
@@ -142,16 +164,21 @@ export default function ProfilePage() {
         }
       } else {
         const error = await response.json();
-        setMessage({ type: "error", text: error.error || "Failed to save profile" });
+        setMessage({
+          type: "error",
+          text: error.error || "Failed to save profile",
+        });
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: "error", text: "Error saving profile" });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -167,11 +194,14 @@ export default function ProfilePage() {
 
       if (response.ok) {
         await fetchProfile(); // Refresh profile data
-        setMessage({ type: "success", text: "Profile image updated successfully" });
+        setMessage({
+          type: "success",
+          text: "Profile image updated successfully",
+        });
       } else {
         setMessage({ type: "error", text: "Failed to upload image" });
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: "error", text: "Error uploading image" });
     } finally {
       setIsUploading(false);
@@ -216,7 +246,9 @@ export default function ProfilePage() {
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="w-full max-w-5xl mx-auto">
           <Alert>
-            <AlertDescription>Failed to load profile data. Please try again.</AlertDescription>
+            <AlertDescription>
+              Failed to load profile data. Please try again.
+            </AlertDescription>
           </Alert>
         </div>
       </div>
@@ -235,20 +267,28 @@ export default function ProfilePage() {
               </div>
               <div className="flex items-center gap-2">
                 <Progress value={completeness.percentage} className="w-24" />
-                <span className="text-sm font-medium">{completeness.percentage}%</span>
+                <span className="text-sm font-medium">
+                  {completeness.percentage}%
+                </span>
               </div>
             </div>
           )}
         </div>
 
         {message && (
-          <Alert className={cn(
-            "mb-6",
-            message.type === "success" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
-          )}>
-            <AlertDescription className={cn(
-              message.type === "success" ? "text-green-800" : "text-red-800"
-            )}>
+          <Alert
+            className={cn(
+              "mb-6",
+              message.type === "success"
+                ? "border-green-200 bg-green-50"
+                : "border-red-200 bg-red-50",
+            )}
+          >
+            <AlertDescription
+              className={cn(
+                message.type === "success" ? "text-green-800" : "text-red-800",
+              )}
+            >
               {message.text}
             </AlertDescription>
           </Alert>
@@ -269,7 +309,10 @@ export default function ProfilePage() {
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={profile.image} alt={profile.name} />
                   <AvatarFallback className="text-lg">
-                    {getUserInitials({ name: profile.name, email: profile.email } as any)}
+                    {getUserInitials({
+                      name: profile.name,
+                      email: profile.email,
+                    } as any)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
@@ -302,7 +345,10 @@ export default function ProfilePage() {
 
               {/* Profile Form */}
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={form.control}
                     name="name"
@@ -384,8 +430,7 @@ export default function ProfilePage() {
                         ? "Saving..."
                         : saveMethod === "approval"
                           ? "Submit for Approval"
-                          : "Save Changes"
-                      }
+                          : "Save Changes"}
                     </Button>
                   </div>
                 </form>
@@ -397,9 +442,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>Account Information</CardTitle>
-              <CardDescription>
-                Your account details and status
-              </CardDescription>
+              <CardDescription>Your account details and status</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
@@ -413,7 +456,9 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Status</span>
                   <Badge
-                    variant={profile.status === "active" ? "default" : "destructive"}
+                    variant={
+                      profile.status === "active" ? "default" : "destructive"
+                    }
                   >
                     {profile.status}
                   </Badge>
@@ -421,7 +466,9 @@ export default function ProfilePage() {
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Email Verified</span>
-                  <Badge variant={profile.emailVerified ? "default" : "outline"}>
+                  <Badge
+                    variant={profile.emailVerified ? "default" : "outline"}
+                  >
                     {profile.emailVerified ? "Verified" : "Unverified"}
                   </Badge>
                 </div>
@@ -430,7 +477,9 @@ export default function ProfilePage() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Account Created</span>
+                    <span className="text-muted-foreground">
+                      Account Created
+                    </span>
                     <span>{format(new Date(profile.createdAt), "PPP")}</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -443,7 +492,9 @@ export default function ProfilePage() {
                   <>
                     <Separator />
                     <div className="space-y-2">
-                      <span className="text-sm font-medium">Missing Information</span>
+                      <span className="text-sm font-medium">
+                        Missing Information
+                      </span>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         {completeness.missingFields.map((field) => (
                           <li key={field} className="flex items-center gap-2">
@@ -482,17 +533,20 @@ export default function ProfilePage() {
                     <div className="space-y-1">
                       <p className="text-sm font-medium">Requested Changes:</p>
                       <ul className="text-sm text-muted-foreground">
-                        {Object.entries(request.requestedChanges).map(([key, value]) => (
-                          <li key={key}>
-                            {key}: {String(value)}
-                          </li>
-                        ))}
+                        {Object.entries(request.requestedChanges).map(
+                          ([key, value]) => (
+                            <li key={key}>
+                              {key}: {String(value)}
+                            </li>
+                          ),
+                        )}
                       </ul>
                     </div>
                     {request.rejectionReason && (
                       <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
                         <p className="text-sm text-red-800">
-                          <strong>Rejection Reason:</strong> {request.rejectionReason}
+                          <strong>Rejection Reason:</strong>{" "}
+                          {request.rejectionReason}
                         </p>
                       </div>
                     )}

@@ -1,19 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Filter,
+  Mail,
+  Plus,
+  Search,
+  UserPlus,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { BulkCreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/bulk-create-invitation-dialog";
+import { CreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/create-invitation-dialog";
+import { InvitationAnalyticsDashboard } from "@/app/(roles)/admin/invitations/components/invitation-analytics-dashboard";
+import { InvitationTable } from "@/app/(roles)/admin/invitations/components/invitation-table";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Filter, Mail, Users, Clock, CheckCircle, XCircle, AlertCircle, UserPlus } from "lucide-react";
-import { InvitationTable } from "@/app/(roles)/admin/invitations/components/invitation-table";
-import { CreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/create-invitation-dialog";
-import { BulkCreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/bulk-create-invitation-dialog";
-import { InvitationAnalyticsDashboard } from "@/app/(roles)/admin/invitations/components/invitation-analytics-dashboard";
-import { toast } from "sonner";
 
 interface InvitationStats {
   total: number;
@@ -109,21 +130,27 @@ export default function AdminInvitationsPage() {
       // Calculate stats from the data
       const newStats: InvitationStats = {
         total: data.pagination.total,
-        pending: data.invitations.filter(inv => inv.status === "pending").length,
-        accepted: data.invitations.filter(inv => inv.status === "accepted").length,
-        expired: data.invitations.filter(inv => inv.status === "expired").length,
-        cancelled: data.invitations.filter(inv => inv.status === "cancelled").length,
+        pending: data.invitations.filter((inv) => inv.status === "pending")
+          .length,
+        accepted: data.invitations.filter((inv) => inv.status === "accepted")
+          .length,
+        expired: data.invitations.filter((inv) => inv.status === "expired")
+          .length,
+        cancelled: data.invitations.filter((inv) => inv.status === "cancelled")
+          .length,
       };
       setStats(newStats);
-
     } catch (error) {
       console.error("Error fetching invitations:", error);
 
       // Handle authentication errors gracefully
-      if (error instanceof Error && error.message.includes("Authentication required")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Authentication required")
+      ) {
         setIsAuthenticated(false);
         toast.error("Please log in to access invitation management", {
-          description: "You need admin privileges to manage invitations."
+          description: "You need admin privileges to manage invitations.",
         });
       } else {
         toast.error("Failed to load invitations");
@@ -136,7 +163,7 @@ export default function AdminInvitationsPage() {
   // Initial load
   useEffect(() => {
     fetchInvitations();
-  }, []);
+  }, [fetchInvitations]);
 
   // Handle search and filters
   const handleSearch = () => {
@@ -160,19 +187,28 @@ export default function AdminInvitationsPage() {
   };
 
   // Handle invitation actions
-  const handleInvitationAction = async (action: string, invitationId: string) => {
+  const handleInvitationAction = async (
+    action: string,
+    invitationId: string,
+  ) => {
     try {
       let response: Response;
       if (action === "resend") {
-        response = await fetch(`/api/admin/invitations/${invitationId}/resend`, {
-          method: "POST",
-          credentials: "include",
-        });
+        response = await fetch(
+          `/api/admin/invitations/${invitationId}/resend`,
+          {
+            method: "POST",
+            credentials: "include",
+          },
+        );
       } else if (action === "cancel") {
-        response = await fetch(`/api/admin/invitations/${invitationId}/cancel`, {
-          method: "POST",
-          credentials: "include",
-        });
+        response = await fetch(
+          `/api/admin/invitations/${invitationId}/cancel`,
+          {
+            method: "POST",
+            credentials: "include",
+          },
+        );
       } else {
         return;
       }
@@ -195,9 +231,12 @@ export default function AdminInvitationsPage() {
       console.error(`Error ${action}ing invitation:`, error);
 
       // Handle authentication errors gracefully
-      if (error instanceof Error && error.message.includes("Authentication required")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Authentication required")
+      ) {
         toast.error("Authentication required", {
-          description: "Please log in to manage invitations."
+          description: "Please log in to manage invitations.",
         });
       } else {
         toast.error(`Failed to ${action} invitation`);
@@ -239,10 +278,14 @@ export default function AdminInvitationsPage() {
       }
 
       const result = await response.json();
-      toast.success(`${result.successCount || invitationIds.length} invitation${(result.successCount || invitationIds.length) !== 1 ? 's' : ''} ${action}ed successfully`);
+      toast.success(
+        `${result.successCount || invitationIds.length} invitation${(result.successCount || invitationIds.length) !== 1 ? "s" : ""} ${action}ed successfully`,
+      );
 
       if (result.failedCount && result.failedCount > 0) {
-        toast.error(`${result.failedCount} invitation${result.failedCount !== 1 ? 's' : ''} failed to ${action}`);
+        toast.error(
+          `${result.failedCount} invitation${result.failedCount !== 1 ? "s" : ""} failed to ${action}`,
+        );
       }
 
       // Refresh the list
@@ -251,9 +294,12 @@ export default function AdminInvitationsPage() {
       console.error(`Error performing bulk ${action}:`, error);
 
       // Handle authentication errors gracefully
-      if (error instanceof Error && error.message.includes("Authentication required")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Authentication required")
+      ) {
         toast.error("Authentication required", {
-          description: "Please log in to manage invitations."
+          description: "Please log in to manage invitations.",
         });
       } else {
         toast.error(`Failed to ${action} invitations`);
@@ -261,7 +307,7 @@ export default function AdminInvitationsPage() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const _getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4" />;
@@ -276,7 +322,7 @@ export default function AdminInvitationsPage() {
     }
   };
 
-  const getStatusVariant = (status: string) => {
+  const _getStatusVariant = (status: string) => {
     switch (status) {
       case "pending":
         return "default";
@@ -297,7 +343,9 @@ export default function AdminInvitationsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Invitation Management</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Invitation Management
+            </h1>
             <p className="text-muted-foreground">
               Manage user invitations, track status, and analyze performance
             </p>
@@ -305,14 +353,18 @@ export default function AdminInvitationsPage() {
         </div>
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="text-destructive">Authentication Required</CardTitle>
+            <CardTitle className="text-destructive">
+              Authentication Required
+            </CardTitle>
             <CardDescription>
-              You need to be logged in as an administrator to access invitation management features.
+              You need to be logged in as an administrator to access invitation
+              management features.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Please contact your system administrator or log in with appropriate credentials to continue.
+              Please contact your system administrator or log in with
+              appropriate credentials to continue.
             </p>
           </CardContent>
         </Card>
@@ -325,13 +377,18 @@ export default function AdminInvitationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invitation Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Invitation Management
+          </h1>
           <p className="text-muted-foreground">
             Manage user invitations, track status, and analyze performance
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowBulkCreateDialog(true)}>
+          <Button
+            variant="outline"
+            onClick={() => setShowBulkCreateDialog(true)}
+          >
             <UserPlus className="mr-2 h-4 w-4" />
             Bulk Create
           </Button>
@@ -349,127 +406,128 @@ export default function AdminInvitationsPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Invitations
+                </CardTitle>
+                <Mail className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.total}</div>
+              </CardContent>
+            </Card>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Invitations</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.pending}</div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Accepted</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.accepted}</div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.accepted}</div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Expired</CardTitle>
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.expired}</div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expired</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.expired}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
-            <XCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.cancelled}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
-          <CardDescription>
-            Filter invitations by status, role, or search by email
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by email or inviter name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-statuses">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-roles">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button onClick={handleSearch} variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Apply Filters
-            </Button>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.cancelled}</div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      <Separator />
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Filters</CardTitle>
+              <CardDescription>
+                Filter invitations by status, role, or search by email
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by email or inviter name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
 
-      {/* Invitations Table */}
-      <InvitationTable
-        invitations={invitations}
-        loading={loading}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        onAction={handleInvitationAction}
-        onBulkAction={handleBulkAction}
-      />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-statuses">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="accepted">Accepted</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-roles">All Roles</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button onClick={handleSearch} variant="outline">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Apply Filters
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Separator />
+
+          {/* Invitations Table */}
+          <InvitationTable
+            invitations={invitations}
+            loading={loading}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            onAction={handleInvitationAction}
+            onBulkAction={handleBulkAction}
+          />
 
           {/* Create Invitation Dialog */}
           <CreateInvitationDialog

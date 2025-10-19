@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
-  nameSchema,
-  websiteSchema,
-  uuidSchema,
   errorMessages,
-  formDataTransforms
-} from './common';
+  formDataTransforms,
+  nameSchema,
+  uuidSchema,
+  websiteSchema,
+} from "./common";
 
 /**
  * Publisher validation schemas
@@ -14,7 +14,7 @@ import {
 // Base publisher schema for form data
 export const publisherFormSchema = z.object({
   name: nameSchema,
-  website: z.string().optional().or(z.literal('')),
+  website: z.string().optional().or(z.literal("")),
   province_id: uuidSchema,
 });
 
@@ -42,10 +42,12 @@ export const deletePublisherSchema = z.object({
 export const publisherEnhancedSchema = z.object({
   id: uuidSchema.optional(),
   name: nameSchema
-    .min(2, errorMessages.tooShort('Publisher name', 2))
-    .max(100, errorMessages.tooLong('Publisher name', 100))
-    .regex(/^[a-zA-Z0-9\s\-&.'()]+$/,
-      'Publisher name can only contain letters, numbers, spaces, hyphens, ampersands, periods, apostrophes, and parentheses'),
+    .min(2, errorMessages.tooShort("Publisher name", 2))
+    .max(100, errorMessages.tooLong("Publisher name", 100))
+    .regex(
+      /^[a-zA-Z0-9\s\-&.'()]+$/,
+      "Publisher name can only contain letters, numbers, spaces, hyphens, ampersands, periods, apostrophes, and parentheses",
+    ),
   website: websiteSchema,
   province_id: uuidSchema,
   createdAt: z.date().optional(),
@@ -159,22 +161,22 @@ export const publisherValidationHelpers = {
 
 // Default values for forms
 export const publisherDefaultValues: Partial<PublisherFormData> = {
-  name: '',
-  website: '',
-  province_id: '',
+  name: "",
+  website: "",
+  province_id: "",
 };
 
 // Error messages specific to publishers
 export const publisherErrorMessages = {
-  nameRequired: 'Publisher name is required',
-  nameTooShort: 'Publisher name must be at least 2 characters',
-  nameTooLong: 'Publisher name must be less than 100 characters',
-  nameInvalid: 'Publisher name contains invalid characters',
-  websiteInvalid: 'Please enter a valid website URL',
-  provinceRequired: 'Please select a province',
-  publisherNotFound: 'Publisher not found',
-  duplicateName: 'A publisher with this name already exists',
-  creationFailed: 'Failed to create publisher',
-  updateFailed: 'Failed to update publisher',
-  deleteFailed: 'Failed to delete publisher',
+  nameRequired: "Publisher name is required",
+  nameTooShort: "Publisher name must be at least 2 characters",
+  nameTooLong: "Publisher name must be less than 100 characters",
+  nameInvalid: "Publisher name contains invalid characters",
+  websiteInvalid: "Please enter a valid website URL",
+  provinceRequired: "Please select a province",
+  publisherNotFound: "Publisher not found",
+  duplicateName: "A publisher with this name already exists",
+  creationFailed: "Failed to create publisher",
+  updateFailed: "Failed to update publisher",
+  deleteFailed: "Failed to delete publisher",
 };
