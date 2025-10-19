@@ -148,7 +148,7 @@ export function EditMemberDialog({
                           <SelectItem key={role.value} value={role.value}>
                             <div className="flex flex-col">
                               <span className="font-medium">{role.label}</span>
-                              <span className="text-xs text-gray-500">{role.description}</span>
+                              {/* <span className="text-xs text-gray-500">{role.description}</span> */}
                             </div>
                           </SelectItem>
                         ))}
@@ -177,13 +177,13 @@ export function EditMemberDialog({
                         <SelectItem value="active">
                           <div className="flex flex-col">
                             <span className="font-medium">Active</span>
-                            <span className="text-xs text-gray-500">Member can access the platform</span>
+                            {/* <span className="text-xs text-gray-500">Member can access the platform</span> */}
                           </div>
                         </SelectItem>
                         <SelectItem value="suspended">
                           <div className="flex flex-col">
                             <span className="font-medium">Suspended</span>
-                            <span className="text-xs text-gray-500">Member cannot access the platform</span>
+                            {/* <span className="text-xs text-gray-500">Member cannot access the platform</span> */}
                           </div>
                         </SelectItem>
                       </SelectContent>
