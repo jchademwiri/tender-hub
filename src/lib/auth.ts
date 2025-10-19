@@ -17,7 +17,7 @@ export const auth = betterAuth({
     enabled: true, // ✅ MUST be true for invitation acceptance
     disableSignUp: false, // ✅ Enable for invitation acceptance
     requireEmailVerification: false, // ✅ Disable verification for invited users
-    minPasswordLength: 3,
+    minPasswordLength: 6,
     maxPasswordLength: 128,
 
     sendResetPassword: async ({ user, url, token }, request) => {
