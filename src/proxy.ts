@@ -65,11 +65,15 @@ export default async function proxy(req: NextRequest) {
     }
 
     // Redirect based on user role
-    const dashboardUrl =
-      user?.role === "admin" || user?.role === "owner"
-        ? "/admin"
-        : "/dashboard";
-    return NextResponse.redirect(new URL(dashboardUrl, nextUrl.origin));
+    let redirectUrl: string;
+    if (user?.role === "admin" || user?.role === "owner") {
+      redirectUrl = "/admin";
+    } else if (user?.role === "manager") {
+      redirectUrl = "/manager";
+    } else {
+      redirectUrl = "/dashboard";
+    }
+    return NextResponse.redirect(new URL(redirectUrl, nextUrl.origin));
   }
 
   return NextResponse.next();
