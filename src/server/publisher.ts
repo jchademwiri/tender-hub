@@ -14,8 +14,10 @@ import {
 
 export async function getAllPublishers(userId?: string) {
   try {
+    console.log("getAllPublishers called with userId:", userId);
     const result = await retryWithBackoff(
       async () => {
+        console.log("Executing database query for publishers");
         if (userId) {
           const publishersWithBookmarks = await db
             .select({
@@ -31,6 +33,7 @@ export async function getAllPublishers(userId?: string) {
             )
             .orderBy(publishers.name);
 
+          console.log("Query result count:", publishersWithBookmarks.length);
           return publishersWithBookmarks.map(p => ({
             id: p.id,
             name: p.name,
@@ -38,7 +41,7 @@ export async function getAllPublishers(userId?: string) {
             isBookmarked: !!p.bookmarkId,
           }));
         } else {
-          return await db
+          const publishersList = await db
             .select({
               id: publishers.id,
               name: publishers.name,
@@ -46,15 +49,20 @@ export async function getAllPublishers(userId?: string) {
             })
             .from(publishers)
             .orderBy(publishers.name);
+
+          console.log("Query result count (no user):", publishersList.length);
+          return publishersList;
         }
       },
       {
         maxRetries: 2,
         shouldRetry: (error) => {
           const message = error.message.toLowerCase();
+          console.log("Checking if error should be retried:", message);
           return message.includes("connection") || message.includes("timeout");
         },
         onRetry: (error, attempt) => {
+          console.log(`Retrying getAllPublishers attempt ${attempt} for error:`, error.message);
           logError(
             createAppError(`Get all publishers retry attempt ${attempt}`, {
               details: { originalError: error },
@@ -64,8 +72,50 @@ export async function getAllPublishers(userId?: string) {
         },
       },
     );
+    console.log("getAllPublishers returning result with length:", result.length);
     return result;
   } catch (error) {
+    console.error("Error in getAllPublishers:", error);
+
+    // Check for specific database errors
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+      console.log("Error message:", message);
+
+      // Handle "relation does not exist" error (table missing)
+      if (message.includes("42p01") || message.includes("relation") && message.includes("does not exist")) {
+        console.log("Detected missing publishers table error");
+        const appError = createAppError(
+          "Publishers table does not exist. Please run database migrations.",
+          {
+            code: "TABLE_MISSING",
+            statusCode: 500,
+            details: {
+              originalError: error,
+              suggestion: "Run 'npm run db:migrate' or check database setup"
+            },
+          },
+        );
+        logError(appError, classifyError(appError));
+        throw appError;
+      }
+
+      // Handle other database errors
+      if (message.includes("connection") || message.includes("timeout")) {
+        console.log("Detected connection/timeout error");
+        const appError = createAppError(
+          "Database connection failed. Please check your database configuration.",
+          {
+            code: "DB_CONNECTION_FAILED",
+            statusCode: 500,
+            details: { originalError: error },
+          },
+        );
+        logError(appError, classifyError(appError));
+        throw appError;
+      }
+    }
+
     const appError = createAppError(
       `Failed to fetch publishers: ${error instanceof Error ? error.message : "Unknown error"}`,
       {
