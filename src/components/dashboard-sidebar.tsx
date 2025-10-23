@@ -38,12 +38,7 @@ const navMain = [
     url: "/publishers",
     icon: BookOpen,
   },
-  {
-    title: "Account",
-    url: "/account",
-    icon: User,
-  },
-  {
+   {
     title: "Admin",
     url: "/admin",
     icon: Settings2,

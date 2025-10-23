@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   LogOut,
   Settings2,
-  User,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -53,12 +52,7 @@ const DashboardNav = memo(() => {
       icon: <Building2 className="w-4 h-4" />,
       ariaLabel: "Go to Publishers",
     },
-    {
-      href: "/profile",
-      label: "Profile",
-      icon: <User className="w-4 h-4" />,
-      ariaLabel: "Go to Profile",
-    },
+  
   ];
 
   // Memoize navigation items to prevent recreation on every render

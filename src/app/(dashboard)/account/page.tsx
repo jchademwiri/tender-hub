@@ -399,6 +399,7 @@ export default function AccountPage() {
                             type="email"
                             placeholder="Enter your email"
                             {...field}
+                            disabled
                             aria-describedby="email-description"
                           />
                         </FormControl>
@@ -410,6 +411,10 @@ export default function AccountPage() {
                           ) : (
                             "Email verification required"
                           )}
+                          <br />
+                          <span className="text-muted-foreground text-xs">
+                            Email changes must be requested through your administrator.
+                          </span>
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
