@@ -53,6 +53,12 @@ export async function GET(request: NextRequest) {
 
     const totalCount = await db.$count(publishers);
 
+    // DEBUG: Log publishers list and count
+    console.log(`[DEBUG] Publishers API - Page: ${page}, Limit: ${limit}, Search: ${search}`);
+    console.log(`[DEBUG] Total publishers count: ${totalCount}`);
+    console.log(`[DEBUG] Publishers list length: ${publishersList.length}`);
+    console.log(`[DEBUG] Publishers list:`, publishersList.map(p => ({ id: p.id, name: p.name })));
+
     // TODO: Add audit logging for publisher viewing
 
     return NextResponse.json({

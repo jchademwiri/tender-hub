@@ -95,6 +95,8 @@ export default function AdminPublishersPage() {
       const response = await fetch(`/api/admin/publishers?${params}`);
       if (response.ok) {
         const data = await response.json();
+        console.log(`[DEBUG] Frontend - Received publishers:`, data.publishers.map((p: any) => ({ id: p.id, name: p.name })));
+        console.log(`[DEBUG] Frontend - Publishers count: ${data.publishers.length}`);
         setPublishers(data.publishers);
         setPagination(data.pagination);
       } else {
