@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
-export default async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   // Skip middleware for API routes to avoid conflicts
   if (req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.next();
