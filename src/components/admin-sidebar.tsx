@@ -51,7 +51,7 @@ const navMain = [
   },
   {
     title: "Publishers",
-    url: "/publishers",
+    url: "/admin/publishers",
     icon: BookOpen,
   },
   {

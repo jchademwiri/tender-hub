@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  BookOpen,
   CheckCircle,
   Command,
   FileText,
   Home,
+  Map,
   Settings2,
   UserCheck,
   Users,
@@ -50,6 +52,16 @@ const navMain = [
     title: "Approvals",
     url: "/manager/approvals",
     icon: CheckCircle,
+  },
+  {
+    title: "Provinces",
+    url: "/manager/provinces",
+    icon: Map,
+  },
+  {
+    title: "Publishers",
+    url: "/manager/publishers",
+    icon: BookOpen,
   },
   {
     title: "Reports",
