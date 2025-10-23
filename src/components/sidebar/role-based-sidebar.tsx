@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Command, FileText, Home, Map, UserCheck, Users } from "lucide-react";
+import { BookOpen, CheckCircle, Command, FileText, Home, Mail, Map, UserCheck, Users } from "lucide-react";
 import type * as React from "react";
 import Link from "next/link";
 
@@ -32,18 +32,67 @@ const getNavigationItems = (userRole: string) => {
 
   const roleSpecificItems: Record<string, Array<{ title: string; url: string; icon: React.ComponentType<any> }>> = {
     admin: [
-      { title: "Team Management", url: "/admin/team", icon: Users },
-      { title: "Provinces", url: "/admin/provinces", icon: Map },
-      { title: "Publishers", url: "/publishers", icon: BookOpen },
-      { title: "Reports", url: "/admin/reports", icon: FileText },
+   {
+    title: "Dashboard",
+    url: "/admin",
+    icon: Command,
+  },
+  {
+    title: "Team",
+    url: "/admin/team",
+    icon: Users,
+  },
+  {
+    title: "Provinces",
+    url: "/admin/provinces",
+    icon: Map,
+  },
+  {
+    title: "Publishers",
+    url: "/admin/publishers",
+    icon: BookOpen,
+  },
+  {
+    title: "Invitations",
+    url: "/admin/invitations",
+    icon: Mail,
+  },
     ],
     manager: [
-      { title: "Team Management", url: "/manager/team", icon: Users },
-      { title: "Reports", url: "/manager/reports", icon: FileText },
+  {
+    title: "Dashboard",
+    url: "/manager",
+    icon: Command,
+  },
+  {
+    title: "Team",
+    url: "/manager/team",
+    icon: Users,
+  },
+  {
+    title: "Approvals",
+    url: "/manager/approvals",
+    icon: CheckCircle,
+  },
+  {
+    title: "Provinces",
+    url: "/manager/provinces",
+    icon: Map,
+  },
+  {
+    title: "Publishers",
+    url: "/manager/publishers",
+    icon: BookOpen,
+  },
+  {
+    title: "Reports",
+    url: "/manager/reports",
+    icon: FileText,
+  },
     ],
     user: [
       { title: "Dashboard", url: "/dashboard", icon: Command },
-      { title: "Publishers", url: "/publishers", icon: BookOpen },
+      { title: "Publishers", url: "/dashboard/publishers", icon: BookOpen },
     ],
   };
 

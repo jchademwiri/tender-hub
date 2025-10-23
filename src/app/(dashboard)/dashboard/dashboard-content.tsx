@@ -93,9 +93,9 @@ export function DashboardContent({
       case "user":
         return {
           title: "User Dashboard",
-          description: "Browse publishers and manage your profile",
+          description: "Browse publishers and manage your account",
           features: [
-            { icon: Building, label: "Browse Publishers", href: "/publishers" },
+            { icon: Building, label: "Browse Publishers", href: "/dashboard/publishers" },
             { icon: FileText, label: "My Account", href: "/account" },
           ],
         };

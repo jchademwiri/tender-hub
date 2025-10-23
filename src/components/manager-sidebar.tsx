@@ -49,11 +49,6 @@ const navMain = [
     icon: Users,
   },
   {
-    title: "Approvals",
-    url: "/manager/approvals",
-    icon: CheckCircle,
-  },
-  {
     title: "Provinces",
     url: "/manager/provinces",
     icon: Map,
@@ -67,11 +62,6 @@ const navMain = [
     title: "Reports",
     url: "/manager/reports",
     icon: FileText,
-  },
-  {
-    title: "Admin Panel",
-    url: "/admin",
-    icon: Settings2,
   },
 ];
 

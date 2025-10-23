@@ -35,11 +35,6 @@ const navMain = [
     icon: Command,
   },
   {
-    title: "Manager",
-    url: "/manager",
-    icon: Users,
-  },
-  {
     title: "Team Management",
     url: "/admin/team",
     icon: Users,
@@ -68,7 +63,7 @@ export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/admin">
+              <Link href="/admin">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
@@ -76,7 +71,7 @@ export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
                   <span className="truncate font-medium">Tender Hub</span>
                   <span className="truncate text-xs">Admin</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
