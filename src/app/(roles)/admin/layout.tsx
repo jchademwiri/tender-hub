@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ErrorBoundary } from "@/components/error-boundary";
