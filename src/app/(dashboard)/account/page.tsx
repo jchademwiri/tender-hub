@@ -52,6 +52,8 @@ interface UserProfile {
 interface ProfileCompleteness {
   percentage: number;
   missingFields: string[];
+  requiredFields: string[];
+  optionalFields: string[];
 }
 
 interface PendingRequest {
@@ -62,7 +64,10 @@ interface PendingRequest {
   rejectionReason?: string;
 }
 
-export default function ProfilePage() {
+export default function AccountPage() {
+  // Update page title and metadata
+  const pageTitle = "Account";
+  const pageDescription = "Manage your account settings and profile information";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(
     null,
@@ -85,7 +90,7 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/user/profile");
+      const response = await fetch("/api/user/account");
       if (response.ok) {
         const data = await response.json();
         setProfile(data.profile);
@@ -132,7 +137,7 @@ export default function ProfilePage() {
       setMessage(null);
 
       const endpoint =
-        saveMethod === "approval" ? "/api/user/profile" : "/api/user/profile";
+        saveMethod === "approval" ? "/api/user/account" : "/api/user/account";
       const method = saveMethod === "approval" ? "POST" : "PUT";
 
       const response = await fetch(endpoint, {
@@ -187,7 +192,7 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await fetch("/api/user/profile/image", {
+      const response = await fetch("/api/user/account/image", {
         method: "POST",
         body: formData,
       });
@@ -256,14 +261,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="w-full max-w-5xl mx-auto">
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0 min-h-screen">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Profile</h1>
+          <h1 className="text-3xl font-bold">Account</h1>
           {completeness && (
             <div className="flex items-center gap-4">
               <div className="text-sm text-muted-foreground">
-                Profile Completeness
+                Account Completeness
               </div>
               <div className="flex items-center gap-2">
                 <Progress value={completeness.percentage} className="w-24" />
@@ -271,6 +276,11 @@ export default function ProfilePage() {
                   {completeness.percentage}%
                 </span>
               </div>
+              {completeness.percentage < 100 && (
+                <div className="text-xs text-muted-foreground">
+                  {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -290,6 +300,16 @@ export default function ProfilePage() {
               )}
             >
               {message.text}
+              {message.type === "error" && message.text.includes("Email is already in use") && (
+                <div className="mt-2 text-sm">
+                  <strong>What to do:</strong> Try a different email address or contact your administrator if you believe this is an error.
+                </div>
+              )}
+              {message.type === "error" && message.text.includes("Validation failed") && (
+                <div className="mt-2 text-sm">
+                  <strong>What to do:</strong> Check that your name contains only letters, spaces, hyphens, and apostrophes, and ensure your email is in a valid format.
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -298,9 +318,9 @@ export default function ProfilePage() {
           {/* Profile Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
+              <CardTitle>Account Information</CardTitle>
               <CardDescription>
-                Update your personal information and profile picture
+                Update your personal information and account picture
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -438,11 +458,11 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Profile Details */}
+          {/* Current User Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>Your account details and status</CardDescription>
+              <CardTitle>Current User Information</CardTitle>
+              <CardDescription>Your current account details and session information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
@@ -486,20 +506,30 @@ export default function ProfilePage() {
                     <span className="text-muted-foreground">Last Updated</span>
                     <span>{format(new Date(profile.updatedAt), "PPP")}</span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Session Started</span>
+                    <span>{format(new Date(), "PPP")}</span>
+                  </div>
                 </div>
 
                 {completeness && completeness.missingFields.length > 0 && (
                   <>
                     <Separator />
                     <div className="space-y-2">
-                      <span className="text-sm font-medium">
-                        Missing Information
+                      <span className="text-sm font-medium text-orange-700">
+                        Complete Your Account
                       </span>
+                      <p className="text-xs text-muted-foreground">
+                        Fill in the missing information below to get the most out of Tender Hub:
+                      </p>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         {completeness.missingFields.map((field) => (
                           <li key={field} className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
-                            {field.charAt(0).toUpperCase() + field.slice(1)}
+                            {field === "name" && "Full Name"}
+                            {field === "email" && "Email Address"}
+                            {field === "role" && "User Role"}
+                            {!["name", "email", "role"].includes(field) && field.charAt(0).toUpperCase() + field.slice(1)}
                           </li>
                         ))}
                       </ul>

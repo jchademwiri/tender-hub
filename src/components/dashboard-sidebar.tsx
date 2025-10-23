@@ -39,8 +39,8 @@ const navMain = [
     icon: BookOpen,
   },
   {
-    title: "Profile",
-    url: "/profile",
+    title: "Account",
+    url: "/account",
     icon: User,
   },
   {
