@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { getAllPublishers } from "@/server/publisher";
 import { PublishersTableClient } from "./publishers-table-client";
+import { getCurrentUser } from "@/lib/auth-utils";
 
 export default async function PublishersPage() {
-  const publishers = await getAllPublishers();
+  const user = await getCurrentUser();
+  const userId = user?.id;
+  const publishers = await getAllPublishers(userId);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

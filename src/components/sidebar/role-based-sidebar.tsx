@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CheckCircle, Command, FileText, Home, Mail, Map, UserCheck, Users } from "lucide-react";
+import { BookOpen, Bookmark, CheckCircle, Command, FileText, Home, Mail, Map, TrendingUp, UserCheck, Users } from "lucide-react";
 import type * as React from "react";
 import Link from "next/link";
 
@@ -93,6 +93,8 @@ const getNavigationItems = (userRole: string) => {
     user: [
       { title: "Dashboard", url: "/dashboard", icon: Command },
       { title: "Publishers", url: "/dashboard/publishers", icon: BookOpen },
+      { title: "Most Visited", url: "/dashboard/most-visited", icon: TrendingUp },
+      { title: "Bookmarks", url: "/dashboard/bookmarks", icon: Bookmark },
     ],
   };
 

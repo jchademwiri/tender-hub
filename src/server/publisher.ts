@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { provinces, publishers } from "@/db/schema";
+import { provinces, publishers, userBookmarks } from "@/db/schema";
 import {
   classifyError,
   createAppError,
@@ -12,22 +12,41 @@ import {
   retryWithBackoff,
 } from "@/lib/error-utils";
 
-export async function getAllPublishers() {
+export async function getAllPublishers(userId?: string) {
   try {
     const result = await retryWithBackoff(
       async () => {
-        return await db
-          .select({
-            id: publishers.id,
-            name: publishers.name,
-            website: publishers.website,
-            province_id: publishers.province_id,
-            createdAt: publishers.createdAt,
-            provinceName: provinces.name,
-          })
-          .from(publishers)
-          .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-          .orderBy(publishers.name);
+        if (userId) {
+          const publishersWithBookmarks = await db
+            .select({
+              id: publishers.id,
+              name: publishers.name,
+              website: publishers.website,
+              bookmarkId: userBookmarks.id,
+            })
+            .from(publishers)
+            .leftJoin(
+              userBookmarks,
+              eq(userBookmarks.publisherId, publishers.id) && eq(userBookmarks.userId, userId)
+            )
+            .orderBy(publishers.name);
+
+          return publishersWithBookmarks.map(p => ({
+            id: p.id,
+            name: p.name,
+            website: p.website,
+            isBookmarked: !!p.bookmarkId,
+          }));
+        } else {
+          return await db
+            .select({
+              id: publishers.id,
+              name: publishers.name,
+              website: publishers.website,
+            })
+            .from(publishers)
+            .orderBy(publishers.name);
+        }
       },
       {
         maxRetries: 2,
@@ -278,4 +297,41 @@ export async function createPublisher(_prevState: any, formData: FormData) {
 
   // Redirect OUTSIDE the try-catch
   redirect("/admin/publishers");
+}
+
+export async function toggleBookmark(userId: string, publisherId: string) {
+  try {
+    // Check if bookmark exists
+    const existingBookmark = await db
+      .select()
+      .from(userBookmarks)
+      .where(eq(userBookmarks.userId, userId) && eq(userBookmarks.publisherId, publisherId))
+      .limit(1);
+
+    if (existingBookmark.length > 0) {
+      // Remove bookmark
+      await db
+        .delete(userBookmarks)
+        .where(eq(userBookmarks.id, existingBookmark[0].id));
+      return { bookmarked: false };
+    } else {
+      // Add bookmark
+      await db.insert(userBookmarks).values({
+        userId,
+        publisherId,
+      });
+      return { bookmarked: true };
+    }
+  } catch (error) {
+    const appError = createAppError(
+      `Failed to toggle bookmark: ${error instanceof Error ? error.message : "Unknown error"}`,
+      {
+        code: "TOGGLE_BOOKMARK_FAILED",
+        statusCode: 500,
+        details: { userId, publisherId, originalError: error },
+      },
+    );
+    logError(appError, classifyError(appError));
+    throw appError;
+  }
 }
