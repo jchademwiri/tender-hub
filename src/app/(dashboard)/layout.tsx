@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 // import { requireAuth } from "@/lib/auth-utils";
