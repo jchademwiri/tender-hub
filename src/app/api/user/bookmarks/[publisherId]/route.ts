@@ -8,6 +8,8 @@ export async function POST(
 ) {
   try {
     console.log("Bookmark API called with params:", params);
+    console.log("Request URL:", request.url);
+    console.log("Request method:", request.method);
 
     const user = await getCurrentUser();
     console.log("Current user:", user);
@@ -21,11 +23,18 @@ export async function POST(
     }
 
     const { publisherId } = params;
-    console.log("Publisher ID:", publisherId);
+    console.log("Publisher ID from params:", publisherId);
     console.log("Publisher ID type:", typeof publisherId);
     console.log("Publisher ID length:", publisherId?.length);
+    console.log("Publisher ID is truthy:", !!publisherId);
+    console.log("Publisher ID === 'undefined':", publisherId === 'undefined');
+    console.log("Publisher ID === 'null':", publisherId === 'null');
 
-    if (!publisherId || publisherId === 'undefined' || publisherId === 'null') {
+    // Check if it's a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    console.log("Publisher ID matches UUID regex:", uuidRegex.test(publisherId));
+
+    if (!publisherId || publisherId === 'undefined' || publisherId === 'null' || !uuidRegex.test(publisherId)) {
       console.log("Invalid publisher ID provided, returning 400");
       return NextResponse.json(
         { error: "Publisher ID is required" },
