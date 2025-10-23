@@ -67,7 +67,7 @@ interface PendingRequest {
 export default function AccountPage() {
   // Update page title and metadata
   const pageTitle = "Account";
-  const pageDescription = "Manage your account settings and profile information";
+  const pageDescription = "Manage your account settings and account information";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(
     null,
@@ -104,10 +104,10 @@ export default function AccountPage() {
           });
         }
       } else {
-        setMessage({ type: "error", text: "Failed to load profile data" });
+        setMessage({ type: "error", text: "Failed to load account data" });
       }
     } catch (_error) {
-      setMessage({ type: "error", text: "Error loading profile" });
+      setMessage({ type: "error", text: "Error loading account" });
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +126,7 @@ export default function AccountPage() {
     }
   };
 
-  // Fetch user profile data
+  // Fetch user account data
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -158,12 +158,12 @@ export default function AccountPage() {
           type: "success",
           text:
             method === "POST"
-              ? "Profile update request submitted successfully"
-              : "Profile updated successfully",
+              ? "Account update request submitted successfully"
+              : "Account updated successfully",
         });
 
         if (method === "PUT") {
-          await fetchProfile(); // Refresh profile data
+          await fetchProfile(); // Refresh account data
         } else {
           await fetchPendingRequests(); // Refresh pending requests
         }
@@ -175,7 +175,7 @@ export default function AccountPage() {
         });
       }
     } catch (_error) {
-      setMessage({ type: "error", text: "Error saving profile" });
+      setMessage({ type: "error", text: "Error saving account" });
     } finally {
       setIsSaving(false);
     }
@@ -198,10 +198,10 @@ export default function AccountPage() {
       });
 
       if (response.ok) {
-        await fetchProfile(); // Refresh profile data
+        await fetchProfile(); // Refresh account data
         setMessage({
           type: "success",
-          text: "Profile image updated successfully",
+          text: "Account image updated successfully",
         });
       } else {
         setMessage({ type: "error", text: "Failed to upload image" });
@@ -215,8 +215,8 @@ export default function AccountPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="w-full max-w-5xl mx-auto">
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0 min-h-screen">
+        <div className="w-full">
           <Skeleton className="h-8 w-48 mb-6" />
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
@@ -252,7 +252,7 @@ export default function AccountPage() {
         <div className="w-full max-w-5xl mx-auto">
           <Alert>
             <AlertDescription>
-              Failed to load profile data. Please try again.
+              Failed to load account data. Please try again.
             </AlertDescription>
           </Alert>
         </div>
@@ -265,7 +265,7 @@ export default function AccountPage() {
       <div className="w-full">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Account</h1>
-          {completeness && (
+          {completeness && completeness.percentage < 100 && (
             <div className="flex items-center gap-4">
               <div className="text-sm text-muted-foreground">
                 Account Completeness
@@ -276,11 +276,9 @@ export default function AccountPage() {
                   {completeness.percentage}%
                 </span>
               </div>
-              {completeness.percentage < 100 && (
-                <div className="text-xs text-muted-foreground">
-                  {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
-                </div>
-              )}
+              <div className="text-xs text-muted-foreground">
+                {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
+              </div>
             </div>
           )}
         </div>
@@ -352,7 +350,7 @@ export default function AccountPage() {
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="hidden"
-                      aria-label="Upload profile picture"
+                      aria-label="Upload account picture"
                     />
                   </label>
                   <p className="text-xs text-muted-foreground">
@@ -547,7 +545,7 @@ export default function AccountPage() {
             <CardHeader>
               <CardTitle>Pending Approval Requests</CardTitle>
               <CardDescription>
-                Your profile update requests awaiting approval
+                Your account update requests awaiting approval
               </CardDescription>
             </CardHeader>
             <CardContent>
