@@ -6,10 +6,11 @@ import { eq } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAdmin();
+    const { id } = await params;
 
     const formData = await request.formData();
     const name = formData.get("name") as string;
@@ -30,7 +31,7 @@ export async function PUT(
       .where(eq(provinces.code, code.toUpperCase()))
       .limit(1);
 
-    if (existingProvince.length > 0 && existingProvince[0].id !== params.id) {
+    if (existingProvince.length > 0 && existingProvince[0].id !== id) {
       return NextResponse.json(
         { error: "Province with this code already exists" },
         { status: 400 }
@@ -44,7 +45,7 @@ export async function PUT(
         code: code.toUpperCase().trim(),
         description: description?.trim() || null,
       })
-      .where(eq(provinces.id, params.id))
+      .where(eq(provinces.id, id))
       .returning();
 
     if (!updatedProvince) {
@@ -68,10 +69,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAdmin();
+    const { id } = await params;
 
     // Check if province has associated publishers
     // TODO: Implement publisher count check
@@ -86,7 +88,7 @@ export async function DELETE(
 
     const [deletedProvince] = await db
       .delete(provinces)
-      .where(eq(provinces.id, params.id))
+      .where(eq(provinces.id, id))
       .returning();
 
     if (!deletedProvince) {

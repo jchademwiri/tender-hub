@@ -6,10 +6,11 @@ import { eq } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAdmin();
+    const { id } = await params;
 
     const formData = await request.formData();
     const name = formData.get("name") as string;
@@ -44,7 +45,7 @@ export async function PUT(
         website: website?.trim() || null,
         province_id,
       })
-      .where(eq(publishers.id, params.id))
+      .where(eq(publishers.id, id))
       .returning();
 
     if (!updatedPublisher) {
@@ -68,14 +69,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAdmin();
+    const { id } = await params;
 
     const [deletedPublisher] = await db
       .delete(publishers)
-      .where(eq(publishers.id, params.id))
+      .where(eq(publishers.id, id))
       .returning();
 
     if (!deletedPublisher) {
