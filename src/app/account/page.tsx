@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -52,6 +53,8 @@ interface UserProfile {
 interface ProfileCompleteness {
   percentage: number;
   missingFields: string[];
+  requiredFields: string[];
+  optionalFields: string[];
 }
 
 interface PendingRequest {
@@ -62,7 +65,10 @@ interface PendingRequest {
   rejectionReason?: string;
 }
 
-export default function ProfilePage() {
+export default function AccountPage() {
+  // Update page title and metadata
+  const pageTitle = "Account";
+  const pageDescription = "Manage your account settings and account information";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(
     null,
@@ -85,7 +91,7 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/user/profile");
+      const response = await fetch("/api/user/account");
       if (response.ok) {
         const data = await response.json();
         setProfile(data.profile);
@@ -99,10 +105,10 @@ export default function ProfilePage() {
           });
         }
       } else {
-        setMessage({ type: "error", text: "Failed to load profile data" });
+        setMessage({ type: "error", text: "Failed to load account data" });
       }
     } catch (_error) {
-      setMessage({ type: "error", text: "Error loading profile" });
+      setMessage({ type: "error", text: "Error loading account" });
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +127,7 @@ export default function ProfilePage() {
     }
   };
 
-  // Fetch user profile data
+  // Fetch user account data
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -132,7 +138,7 @@ export default function ProfilePage() {
       setMessage(null);
 
       const endpoint =
-        saveMethod === "approval" ? "/api/user/profile" : "/api/user/profile";
+        saveMethod === "approval" ? "/api/user/account" : "/api/user/account";
       const method = saveMethod === "approval" ? "POST" : "PUT";
 
       const response = await fetch(endpoint, {
@@ -153,12 +159,12 @@ export default function ProfilePage() {
           type: "success",
           text:
             method === "POST"
-              ? "Profile update request submitted successfully"
-              : "Profile updated successfully",
+              ? "Account update request submitted successfully"
+              : "Account updated successfully",
         });
 
         if (method === "PUT") {
-          await fetchProfile(); // Refresh profile data
+          await fetchProfile(); // Refresh account data
         } else {
           await fetchPendingRequests(); // Refresh pending requests
         }
@@ -170,7 +176,7 @@ export default function ProfilePage() {
         });
       }
     } catch (_error) {
-      setMessage({ type: "error", text: "Error saving profile" });
+      setMessage({ type: "error", text: "Error saving account" });
     } finally {
       setIsSaving(false);
     }
@@ -187,16 +193,16 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await fetch("/api/user/profile/image", {
+      const response = await fetch("/api/user/account/image", {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
-        await fetchProfile(); // Refresh profile data
+        await fetchProfile(); // Refresh account data
         setMessage({
           type: "success",
-          text: "Profile image updated successfully",
+          text: "Account image updated successfully",
         });
       } else {
         setMessage({ type: "error", text: "Failed to upload image" });
@@ -210,8 +216,8 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="w-full max-w-5xl mx-auto">
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0 min-h-screen">
+        <div className="w-full">
           <Skeleton className="h-8 w-48 mb-6" />
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
@@ -247,7 +253,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-5xl mx-auto">
           <Alert>
             <AlertDescription>
-              Failed to load profile data. Please try again.
+              Failed to load account data. Please try again.
             </AlertDescription>
           </Alert>
         </div>
@@ -255,25 +261,48 @@ export default function ProfilePage() {
     );
   }
 
+  const getHomeUrl = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return '/admin';
+      case 'manager':
+        return '/manager';
+      default:
+        return '/dashboard';
+    }
+  };
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="w-full max-w-5xl mx-auto">
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0 min-h-screen">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Profile</h1>
-          {completeness && (
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                Profile Completeness
-              </div>
-              <div className="flex items-center gap-2">
-                <Progress value={completeness.percentage} className="w-24" />
-                <span className="text-sm font-medium">
-                  {completeness.percentage}%
-                </span>
-              </div>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = getHomeUrl(profile?.role || 'user')}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+          <h1 className="text-3xl font-bold">Account</h1>
         </div>
+
+        {completeness && completeness.percentage < 100 && (
+          <div className="flex items-center gap-4 mb-6">
+            <div className="text-sm text-muted-foreground">
+              Account Completeness
+            </div>
+            <div className="flex items-center gap-2">
+              <Progress value={completeness.percentage} className="w-24" />
+              <span className="text-sm font-medium">
+                {completeness.percentage}%
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
+            </div>
+          </div>
+        )}
 
         {message && (
           <Alert
@@ -290,6 +319,16 @@ export default function ProfilePage() {
               )}
             >
               {message.text}
+              {message.type === "error" && message.text.includes("Email is already in use") && (
+                <div className="mt-2 text-sm">
+                  <strong>What to do:</strong> Try a different email address or contact your administrator if you believe this is an error.
+                </div>
+              )}
+              {message.type === "error" && message.text.includes("Validation failed") && (
+                <div className="mt-2 text-sm">
+                  <strong>What to do:</strong> Check that your name contains only letters, spaces, hyphens, and apostrophes, and ensure your email is in a valid format.
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -298,9 +337,9 @@ export default function ProfilePage() {
           {/* Profile Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
+              <CardTitle>Account Information</CardTitle>
               <CardDescription>
-                Update your personal information and profile picture
+                Update your personal information and account picture
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -332,7 +371,7 @@ export default function ProfilePage() {
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="hidden"
-                      aria-label="Upload profile picture"
+                      aria-label="Upload account picture"
                     />
                   </label>
                   <p className="text-xs text-muted-foreground">
@@ -381,6 +420,7 @@ export default function ProfilePage() {
                             type="email"
                             placeholder="Enter your email"
                             {...field}
+                            disabled
                             aria-describedby="email-description"
                           />
                         </FormControl>
@@ -392,57 +432,33 @@ export default function ProfilePage() {
                           ) : (
                             "Email verification required"
                           )}
+                          <br />
+                          <span className="text-muted-foreground text-xs">
+                            Email changes must be requested through your administrator.
+                          </span>
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <label className="text-sm font-medium">
-                          Update Method
-                        </label>
-                        <p className="text-xs text-muted-foreground">
-                          Choose how you want to save your changes
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">Direct</span>
-                        <Switch
-                          checked={saveMethod === "approval"}
-                          onCheckedChange={(checked) =>
-                            setSaveMethod(checked ? "approval" : "direct")
-                          }
-                          aria-label="Toggle approval workflow"
-                        />
-                        <span className="text-sm">Approval</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSaving}
-                    >
-                      {isSaving
-                        ? "Saving..."
-                        : saveMethod === "approval"
-                          ? "Submit for Approval"
-                          : "Save Changes"}
-                    </Button>
-                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
 
-          {/* Profile Details */}
+          {/* Current User Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>Your account details and status</CardDescription>
+              <CardTitle>Current User Information</CardTitle>
+              <CardDescription>Your current account details and session information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
@@ -486,20 +502,30 @@ export default function ProfilePage() {
                     <span className="text-muted-foreground">Last Updated</span>
                     <span>{format(new Date(profile.updatedAt), "PPP")}</span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Session Started</span>
+                    <span>{format(new Date(), "PPP")}</span>
+                  </div>
                 </div>
 
                 {completeness && completeness.missingFields.length > 0 && (
                   <>
                     <Separator />
                     <div className="space-y-2">
-                      <span className="text-sm font-medium">
-                        Missing Information
+                      <span className="text-sm font-medium text-orange-700">
+                        Complete Your Account
                       </span>
+                      <p className="text-xs text-muted-foreground">
+                        Fill in the missing information below to get the most out of Tender Hub:
+                      </p>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         {completeness.missingFields.map((field) => (
                           <li key={field} className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
-                            {field.charAt(0).toUpperCase() + field.slice(1)}
+                            {field === "name" && "Full Name"}
+                            {field === "email" && "Email Address"}
+                            {field === "role" && "User Role"}
+                            {!["name", "email", "role"].includes(field) && field.charAt(0).toUpperCase() + field.slice(1)}
                           </li>
                         ))}
                       </ul>
@@ -517,7 +543,7 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Pending Approval Requests</CardTitle>
               <CardDescription>
-                Your profile update requests awaiting approval
+                Your account update requests awaiting approval
               </CardDescription>
             </CardHeader>
             <CardContent>

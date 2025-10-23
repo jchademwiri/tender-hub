@@ -22,7 +22,7 @@ export default function PublicNav() {
           href="/"
           className="text-xl font-bold text-foreground cursor-pointer"
         >
-          Tender Hub
+          STP Tender Hub
         </Link>
         <div className="space-x-4">
           <Link
@@ -38,17 +38,12 @@ export default function PublicNav() {
             Contact
           </Link>
           <Link
-            href="#"
+            href="/sign-in"
             className="text-foreground hover:text-primary cursor-pointer"
           >
             Login
           </Link>
-          <Link
-            href="#"
-            className="text-foreground hover:text-primary cursor-pointer"
-          >
-            Sign Up
-          </Link>
+         
         </div>
       </div>
     </nav>

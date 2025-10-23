@@ -6,8 +6,8 @@ import { AuditLogger } from "@/lib/audit-logger";
 import { requireAuth } from "@/lib/auth-utils";
 
 /**
- * Profile Image Upload API
- * POST /api/user/profile/image - Upload and update user profile image
+ * Account Image Upload API
+ * POST /api/user/account/image - Upload and update user account image
  */
 
 export async function POST(request: NextRequest) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Store previous image for audit logging
     const previousImage = currentUser.image;
 
-    // Update user profile with new image
+    // Update user account with new image
     const updatedUser = await db
       .update(user)
       .set({
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Audit log the profile image update
+    // Audit log the account image update
     await AuditLogger.logUserUpdated(
       currentUser.id,
       {
@@ -100,11 +100,11 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      message: "Profile image updated successfully",
+      message: "Account image updated successfully",
       profile: updatedUser[0],
     });
   } catch (error) {
-    console.error("Profile image upload API error:", error);
+    console.error("Account image upload API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

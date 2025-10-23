@@ -1,18 +1,17 @@
 "use client";
 
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Bookmark, BookmarkCheck } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PublisherVisitBadge } from "@/components/publisher-visit-badge";
 import Table from "@/components/Table";
+import { toast } from "sonner";
 
 interface Publisher {
   id: string;
   name: string;
   website: string | null;
-  province_id: string | null;
-  createdAt: Date;
-  provinceName: string | null;
+  isBookmarked?: boolean;
 }
 
 interface PublishersTableClientProps {
@@ -23,13 +22,14 @@ type SortKey = keyof Publisher;
 type SortDirection = "asc" | "desc";
 
 export function PublishersTableClient({
-  publishers,
+  publishers: initialPublishers,
 }: PublishersTableClientProps) {
+  const [publishers, setPublishers] = useState(initialPublishers);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const sortedPublishers = useMemo(() => {
-    return [...publishers].sort((a, b) => {
+    return [...publishers].sort((a: Publisher, b: Publisher) => {
       const aVal = a[sortKey];
       const bVal = b[sortKey];
 
@@ -43,13 +43,6 @@ export function PublishersTableClient({
         return sortDirection === "asc"
           ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
-      }
-
-      // Handle date comparison
-      if (aVal instanceof Date && bVal instanceof Date) {
-        return sortDirection === "asc"
-          ? aVal.getTime() - bVal.getTime()
-          : bVal.getTime() - aVal.getTime();
       }
 
       return 0;
@@ -94,6 +87,46 @@ export function PublishersTableClient({
       return "N/A";
     } catch {
       return "N/A";
+    }
+  };
+
+  const handleBookmarkToggle = async (publisherId: string) => {
+    try {
+      console.log("Toggling bookmark for publisher:", publisherId);
+      console.log("Publisher ID type:", typeof publisherId);
+      console.log("Publisher ID length:", publisherId?.length);
+      console.log("Publisher ID is valid UUID:", /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(publisherId));
+      const url = `/api/user/bookmarks/${publisherId}`;
+      console.log("Fetch URL:", url);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Response result:", result);
+        toast.success(result.bookmarked ? "Added to bookmarks" : "Removed from bookmarks");
+
+        // Update the local state instead of reloading the page
+        setPublishers(prevPublishers =>
+          prevPublishers.map(p =>
+            p.id === publisherId ? { ...p, isBookmarked: result.bookmarked } : p
+          )
+        );
+      } else {
+        const errorData = await response.json();
+        console.log("Error response:", errorData);
+        toast.error(errorData.error || "Failed to toggle bookmark");
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      toast.error("Error toggling bookmark");
     }
   };
 
@@ -147,38 +180,21 @@ export function PublishersTableClient({
       render: (value: string | null) => validateAndRenderUrl(value),
     },
     {
-      key: "provinceName",
-      header: (
+      key: "bookmark",
+      header: "Bookmark",
+      render: (_value: any, item: Publisher) => (
         <button
-          onClick={() => handleSort("provinceName")}
-          className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
+          onClick={() => handleBookmarkToggle(item.id)}
+          className="p-1 hover:bg-muted rounded transition-colors"
+          title={item.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
         >
-          Province
-          <ArrowUpDown
-            className={`w-3 h-3 transition-opacity ${
-              sortKey === "provinceName" ? "opacity-100" : "opacity-50"
-            }`}
-          />
+          {item.isBookmarked ? (
+            <BookmarkCheck className="w-4 h-4 text-primary" />
+          ) : (
+            <Bookmark className="w-4 h-4 text-muted-foreground hover:text-primary" />
+          )}
         </button>
       ),
-      render: (value: string | null) => value || "N/A",
-    },
-    {
-      key: "createdAt",
-      header: (
-        <button
-          onClick={() => handleSort("createdAt")}
-          className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
-        >
-          Created
-          <ArrowUpDown
-            className={`w-3 h-3 transition-opacity ${
-              sortKey === "createdAt" ? "opacity-100" : "opacity-50"
-            }`}
-          />
-        </button>
-      ),
-      render: (value: Date) => new Date(value).toLocaleDateString(),
     },
   ];
 

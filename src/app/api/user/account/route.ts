@@ -7,38 +7,35 @@ import { requireAuth } from "@/lib/auth-utils";
 import { authValidationHelpers } from "@/lib/validations/auth";
 
 /**
- * TODO: User Profile API Implementation Checklist
+ * User Account API Implementation
  *
- * PROFILE MANAGEMENT:
- * [ ] GET /api/user/profile - Get current user profile
- * [ ] PUT /api/user/profile - Update user profile information
- * [ ] POST /api/user/profile/request-update - Request profile update (approval required)
- * [ ] GET /api/user/profile/update-requests - View profile update request history
- * [ ] GET /api/user/profile/completeness - Profile completion percentage
+ * ACCOUNT MANAGEMENT:
+ * [x] GET /api/user/account - Get current user account
+ * [x] PUT /api/user/account - Update user account information
+ * [x] POST /api/user/account/request-update - Request account update (approval required)
+ * [ ] GET /api/user/account/update-requests - View account update request history
+ * [x] GET /api/user/account/completeness - Account completion percentage
  *
- * PROFILE UPDATE WORKFLOW:
- * [ ] POST /api/user/profile/request-role-change - Request role change
- * [ ] POST /api/user/profile/request-info-update - Request information update
- * [ ] GET /api/user/profile/pending-requests - Check pending approval requests
- * [ ] POST /api/user/profile/cancel-request - Cancel pending request
+ * ACCOUNT UPDATE WORKFLOW:
+ * [ ] POST /api/user/account/request-role-change - Request role change
+ * [ ] POST /api/user/account/request-info-update - Request information update
+ * [ ] GET /api/user/account/pending-requests - Check pending approval requests
+ * [ ] POST /api/user/account/cancel-request - Cancel pending request
  *
- * PROFILE VALIDATION:
- * [ ] Input validation for profile fields
- * [ ] Email format and uniqueness validation
- * [ ] Name and contact information validation
- * [ ] Role-specific field requirements
+ * ACCOUNT VALIDATION:
+ * [x] Input validation for account fields
+ * [x] Email format and uniqueness validation
+ * [x] Name and contact information validation
+ * [x] Role-specific field requirements
  */
 
 export async function GET(_request: NextRequest) {
   try {
-    // TODO: Implement user authentication
-    // const currentUser = await requireAuth();
+    // Authenticate user
+    const currentUser = await requireAuth();
 
-    // TODO: Get current user ID from session
-    const currentUserId = "user-id"; // TODO: Get from session
-
-    // TODO: Get user profile with related data
-    const userProfile = await db
+    // Get user account with related data
+    const userAccount = await db
       .select({
         id: user.id,
         name: user.name,
@@ -49,29 +46,32 @@ export async function GET(_request: NextRequest) {
         updatedAt: user.updatedAt,
         invitedBy: user.invitedBy,
         invitedAt: user.invitedAt,
+        emailVerified: user.emailVerified,
         // TODO: Add profile picture, bio, contact info fields
       })
       .from(user)
-      .where(eq(user.id, currentUserId))
+      .where(eq(user.id, currentUser.id))
       .limit(1);
 
-    if (userProfile.length === 0) {
+    if (userAccount.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // TODO: Calculate profile completeness
-    const profile = userProfile[0];
-    const completeness = calculateProfileCompleteness(profile);
+    // Calculate account completeness
+    const account = userAccount[0];
+    const completeness = calculateAccountCompleteness(account);
 
     return NextResponse.json({
-      profile: profile,
+      profile: account,
       completeness: {
         percentage: completeness,
-        missingFields: getMissingFields(profile),
+        missingFields: getMissingFields(account),
+        requiredFields: ["name", "email", "role"],
+        optionalFields: [],
       },
     });
   } catch (error) {
-    console.error("User profile API error:", error);
+    console.error("User account API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -133,7 +133,7 @@ export async function PUT(request: NextRequest) {
       email: currentUser.email,
     };
 
-    // Update user profile
+    // Update user account
     const updatedUser = await db
       .update(user)
       .set({
@@ -148,7 +148,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Audit log the profile update
+    // Audit log the account update
     await AuditLogger.logUserUpdated(
       currentUser.id,
       {
@@ -170,11 +170,11 @@ export async function PUT(request: NextRequest) {
     );
 
     return NextResponse.json({
-      message: "Profile updated successfully",
+      message: "Account updated successfully",
       profile: updatedUser[0],
     });
   } catch (error) {
-    console.error("User profile update API error:", error);
+    console.error("User account update API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate the changes using the profile update schema
+    // Validate the changes using the account update schema
     const validationResult =
       authValidationHelpers.safeValidateUpdateProfile(changes);
 
@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
 
     if (pendingRequests.length > 0) {
       return NextResponse.json(
-        { error: "You already have a pending profile update request" },
+        { error: "You already have a pending account update request" },
         { status: 409 },
       );
     }
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create profile update request
+    // Create account update request
     const newRequest = await db
       .insert(profileUpdateRequest)
       .values({
@@ -288,12 +288,12 @@ export async function POST(request: NextRequest) {
 
     if (newRequest.length === 0) {
       return NextResponse.json(
-        { error: "Failed to create profile update request" },
+        { error: "Failed to create account update request" },
         { status: 500 },
       );
     }
 
-    // Audit log the profile update request
+    // Audit log the account update request
     await AuditLogger.logProfileUpdateRequested(
       currentUser.id,
       {
@@ -316,13 +316,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Profile update request submitted successfully",
+        message: "Account update request submitted successfully",
         request: newRequest[0],
       },
       { status: 201 },
     );
   } catch (error) {
-    console.error("User profile update request API error:", error);
+    console.error("User account update request API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -331,17 +331,17 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper functions
-function calculateProfileCompleteness(profile: any): number {
+function calculateAccountCompleteness(account: any): number {
   const fields = ["name", "email", "role"];
   const completedFields = fields.filter(
-    (field) => profile[field] && profile[field].trim() !== "",
+    (field) => account[field] && account[field].trim() !== "",
   ).length;
   return Math.round((completedFields / fields.length) * 100);
 }
 
-function getMissingFields(profile: any): string[] {
+function getMissingFields(account: any): string[] {
   const fields = ["name", "email", "role"];
   return fields.filter(
-    (field) => !profile[field] || profile[field].trim() === "",
+    (field) => !account[field] || account[field].trim() === "",
   );
 }

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import type { Metadata } from "next";
-import { AdminSidebar } from "@/components/admin-sidebar";
+import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
 import { ErrorBoundary } from "@/components/error-boundary";
 import {
   Breadcrumb,
@@ -61,12 +61,13 @@ export default async function AdminLayout({
     name: user.name || "Admin",
     email: user.email,
     avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
+    role: user.role || "admin",
   };
 
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <AdminSidebar user={userData} />
+        <RoleBasedSidebar user={userData} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { provinces, publishers } from "@/db/schema";
+import { provinces, publishers, userBookmarks } from "@/db/schema";
 import {
   classifyError,
   createAppError,
@@ -12,30 +12,57 @@ import {
   retryWithBackoff,
 } from "@/lib/error-utils";
 
-export async function getAllPublishers() {
+export async function getAllPublishers(userId?: string) {
   try {
+    console.log("getAllPublishers called with userId:", userId);
     const result = await retryWithBackoff(
       async () => {
-        return await db
-          .select({
-            id: publishers.id,
-            name: publishers.name,
-            website: publishers.website,
-            province_id: publishers.province_id,
-            createdAt: publishers.createdAt,
-            provinceName: provinces.name,
-          })
-          .from(publishers)
-          .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-          .orderBy(publishers.name);
+        console.log("Executing database query for publishers");
+        if (userId) {
+          const publishersWithBookmarks = await db
+            .select({
+              id: publishers.id,
+              name: publishers.name,
+              website: publishers.website,
+              bookmarkId: userBookmarks.id,
+            })
+            .from(publishers)
+            .leftJoin(
+              userBookmarks,
+              eq(userBookmarks.publisherId, publishers.id) && eq(userBookmarks.userId, userId)
+            )
+            .orderBy(publishers.name);
+
+          console.log("Query result count:", publishersWithBookmarks.length);
+          return publishersWithBookmarks.map(p => ({
+            id: p.id,
+            name: p.name,
+            website: p.website,
+            isBookmarked: !!p.bookmarkId,
+          }));
+        } else {
+          const publishersList = await db
+            .select({
+              id: publishers.id,
+              name: publishers.name,
+              website: publishers.website,
+            })
+            .from(publishers)
+            .orderBy(publishers.name);
+
+          console.log("Query result count (no user):", publishersList.length);
+          return publishersList;
+        }
       },
       {
         maxRetries: 2,
         shouldRetry: (error) => {
           const message = error.message.toLowerCase();
+          console.log("Checking if error should be retried:", message);
           return message.includes("connection") || message.includes("timeout");
         },
         onRetry: (error, attempt) => {
+          console.log(`Retrying getAllPublishers attempt ${attempt} for error:`, error.message);
           logError(
             createAppError(`Get all publishers retry attempt ${attempt}`, {
               details: { originalError: error },
@@ -45,8 +72,50 @@ export async function getAllPublishers() {
         },
       },
     );
+    console.log("getAllPublishers returning result with length:", result.length);
     return result;
   } catch (error) {
+    console.error("Error in getAllPublishers:", error);
+
+    // Check for specific database errors
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+      console.log("Error message:", message);
+
+      // Handle "relation does not exist" error (table missing)
+      if (message.includes("42p01") || message.includes("relation") && message.includes("does not exist")) {
+        console.log("Detected missing publishers table error");
+        const appError = createAppError(
+          "Publishers table does not exist. Please run database migrations.",
+          {
+            code: "TABLE_MISSING",
+            statusCode: 500,
+            details: {
+              originalError: error,
+              suggestion: "Run 'npm run db:migrate' or check database setup"
+            },
+          },
+        );
+        logError(appError, classifyError(appError));
+        throw appError;
+      }
+
+      // Handle other database errors
+      if (message.includes("connection") || message.includes("timeout")) {
+        console.log("Detected connection/timeout error");
+        const appError = createAppError(
+          "Database connection failed. Please check your database configuration.",
+          {
+            code: "DB_CONNECTION_FAILED",
+            statusCode: 500,
+            details: { originalError: error },
+          },
+        );
+        logError(appError, classifyError(appError));
+        throw appError;
+      }
+    }
+
     const appError = createAppError(
       `Failed to fetch publishers: ${error instanceof Error ? error.message : "Unknown error"}`,
       {
@@ -278,4 +347,41 @@ export async function createPublisher(_prevState: any, formData: FormData) {
 
   // Redirect OUTSIDE the try-catch
   redirect("/admin/publishers");
+}
+
+export async function toggleBookmark(userId: string, publisherId: string) {
+  try {
+    // Check if bookmark exists
+    const existingBookmark = await db
+      .select()
+      .from(userBookmarks)
+      .where(eq(userBookmarks.userId, userId) && eq(userBookmarks.publisherId, publisherId))
+      .limit(1);
+
+    if (existingBookmark.length > 0) {
+      // Remove bookmark
+      await db
+        .delete(userBookmarks)
+        .where(eq(userBookmarks.id, existingBookmark[0].id));
+      return { bookmarked: false };
+    } else {
+      // Add bookmark
+      await db.insert(userBookmarks).values({
+        userId,
+        publisherId,
+      });
+      return { bookmarked: true };
+    }
+  } catch (error) {
+    const appError = createAppError(
+      `Failed to toggle bookmark: ${error instanceof Error ? error.message : "Unknown error"}`,
+      {
+        code: "TOGGLE_BOOKMARK_FAILED",
+        statusCode: 500,
+        details: { userId, publisherId, originalError: error },
+      },
+    );
+    logError(appError, classifyError(appError));
+    throw appError;
+  }
 }

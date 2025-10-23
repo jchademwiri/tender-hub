@@ -131,6 +131,29 @@ export const publishers = pgTable(
   }),
 );
 
+/**
+ * User Bookmarks Table
+ * Stores user bookmarks/favorites for publishers
+ */
+export const userBookmarks = pgTable(
+  "user_bookmarks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    publisherId: uuid("publisher_id")
+      .notNull()
+      .references(() => publishers.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index("user_bookmarks_user_idx").on(table.userId),
+    publisherIdx: index("user_bookmarks_publisher_idx").on(table.publisherId),
+    uniqueBookmark: index("user_bookmarks_unique_idx").on(table.userId, table.publisherId),
+  }),
+);
+
 // Invitation status enum for better type safety
 export const invitationStatusEnum = pgEnum("invitation_status", [
   "pending",
@@ -473,6 +496,8 @@ export type Verification = typeof verification.$inferSelect;
 export type Province = typeof provinces.$inferSelect;
 export type Publisher = typeof publishers.$inferSelect;
 export type NewPublisher = typeof publishers.$inferInsert;
+export type UserBookmark = typeof userBookmarks.$inferSelect;
+export type NewUserBookmark = typeof userBookmarks.$inferInsert;
 
 // Analytics Types
 export type AnalyticsSession = typeof sessions.$inferSelect;
