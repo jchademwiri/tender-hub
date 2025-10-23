@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import type { Metadata } from "next";
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
 // import { requireAuth } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
 import {
@@ -37,12 +37,13 @@ export default async function DashboardLayout({
     name: user.name || "User",
     email: user.email,
     avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
+    role: user.role || "user",
   };
 
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <DashboardSidebar user={userData} />
+        <RoleBasedSidebar user={userData} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

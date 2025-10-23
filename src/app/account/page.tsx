@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -260,28 +261,48 @@ export default function AccountPage() {
     );
   }
 
+  const getHomeUrl = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return '/admin';
+      case 'manager':
+        return '/manager';
+      default:
+        return '/dashboard';
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 min-h-screen">
       <div className="w-full">
         <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = getHomeUrl(profile?.role || 'user')}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
           <h1 className="text-3xl font-bold">Account</h1>
-          {completeness && completeness.percentage < 100 && (
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                Account Completeness
-              </div>
-              <div className="flex items-center gap-2">
-                <Progress value={completeness.percentage} className="w-24" />
-                <span className="text-sm font-medium">
-                  {completeness.percentage}%
-                </span>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
-              </div>
-            </div>
-          )}
         </div>
+
+        {completeness && completeness.percentage < 100 && (
+          <div className="flex items-center gap-4 mb-6">
+            <div className="text-sm text-muted-foreground">
+              Account Completeness
+            </div>
+            <div className="flex items-center gap-2">
+              <Progress value={completeness.percentage} className="w-24" />
+              <span className="text-sm font-medium">
+                {completeness.percentage}%
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
+            </div>
+          </div>
+        )}
 
         {message && (
           <Alert
@@ -421,41 +442,13 @@ export default function AccountPage() {
                     )}
                   />
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <label className="text-sm font-medium">
-                          Update Method
-                        </label>
-                        <p className="text-xs text-muted-foreground">
-                          Choose how you want to save your changes
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">Direct</span>
-                        <Switch
-                          checked={saveMethod === "approval"}
-                          onCheckedChange={(checked) =>
-                            setSaveMethod(checked ? "approval" : "direct")
-                          }
-                          aria-label="Toggle approval workflow"
-                        />
-                        <span className="text-sm">Approval</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSaving}
-                    >
-                      {isSaving
-                        ? "Saving..."
-                        : saveMethod === "approval"
-                          ? "Submit for Approval"
-                          : "Save Changes"}
-                    </Button>
-                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
                 </form>
               </Form>
             </CardContent>
