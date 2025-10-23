@@ -22,13 +22,14 @@ type SortKey = keyof Publisher;
 type SortDirection = "asc" | "desc";
 
 export function PublishersTableClient({
-  publishers,
+  publishers: initialPublishers,
 }: PublishersTableClientProps) {
+  const [publishers, setPublishers] = useState(initialPublishers);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const sortedPublishers = useMemo(() => {
-    return [...publishers].sort((a, b) => {
+    return [...publishers].sort((a: Publisher, b: Publisher) => {
       const aVal = a[sortKey];
       const bVal = b[sortKey];
 
@@ -92,7 +93,12 @@ export function PublishersTableClient({
   const handleBookmarkToggle = async (publisherId: string) => {
     try {
       console.log("Toggling bookmark for publisher:", publisherId);
-      const response = await fetch(`/api/user/bookmarks/${publisherId}`, {
+      console.log("Publisher ID type:", typeof publisherId);
+      console.log("Publisher ID length:", publisherId?.length);
+      console.log("Publisher ID is valid UUID:", /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(publisherId));
+      const url = `/api/user/bookmarks/${publisherId}`;
+      console.log("Fetch URL:", url);
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,8 +113,12 @@ export function PublishersTableClient({
         console.log("Response result:", result);
         toast.success(result.bookmarked ? "Added to bookmarks" : "Removed from bookmarks");
 
-        // Refresh the page to update the data
-        window.location.reload();
+        // Update the local state instead of reloading the page
+        setPublishers(prevPublishers =>
+          prevPublishers.map(p =>
+            p.id === publisherId ? { ...p, isBookmarked: result.bookmarked } : p
+          )
+        );
       } else {
         const errorData = await response.json();
         console.log("Error response:", errorData);

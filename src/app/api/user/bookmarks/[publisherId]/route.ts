@@ -4,10 +4,11 @@ import { toggleBookmark } from "@/server/publisher";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { publisherId: string } }
+  { params }: { params: Promise<{ publisherId: string }> }
 ) {
   try {
-    console.log("Bookmark API called with params:", params);
+    const resolvedParams = await params;
+    console.log("Bookmark API called with params:", resolvedParams);
     console.log("Request URL:", request.url);
     console.log("Request method:", request.method);
 
@@ -22,19 +23,22 @@ export async function POST(
       );
     }
 
-    const { publisherId } = params;
+    const { publisherId } = resolvedParams;
     console.log("Publisher ID from params:", publisherId);
     console.log("Publisher ID type:", typeof publisherId);
     console.log("Publisher ID length:", publisherId?.length);
     console.log("Publisher ID is truthy:", !!publisherId);
     console.log("Publisher ID === 'undefined':", publisherId === 'undefined');
     console.log("Publisher ID === 'null':", publisherId === 'null');
+    console.log("Publisher ID is empty string:", publisherId === '');
+    console.log("Publisher ID is '982a3ef8-250e-46db-9ce9-11641d793d64':", publisherId === '982a3ef8-250e-46db-9ce9-11641d793d64');
 
     // Check if it's a valid UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     console.log("Publisher ID matches UUID regex:", uuidRegex.test(publisherId));
+    console.log("UUID regex test result for specific ID:", uuidRegex.test('982a3ef8-250e-46db-9ce9-11641d793d64'));
 
-    if (!publisherId || publisherId === 'undefined' || publisherId === 'null' || !uuidRegex.test(publisherId)) {
+    if (!publisherId || publisherId === 'undefined' || publisherId === 'null' || publisherId === '' || !uuidRegex.test(publisherId)) {
       console.log("Invalid publisher ID provided, returning 400");
       return NextResponse.json(
         { error: "Publisher ID is required" },
