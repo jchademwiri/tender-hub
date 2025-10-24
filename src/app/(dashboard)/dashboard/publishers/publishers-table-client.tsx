@@ -77,7 +77,7 @@ export function PublishersTableClient({
             href={urlObj.toString()}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline hover:text-primary/80"
+            className="text-primary underline hover:text-primary/80 transition-colors"
           >
             {url}
           </a>
@@ -92,7 +92,6 @@ export function PublishersTableClient({
 
   const handleBookmarkToggle = async (publisherId: string) => {
     try {
-      console.log("Toggling bookmark for publisher:", publisherId);
       console.log("Publisher ID type:", typeof publisherId);
       console.log("Publisher ID length:", publisherId?.length);
       console.log(
@@ -145,7 +144,7 @@ export function PublishersTableClient({
       header: (
         <button
           onClick={() => handleSort("name")}
-          className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
+          className="flex items-center gap-1 hover:bg-muted/50 px-2 py-1 rounded transition-colors font-medium"
         >
           Publisher
           <ArrowUpDown
@@ -159,7 +158,7 @@ export function PublishersTableClient({
         <div className="flex items-center gap-2">
           <Link
             href={`/publishers/${item.id}`}
-            className="text-primary hover:underline font-medium"
+            className="text-primary hover:underline font-medium transition-colors"
           >
             {value}
           </Link>
@@ -176,7 +175,7 @@ export function PublishersTableClient({
       header: (
         <button
           onClick={() => handleSort("website")}
-          className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
+          className="flex items-center gap-1 hover:bg-muted/50 px-2 py-1 rounded transition-colors font-medium"
         >
           Website
           <ArrowUpDown
@@ -194,7 +193,7 @@ export function PublishersTableClient({
       render: (_value: any, item: Publisher) => (
         <button
           onClick={() => handleBookmarkToggle(item.id)}
-          className="p-1 hover:bg-muted rounded transition-colors"
+          className="p-2 hover:bg-muted rounded transition-colors"
           title={
             item.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"
           }

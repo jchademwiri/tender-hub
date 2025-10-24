@@ -19,27 +19,29 @@ export async function getAllPublishers(userId?: string) {
       async () => {
         console.log("Executing database query for publishers");
         if (userId) {
-          const publishersWithBookmarks = await db
+          // Get all publishers
+          const publishersList = await db
             .select({
               id: publishers.id,
               name: publishers.name,
               website: publishers.website,
-              bookmarkId: userBookmarks.id,
             })
             .from(publishers)
-            .leftJoin(
-              userBookmarks,
-              eq(userBookmarks.publisherId, publishers.id) &&
-                eq(userBookmarks.userId, userId),
-            )
             .orderBy(publishers.name);
 
-          console.log("Query result count:", publishersWithBookmarks.length);
-          return publishersWithBookmarks.map((p) => ({
+          // Get bookmarked publisher IDs for the user
+          const bookmarkedIds = await db
+            .select({ publisherId: userBookmarks.publisherId })
+            .from(userBookmarks)
+            .where(eq(userBookmarks.userId, userId));
+
+          const bookmarkedSet = new Set(bookmarkedIds.map(b => b.publisherId));
+
+          return publishersList.map((p) => ({
             id: p.id,
             name: p.name,
             website: p.website,
-            isBookmarked: !!p.bookmarkId,
+            isBookmarked: bookmarkedSet.has(p.id),
           }));
         } else {
           const publishersList = await db
@@ -51,7 +53,6 @@ export async function getAllPublishers(userId?: string) {
             .from(publishers)
             .orderBy(publishers.name);
 
-          console.log("Query result count (no user):", publishersList.length);
           return publishersList;
         }
       },
@@ -367,21 +368,23 @@ export async function createPublisher(
 
 export async function toggleBookmark(userId: string, publisherId: string) {
   try {
-    // Check if bookmark exists
-    const existingBookmark = await db
+    // Check if any bookmark exists for this user and publisher
+    const existingBookmarks = await db
       .select()
       .from(userBookmarks)
       .where(
         eq(userBookmarks.userId, userId) &&
           eq(userBookmarks.publisherId, publisherId),
-      )
-      .limit(1);
+      );
 
-    if (existingBookmark.length > 0) {
-      // Remove bookmark
+    if (existingBookmarks.length > 0) {
+      // Remove all bookmarks for this user and publisher
       await db
         .delete(userBookmarks)
-        .where(eq(userBookmarks.id, existingBookmark[0].id));
+        .where(
+          eq(userBookmarks.userId, userId) &&
+            eq(userBookmarks.publisherId, publisherId),
+        );
       return { bookmarked: false };
     } else {
       // Add bookmark
