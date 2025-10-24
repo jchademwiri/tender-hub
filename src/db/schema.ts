@@ -150,7 +150,10 @@ export const userBookmarks = pgTable(
   (table) => ({
     userIdx: index("user_bookmarks_user_idx").on(table.userId),
     publisherIdx: index("user_bookmarks_publisher_idx").on(table.publisherId),
-    uniqueBookmark: index("user_bookmarks_unique_idx").on(table.userId, table.publisherId),
+    uniqueBookmark: index("user_bookmarks_unique_idx").on(
+      table.userId,
+      table.publisherId,
+    ),
   }),
 );
 

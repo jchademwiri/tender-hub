@@ -81,7 +81,8 @@ export default async function MostVisitedPage() {
         {mostVisitedPublishers.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No visit data available yet. Start visiting publishers to see your most visited list.
+              No visit data available yet. Start visiting publishers to see your
+              most visited list.
             </p>
           </div>
         )}

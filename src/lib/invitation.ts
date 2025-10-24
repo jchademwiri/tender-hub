@@ -104,20 +104,17 @@ export async function createInvitation({
       throw new Error("Failed to create invitation - no invitation returned");
     }
 
-    // Send invitation email manually (since we disabled auto-send)
+    // Send invitation email using the proper template
     const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${newInvitation.id}`;
 
-    await sendEmail({
+    const { sendInvitationEmail } = await import("@/lib/email");
+    await sendInvitationEmail({
       to: email,
-      subject: `You've been invited to Tender Hub`,
-      html: `
-        <h1>Welcome to Tender Hub!</h1>
-        <p>${inviter.name} has invited you to join as a <strong>${role}</strong>.</p>
-        <p>Click the link below to accept your invitation and create your account:</p>
-        <a href="${invitationUrl}" style="display: inline-block; padding: 12px 24px; background: #0070f3; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a>
-        <p>This invitation expires in 7 days.</p>
-        <p>If you didn't expect this invitation, you can safely ignore this email.</p>
-      `,
+      inviterName: inviter.name,
+      inviterEmail: inviter.email,
+      role,
+      invitationUrl,
+      expirationTime: "7 days",
     });
 
     // Track the invitation as sent

@@ -8,7 +8,6 @@ async function createFirstAdmin(
   name?: string,
   password?: string,
 ) {
-
   // Check if any admin exists
   const adminCount = await db
     .select({ count: count() })
@@ -60,10 +59,12 @@ async function createFirstAdmin(
     password: hashedPassword,
     createdAt: new Date(),
   });
-
 }
 
 createFirstAdmin().catch((error) => {
-  console.error("Failed to create admin:", error instanceof Error ? error.message : error);
+  console.error(
+    "Failed to create admin:",
+    error instanceof Error ? error.message : error,
+  );
   process.exit(1);
 });

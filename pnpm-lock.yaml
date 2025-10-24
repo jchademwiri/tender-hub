@@ -102,6 +102,9 @@ importers:
       '@react-email/render':
         specifier: ^1.3.2
         version: 1.3.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@tanstack/react-query':
+        specifier: ^5.90.5
+        version: 5.90.5(react@19.2.0)
       '@types/papaparse':
         specifier: ^5.3.16
         version: 5.3.16
@@ -1912,6 +1915,14 @@ packages:
 
   '@tailwindcss/postcss@4.1.14':
     resolution: {integrity: sha512-BdMjIxy7HUNThK87C7BC8I1rE8BVUsfNQSI5siQ4JK3iIa3w0XyVvVL9SXLWO//CtYTcp1v7zci0fYwJOjB+Zg==}
+
+  '@tanstack/query-core@5.90.5':
+    resolution: {integrity: sha512-wLamYp7FaDq6ZnNehypKI5fNvxHPfTYylE0m/ZpuuzJfJqhR5Pxg9gvGBHZx4n7J+V5Rg5mZxHHTlv25Zt5u+w==}
+
+  '@tanstack/react-query@5.90.5':
+    resolution: {integrity: sha512-pN+8UWpxZkEJ/Rnnj2v2Sxpx1WFlaa9L6a4UO89p6tTQbeo+m0MS8oYDjbggrR8QcTyjKoYWKS3xJQGr3ExT8Q==}
+    peerDependencies:
+      react: ^18 || ^19
 
   '@types/cors@2.8.19':
     resolution: {integrity: sha512-mFNylyeyqN93lfe/9CSxOGREz8cpzAhH+E93xJ4xWQf62V8sQ/24reV2nyzUWM6H6Xji+GGHpkbLe7pVoUEskg==}
@@ -6118,6 +6129,13 @@ snapshots:
       '@tailwindcss/oxide': 4.1.14
       postcss: 8.5.6
       tailwindcss: 4.1.14
+
+  '@tanstack/query-core@5.90.5': {}
+
+  '@tanstack/react-query@5.90.5(react@19.2.0)':
+    dependencies:
+      '@tanstack/query-core': 5.90.5
+      react: 19.2.0
 
   '@types/cors@2.8.19':
     dependencies:

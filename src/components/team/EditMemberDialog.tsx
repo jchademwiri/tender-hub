@@ -60,9 +60,21 @@ export function EditMemberDialog({
   canEditRole = false,
   canEditStatus = false,
   availableRoles = [
-    { value: "user", label: "User", description: "Basic access to the platform" },
-    { value: "manager", label: "Manager", description: "Can manage users and content" },
-    { value: "admin", label: "Admin", description: "Full administrative access" },
+    {
+      value: "user",
+      label: "User",
+      description: "Basic access to the platform",
+    },
+    {
+      value: "manager",
+      label: "Manager",
+      description: "Can manage users and content",
+    },
+    {
+      value: "admin",
+      label: "Admin",
+      description: "Full administrative access",
+    },
   ],
 }: EditMemberDialogProps) {
   const [error, setError] = useState<string | null>(null);
@@ -120,10 +132,7 @@ export function EditMemberDialog({
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="John Doe"
-                      {...field}
-                    />
+                    <Input placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

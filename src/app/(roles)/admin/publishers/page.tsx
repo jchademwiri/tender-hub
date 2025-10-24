@@ -34,7 +34,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import PublisherForm from "@/components/PublisherForm";
 
 interface Province {
@@ -67,7 +73,9 @@ export default function AdminPublishersPage() {
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingPublisher, setEditingPublisher] = useState<Publisher | null>(null);
+  const [editingPublisher, setEditingPublisher] = useState<Publisher | null>(
+    null,
+  );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -95,8 +103,13 @@ export default function AdminPublishersPage() {
       const response = await fetch(`/api/admin/publishers?${params}`);
       if (response.ok) {
         const data = await response.json();
-        console.log(`[DEBUG] Frontend - Received publishers:`, data.publishers.map((p: any) => ({ id: p.id, name: p.name })));
-        console.log(`[DEBUG] Frontend - Publishers count: ${data.publishers.length}`);
+        console.log(
+          `[DEBUG] Frontend - Received publishers:`,
+          data.publishers.map((p: any) => ({ id: p.id, name: p.name })),
+        );
+        console.log(
+          `[DEBUG] Frontend - Publishers count: ${data.publishers.length}`,
+        );
         setPublishers(data.publishers);
         setPagination(data.pagination);
       } else {
@@ -139,10 +152,13 @@ export default function AdminPublishersPage() {
     if (!editingPublisher) return { error: "No publisher selected" };
 
     try {
-      const response = await fetch(`/api/admin/publishers/${editingPublisher.id}`, {
-        method: "PUT",
-        body: formData,
-      });
+      const response = await fetch(
+        `/api/admin/publishers/${editingPublisher.id}`,
+        {
+          method: "PUT",
+          body: formData,
+        },
+      );
 
       const result = await response.json();
 
@@ -216,10 +232,10 @@ export default function AdminPublishersPage() {
               </DialogDescription>
             </DialogHeader>
             <PublisherForm
-              provinces={provinces.map(p => ({
+              provinces={provinces.map((p) => ({
                 ...p,
                 createdAt: new Date(p.createdAt),
-                description: p.description || null
+                description: p.description || null,
               }))}
               action={handleCreatePublisher}
             />
@@ -252,7 +268,9 @@ export default function AdminPublishersPage() {
             </div>
           ) : publishers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">
-              <div className="text-muted-foreground mb-4">No publishers found</div>
+              <div className="text-muted-foreground mb-4">
+                No publishers found
+              </div>
               <Button
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(true)}
@@ -275,7 +293,9 @@ export default function AdminPublishersPage() {
               <TableBody>
                 {publishers.map((publisher) => (
                   <TableRow key={publisher.id}>
-                    <TableCell className="font-medium">{publisher.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {publisher.name}
+                    </TableCell>
                     <TableCell>
                       {publisher.website ? (
                         <a
@@ -288,7 +308,9 @@ export default function AdminPublishersPage() {
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       ) : (
-                        <span className="text-muted-foreground">No website</span>
+                        <span className="text-muted-foreground">
+                          No website
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -302,7 +324,10 @@ export default function AdminPublishersPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Dialog
-                          open={isEditDialogOpen && editingPublisher?.id === publisher.id}
+                          open={
+                            isEditDialogOpen &&
+                            editingPublisher?.id === publisher.id
+                          }
                           onOpenChange={(open) => {
                             setIsEditDialogOpen(open);
                             if (!open) setEditingPublisher(null);
@@ -325,15 +350,21 @@ export default function AdminPublishersPage() {
                               </DialogDescription>
                             </DialogHeader>
                             <PublisherForm
-                              publisher={editingPublisher ? {
-                                ...editingPublisher,
-                                createdAt: new Date(editingPublisher.createdAt),
-                                website: editingPublisher.website || null
-                              } : undefined}
-                              provinces={provinces.map(p => ({
+                              publisher={
+                                editingPublisher
+                                  ? {
+                                      ...editingPublisher,
+                                      createdAt: new Date(
+                                        editingPublisher.createdAt,
+                                      ),
+                                      website: editingPublisher.website || null,
+                                    }
+                                  : undefined
+                              }
+                              provinces={provinces.map((p) => ({
                                 ...p,
                                 createdAt: new Date(p.createdAt),
-                                description: p.description || null
+                                description: p.description || null,
                               }))}
                               action={handleUpdatePublisher}
                             />
@@ -348,9 +379,12 @@ export default function AdminPublishersPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Publisher</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Delete Publisher
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{publisher.name}"? This action cannot be undone.
+                                Are you sure you want to delete "
+                                {publisher.name}"? This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -375,15 +409,17 @@ export default function AdminPublishersPage() {
           {pagination && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
               <div className="text-sm text-muted-foreground">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to{" "}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                {pagination.total} publishers
+                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+                of {pagination.total} publishers
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fetchPublishers(searchTerm, pagination.page - 1)}
+                  onClick={() =>
+                    fetchPublishers(searchTerm, pagination.page - 1)
+                  }
                   disabled={pagination.page === 1}
                 >
                   Previous
@@ -391,7 +427,9 @@ export default function AdminPublishersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fetchPublishers(searchTerm, pagination.page + 1)}
+                  onClick={() =>
+                    fetchPublishers(searchTerm, pagination.page + 1)
+                  }
                   disabled={pagination.page === pagination.totalPages}
                 >
                   Next

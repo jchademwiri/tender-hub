@@ -1,6 +1,18 @@
 "use client";
 
-import { BookOpen, Bookmark, CheckCircle, Command, FileText, Home, Mail, Map, TrendingUp, UserCheck, Users } from "lucide-react";
+import {
+  BookOpen,
+  Bookmark,
+  CheckCircle,
+  Command,
+  FileText,
+  Home,
+  Mail,
+  Map,
+  TrendingUp,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import type * as React from "react";
 import Link from "next/link";
 
@@ -26,74 +38,79 @@ interface RoleBasedSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 // Role-based navigation filtering
 const getNavigationItems = (userRole: string) => {
-  const baseItems = [
-    { title: "Back to Site", url: "/", icon: Home },
-  ];
+  const baseItems = [{ title: "Back to Site", url: "/", icon: Home }];
 
-  const roleSpecificItems: Record<string, Array<{ title: string; url: string; icon: React.ComponentType<any> }>> = {
+  const roleSpecificItems: Record<
+    string,
+    Array<{ title: string; url: string; icon: React.ComponentType<any> }>
+  > = {
     admin: [
-   {
-    title: "Dashboard",
-    url: "/admin",
-    icon: Command,
-  },
-  {
-    title: "Team",
-    url: "/admin/team",
-    icon: Users,
-  },
-  {
-    title: "Provinces",
-    url: "/admin/provinces",
-    icon: Map,
-  },
-  {
-    title: "Publishers",
-    url: "/admin/publishers",
-    icon: BookOpen,
-  },
-  {
-    title: "Invitations",
-    url: "/admin/invitations",
-    icon: Mail,
-  },
+      {
+        title: "Dashboard",
+        url: "/admin",
+        icon: Command,
+      },
+      {
+        title: "Team",
+        url: "/admin/team",
+        icon: Users,
+      },
+      {
+        title: "Provinces",
+        url: "/admin/provinces",
+        icon: Map,
+      },
+      {
+        title: "Publishers",
+        url: "/admin/publishers",
+        icon: BookOpen,
+      },
+      {
+        title: "Invitations",
+        url: "/admin/invitations",
+        icon: Mail,
+      },
     ],
     manager: [
-  {
-    title: "Dashboard",
-    url: "/manager",
-    icon: Command,
-  },
-  {
-    title: "Team",
-    url: "/manager/team",
-    icon: Users,
-  },
-  {
-    title: "Approvals",
-    url: "/manager/approvals",
-    icon: CheckCircle,
-  },
-  {
-    title: "Provinces",
-    url: "/manager/provinces",
-    icon: Map,
-  },
-  {
-    title: "Publishers",
-    url: "/manager/publishers",
-    icon: BookOpen,
-  },
-  {
-    title: "Reports",
-    url: "/manager/reports",
-    icon: FileText,
-  },
+      {
+        title: "Dashboard",
+        url: "/manager",
+        icon: Command,
+      },
+      {
+        title: "Team",
+        url: "/manager/team",
+        icon: Users,
+      },
+      {
+        title: "Approvals",
+        url: "/manager/approvals",
+        icon: CheckCircle,
+      },
+      {
+        title: "Provinces",
+        url: "/manager/provinces",
+        icon: Map,
+      },
+      {
+        title: "Publishers",
+        url: "/manager/publishers",
+        icon: BookOpen,
+      },
+      {
+        title: "Reports",
+        url: "/manager/reports",
+        icon: FileText,
+      },
     ],
     user: [
       { title: "Dashboard", url: "/dashboard", icon: Command },
       { title: "Publishers", url: "/dashboard/publishers", icon: BookOpen },
-      { title: "Most Visited", url: "/dashboard/most-visited", icon: TrendingUp },
+      {
+        title: "Most Visited",
+        url: "/dashboard/most-visited",
+        icon: TrendingUp,
+      },
       { title: "Bookmarks", url: "/dashboard/bookmarks", icon: Bookmark },
     ],
   };
@@ -102,10 +119,33 @@ const getNavigationItems = (userRole: string) => {
 };
 
 function RoleSpecificHeader({ role }: { role: string }) {
-  const headers: Record<string, { title: string; subtitle: string; icon: React.ComponentType<any>; href: string }> = {
-    admin: { title: "Tender Hub", subtitle: "Admin", icon: Command, href: "/admin" },
-    manager: { title: "Tender Hub", subtitle: "Manager", icon: UserCheck, href: "/manager" },
-    user: { title: "Tender Hub", subtitle: "Dashboard", icon: Command, href: "/dashboard" },
+  const headers: Record<
+    string,
+    {
+      title: string;
+      subtitle: string;
+      icon: React.ComponentType<any>;
+      href: string;
+    }
+  > = {
+    admin: {
+      title: "Tender Hub",
+      subtitle: "Admin",
+      icon: Command,
+      href: "/admin",
+    },
+    manager: {
+      title: "Tender Hub",
+      subtitle: "Manager",
+      icon: UserCheck,
+      href: "/manager",
+    },
+    user: {
+      title: "Tender Hub",
+      subtitle: "Dashboard",
+      icon: Command,
+      href: "/dashboard",
+    },
   };
 
   const header = headers[role] || headers.user;

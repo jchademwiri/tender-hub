@@ -68,7 +68,8 @@ interface PendingRequest {
 export default function AccountPage() {
   // Update page title and metadata
   const pageTitle = "Account";
-  const pageDescription = "Manage your account settings and account information";
+  const pageDescription =
+    "Manage your account settings and account information";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(
     null,
@@ -263,12 +264,12 @@ export default function AccountPage() {
 
   const getHomeUrl = (role: string) => {
     switch (role) {
-      case 'admin':
-        return '/admin';
-      case 'manager':
-        return '/manager';
+      case "admin":
+        return "/admin";
+      case "manager":
+        return "/manager";
       default:
-        return '/dashboard';
+        return "/dashboard";
     }
   };
 
@@ -278,7 +279,9 @@ export default function AccountPage() {
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"
-            onClick={() => window.location.href = getHomeUrl(profile?.role || 'user')}
+            onClick={() =>
+              (window.location.href = getHomeUrl(profile?.role || "user"))
+            }
             className="flex items-center gap-2 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -299,7 +302,8 @@ export default function AccountPage() {
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
-              {completeness.missingFields.length} field{completeness.missingFields.length !== 1 ? 's' : ''} to complete
+              {completeness.missingFields.length} field
+              {completeness.missingFields.length !== 1 ? "s" : ""} to complete
             </div>
           </div>
         )}
@@ -319,16 +323,22 @@ export default function AccountPage() {
               )}
             >
               {message.text}
-              {message.type === "error" && message.text.includes("Email is already in use") && (
-                <div className="mt-2 text-sm">
-                  <strong>What to do:</strong> Try a different email address or contact your administrator if you believe this is an error.
-                </div>
-              )}
-              {message.type === "error" && message.text.includes("Validation failed") && (
-                <div className="mt-2 text-sm">
-                  <strong>What to do:</strong> Check that your name contains only letters, spaces, hyphens, and apostrophes, and ensure your email is in a valid format.
-                </div>
-              )}
+              {message.type === "error" &&
+                message.text.includes("Email is already in use") && (
+                  <div className="mt-2 text-sm">
+                    <strong>What to do:</strong> Try a different email address
+                    or contact your administrator if you believe this is an
+                    error.
+                  </div>
+                )}
+              {message.type === "error" &&
+                message.text.includes("Validation failed") && (
+                  <div className="mt-2 text-sm">
+                    <strong>What to do:</strong> Check that your name contains
+                    only letters, spaces, hyphens, and apostrophes, and ensure
+                    your email is in a valid format.
+                  </div>
+                )}
             </AlertDescription>
           </Alert>
         )}
@@ -434,7 +444,8 @@ export default function AccountPage() {
                           )}
                           <br />
                           <span className="text-muted-foreground text-xs">
-                            Email changes must be requested through your administrator.
+                            Email changes must be requested through your
+                            administrator.
                           </span>
                         </FormDescription>
                         <FormMessage />
@@ -442,11 +453,7 @@ export default function AccountPage() {
                     )}
                   />
 
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isSaving}
-                  >
+                  <Button type="submit" className="w-full" disabled={isSaving}>
                     {isSaving ? "Saving..." : "Save Changes"}
                   </Button>
                 </form>
@@ -458,7 +465,9 @@ export default function AccountPage() {
           <Card>
             <CardHeader>
               <CardTitle>Current User Information</CardTitle>
-              <CardDescription>Your current account details and session information</CardDescription>
+              <CardDescription>
+                Your current account details and session information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
@@ -503,7 +512,9 @@ export default function AccountPage() {
                     <span>{format(new Date(profile.updatedAt), "PPP")}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Session Started</span>
+                    <span className="text-muted-foreground">
+                      Session Started
+                    </span>
                     <span>{format(new Date(), "PPP")}</span>
                   </div>
                 </div>
@@ -516,7 +527,8 @@ export default function AccountPage() {
                         Complete Your Account
                       </span>
                       <p className="text-xs text-muted-foreground">
-                        Fill in the missing information below to get the most out of Tender Hub:
+                        Fill in the missing information below to get the most
+                        out of Tender Hub:
                       </p>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         {completeness.missingFields.map((field) => (
@@ -525,7 +537,8 @@ export default function AccountPage() {
                             {field === "name" && "Full Name"}
                             {field === "email" && "Email Address"}
                             {field === "role" && "User Role"}
-                            {!["name", "email", "role"].includes(field) && field.charAt(0).toUpperCase() + field.slice(1)}
+                            {!["name", "email", "role"].includes(field) &&
+                              field.charAt(0).toUpperCase() + field.slice(1)}
                           </li>
                         ))}
                       </ul>

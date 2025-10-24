@@ -92,7 +92,8 @@ export function InviteMemberDialog({
         <DialogHeader>
           <DialogTitle>Invite Team Member</DialogTitle>
           <DialogDescription>
-            Send an invitation to a new team member. They will receive an email with instructions to join.
+            Send an invitation to a new team member. They will receive an email
+            with instructions to join.
           </DialogDescription>
         </DialogHeader>
 
@@ -123,10 +124,7 @@ export function InviteMemberDialog({
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="John Doe"
-                      {...field}
-                    />
+                    <Input placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,7 +137,10 @@ export function InviteMemberDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
@@ -174,7 +175,9 @@ export function InviteMemberDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isInviting}>
-                {isInviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isInviting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Send Invitation
               </Button>
             </DialogFooter>

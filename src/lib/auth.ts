@@ -315,7 +315,13 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "https://tenders.livhuandmusa.co.za" || "https://tender-hub-nine.vercel.app" || "https://tender-hub-tau.vercel.app/",
-    process.env.NEXT_PUBLIC_APP_URL || "https://tenders.livhuandmusa.co.za" || "https://tender-hub-nine.vercel.app" || "https://tender-hub-tau.vercel.app/",
+    process.env.BETTER_AUTH_URL ||
+      "https://tenders.livhuandmusa.co.za" ||
+      "https://tender-hub-nine.vercel.app" ||
+      "https://tender-hub-tau.vercel.app/",
+    process.env.NEXT_PUBLIC_APP_URL ||
+      "https://tenders.livhuandmusa.co.za" ||
+      "https://tender-hub-nine.vercel.app" ||
+      "https://tender-hub-tau.vercel.app/",
   ],
 });

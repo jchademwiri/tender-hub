@@ -23,7 +23,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import ProvinceForm from "@/components/ProvinceForm";
 
 interface Province {
@@ -104,10 +110,13 @@ export default function ManagerProvincesPage() {
     if (!editingProvince) return { error: "No province selected" };
 
     try {
-      const response = await fetch(`/api/manager/provinces/${editingProvince.id}`, {
-        method: "PUT",
-        body: formData,
-      });
+      const response = await fetch(
+        `/api/manager/provinces/${editingProvince.id}`,
+        {
+          method: "PUT",
+          body: formData,
+        },
+      );
 
       const result = await response.json();
 
@@ -190,7 +199,9 @@ export default function ManagerProvincesPage() {
             </div>
           ) : provinces.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">
-              <div className="text-muted-foreground mb-4">No provinces found</div>
+              <div className="text-muted-foreground mb-4">
+                No provinces found
+              </div>
               <Button
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(true)}
@@ -213,7 +224,9 @@ export default function ManagerProvincesPage() {
               <TableBody>
                 {provinces.map((province) => (
                   <TableRow key={province.id}>
-                    <TableCell className="font-medium">{province.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {province.name}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{province.code}</Badge>
                     </TableCell>
@@ -226,7 +239,10 @@ export default function ManagerProvincesPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Dialog
-                          open={isEditDialogOpen && editingProvince?.id === province.id}
+                          open={
+                            isEditDialogOpen &&
+                            editingProvince?.id === province.id
+                          }
                           onOpenChange={(open) => {
                             setIsEditDialogOpen(open);
                             if (!open) setEditingProvince(null);
@@ -249,11 +265,18 @@ export default function ManagerProvincesPage() {
                               </DialogDescription>
                             </DialogHeader>
                             <ProvinceForm
-                              province={editingProvince ? {
-                                ...editingProvince,
-                                createdAt: new Date(editingProvince.createdAt),
-                                description: editingProvince.description || null
-                              } : undefined}
+                              province={
+                                editingProvince
+                                  ? {
+                                      ...editingProvince,
+                                      createdAt: new Date(
+                                        editingProvince.createdAt,
+                                      ),
+                                      description:
+                                        editingProvince.description || null,
+                                    }
+                                  : undefined
+                              }
                               action={handleUpdateProvince}
                             />
                           </DialogContent>
@@ -269,15 +292,17 @@ export default function ManagerProvincesPage() {
           {pagination && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-4">
               <div className="text-sm text-muted-foreground">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to{" "}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                {pagination.total} provinces
+                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+                of {pagination.total} provinces
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fetchProvinces(searchTerm, pagination.page - 1)}
+                  onClick={() =>
+                    fetchProvinces(searchTerm, pagination.page - 1)
+                  }
                   disabled={pagination.page === 1}
                 >
                   Previous
@@ -285,7 +310,9 @@ export default function ManagerProvincesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fetchProvinces(searchTerm, pagination.page + 1)}
+                  onClick={() =>
+                    fetchProvinces(searchTerm, pagination.page + 1)
+                  }
                   disabled={pagination.page === pagination.totalPages}
                 >
                   Next

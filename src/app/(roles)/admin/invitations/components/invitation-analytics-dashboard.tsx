@@ -89,61 +89,71 @@ export function InvitationAnalyticsDashboard({
   const [exportFormat, _setExportFormat] = useState("csv");
 
   // Fetch analytics data
-  const fetchAnalytics = useCallback(async (range = timeRange) => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        analytics: "true",
-        period: range,
-      });
+  const fetchAnalytics = useCallback(
+    async (range = timeRange) => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          analytics: "true",
+          period: range,
+        });
 
-      const response = await fetch(`/api/admin/invitations/enhanced?${params}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch analytics");
+        const response = await fetch(
+          `/api/admin/invitations/enhanced?${params}`,
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch analytics");
+        }
+
+        const data = await response.json();
+        setAnalytics(data.analytics);
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+        toast.error("Failed to load analytics data");
+      } finally {
+        setLoading(false);
       }
-
-      const data = await response.json();
-      setAnalytics(data.analytics);
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      toast.error("Failed to load analytics data");
-    } finally {
-      setLoading(false);
-    }
-  }, [timeRange]);
+    },
+    [timeRange],
+  );
 
   // Handle export
-  const handleExport = useCallback(async (format: string) => {
-    try {
-      const params = new URLSearchParams({
-        analytics: "true",
-        export: format,
-        period: timeRange,
-      });
+  const handleExport = useCallback(
+    async (format: string) => {
+      try {
+        const params = new URLSearchParams({
+          analytics: "true",
+          export: format,
+          period: timeRange,
+        });
 
-      const response = await fetch(`/api/admin/invitations/enhanced?${params}`);
-      if (!response.ok) {
-        throw new Error("Export failed");
-      }
+        const response = await fetch(
+          `/api/admin/invitations/enhanced?${params}`,
+        );
+        if (!response.ok) {
+          throw new Error("Export failed");
+        }
 
-      // For CSV, trigger download
-      if (format === "csv") {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invitation-analytics-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success("Analytics data exported successfully");
+        // For CSV, trigger download
+        if (format === "csv") {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `invitation-analytics-${new Date().toISOString().split("T")[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          toast.success("Analytics data exported successfully");
+        }
+      } catch (error) {
+        console.error("Export error:", error);
+        toast.error("Failed to export analytics data");
       }
-    } catch (error) {
-      console.error("Export error:", error);
-      toast.error("Failed to export analytics data");
-    }
-  }, [timeRange]);
+    },
+    [timeRange],
+  );
 
   useEffect(() => {
     fetchAnalytics();

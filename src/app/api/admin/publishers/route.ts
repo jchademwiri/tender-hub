@@ -54,10 +54,15 @@ export async function GET(request: NextRequest) {
     const totalCount = await db.$count(publishers);
 
     // DEBUG: Log publishers list and count
-    console.log(`[DEBUG] Publishers API - Page: ${page}, Limit: ${limit}, Search: ${search}`);
+    console.log(
+      `[DEBUG] Publishers API - Page: ${page}, Limit: ${limit}, Search: ${search}`,
+    );
     console.log(`[DEBUG] Total publishers count: ${totalCount}`);
     console.log(`[DEBUG] Publishers list length: ${publishersList.length}`);
-    console.log(`[DEBUG] Publishers list:`, publishersList.map(p => ({ id: p.id, name: p.name })));
+    console.log(
+      `[DEBUG] Publishers list:`,
+      publishersList.map((p) => ({ id: p.id, name: p.name })),
+    );
 
     // TODO: Add audit logging for publisher viewing
 
@@ -74,7 +79,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching publishers:", error);
     return NextResponse.json(
       { error: "Failed to fetch publishers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -91,7 +96,7 @@ export async function POST(request: NextRequest) {
     if (!name || !province_id) {
       return NextResponse.json(
         { error: "Name and province are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
     if (provinceExists.length === 0) {
       return NextResponse.json(
         { error: "Selected province does not exist" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -125,7 +130,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating publisher:", error);
     return NextResponse.json(
       { error: "Failed to create publisher" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -76,7 +76,11 @@ export function DashboardContent({
           description: "Manage users, invitations, and system-wide settings",
           features: [
             { icon: Users, label: "Team Management", href: "/admin/team" },
-            { icon: Settings, label: "Invitations", href: "/admin/invitations" },
+            {
+              icon: Settings,
+              label: "Invitations",
+              href: "/admin/invitations",
+            },
             { icon: FileText, label: "System Reports", href: "/admin" },
           ],
         };
@@ -95,7 +99,11 @@ export function DashboardContent({
           title: "User Dashboard",
           description: "Browse publishers and manage your account",
           features: [
-            { icon: Building, label: "Browse Publishers", href: "/dashboard/publishers" },
+            {
+              icon: Building,
+              label: "Browse Publishers",
+              href: "/dashboard/publishers",
+            },
             { icon: FileText, label: "My Account", href: "/account" },
           ],
         };
@@ -194,7 +202,9 @@ export function DashboardContent({
                 <div className="text-2xl font-bold text-green-600">
                   {publisherCount}
                 </div>
-                <p className="text-xs text-muted-foreground">Active publishers</p>
+                <p className="text-xs text-muted-foreground">
+                  Active publishers
+                </p>
               </CardContent>
             </Card>
           </div>

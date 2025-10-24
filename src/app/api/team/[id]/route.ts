@@ -8,7 +8,7 @@ import { checkPermission } from "@/lib/permissions";
 // PUT /api/team/[id] - Update team member
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate user
@@ -17,10 +17,7 @@ export async function PUT(
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get full user data from database
@@ -31,17 +28,14 @@ export async function PUT(
       .limit(1);
 
     if (fullUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const userPermissions = checkPermission(fullUser[0]);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -57,10 +51,7 @@ export async function PUT(
       .limit(1);
 
     if (targetUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const targetUserData = targetUser[0];
@@ -69,14 +60,14 @@ export async function PUT(
     if (role && !userPermissions.canModifyUser(targetUserData)) {
       return NextResponse.json(
         { error: "Cannot modify this user's role" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (status && !userPermissions.canSuspendUser(targetUserData)) {
       return NextResponse.json(
         { error: "Cannot modify this user's status" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -122,7 +113,7 @@ export async function PUT(
     console.error("Team update API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -130,7 +121,7 @@ export async function PUT(
 // DELETE /api/team/[id] - Delete team member (Admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate user
@@ -139,10 +130,7 @@ export async function DELETE(
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get full user data from database
@@ -153,10 +141,7 @@ export async function DELETE(
       .limit(1);
 
     if (fullUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const { id } = await params;
@@ -169,10 +154,7 @@ export async function DELETE(
       .limit(1);
 
     if (targetUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const targetUserData = targetUser[0];
@@ -181,7 +163,7 @@ export async function DELETE(
     if (!userPermissions.canDeleteUser(targetUserData)) {
       return NextResponse.json(
         { error: "Only admins can delete users" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -195,7 +177,7 @@ export async function DELETE(
       if (adminCount[0].count <= 1) {
         return NextResponse.json(
           { error: "Cannot delete the last admin" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -227,7 +209,7 @@ export async function DELETE(
     console.error("Team delete API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -235,7 +217,7 @@ export async function DELETE(
 // GET /api/team/[id] - Get specific team member details
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate user
@@ -244,10 +226,7 @@ export async function GET(
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get full user data from database
@@ -258,17 +237,14 @@ export async function GET(
       .limit(1);
 
     if (fullUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const userPermissions = checkPermission(fullUser[0]);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -293,10 +269,7 @@ export async function GET(
       .limit(1);
 
     if (teamMember.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -306,7 +279,7 @@ export async function GET(
     console.error("Team member API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

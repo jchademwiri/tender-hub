@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAdmin();
@@ -20,7 +20,7 @@ export async function PUT(
     if (!name || !province_id) {
       return NextResponse.json(
         { error: "Name and province are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function PUT(
     if (provinceExists.length === 0) {
       return NextResponse.json(
         { error: "Selected province does not exist" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,7 +51,7 @@ export async function PUT(
     if (!updatedPublisher) {
       return NextResponse.json(
         { error: "Publisher not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -62,14 +62,14 @@ export async function PUT(
     console.error("Error updating publisher:", error);
     return NextResponse.json(
       { error: "Failed to update publisher" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAdmin();
@@ -83,7 +83,7 @@ export async function DELETE(
     if (!deletedPublisher) {
       return NextResponse.json(
         { error: "Publisher not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -94,7 +94,7 @@ export async function DELETE(
     console.error("Error deleting publisher:", error);
     return NextResponse.json(
       { error: "Failed to delete publisher" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

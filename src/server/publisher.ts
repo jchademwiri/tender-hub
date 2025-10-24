@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { provinces, publishers, userBookmarks } from "@/db/schema";
+import { publishers, userBookmarks } from "@/db/schema";
 import {
   classifyError,
   createAppError,
@@ -29,12 +29,13 @@ export async function getAllPublishers(userId?: string) {
             .from(publishers)
             .leftJoin(
               userBookmarks,
-              eq(userBookmarks.publisherId, publishers.id) && eq(userBookmarks.userId, userId)
+              eq(userBookmarks.publisherId, publishers.id) &&
+                eq(userBookmarks.userId, userId),
             )
             .orderBy(publishers.name);
 
           console.log("Query result count:", publishersWithBookmarks.length);
-          return publishersWithBookmarks.map(p => ({
+          return publishersWithBookmarks.map((p) => ({
             id: p.id,
             name: p.name,
             website: p.website,
@@ -62,7 +63,10 @@ export async function getAllPublishers(userId?: string) {
           return message.includes("connection") || message.includes("timeout");
         },
         onRetry: (error, attempt) => {
-          console.log(`Retrying getAllPublishers attempt ${attempt} for error:`, error.message);
+          console.log(
+            `Retrying getAllPublishers attempt ${attempt} for error:`,
+            error.message,
+          );
           logError(
             createAppError(`Get all publishers retry attempt ${attempt}`, {
               details: { originalError: error },
@@ -72,7 +76,10 @@ export async function getAllPublishers(userId?: string) {
         },
       },
     );
-    console.log("getAllPublishers returning result with length:", result.length);
+    console.log(
+      "getAllPublishers returning result with length:",
+      result.length,
+    );
     return result;
   } catch (error) {
     console.error("Error in getAllPublishers:", error);
@@ -83,7 +90,10 @@ export async function getAllPublishers(userId?: string) {
       console.log("Error message:", message);
 
       // Handle "relation does not exist" error (table missing)
-      if (message.includes("42p01") || message.includes("relation") && message.includes("does not exist")) {
+      if (
+        message.includes("42p01") ||
+        (message.includes("relation") && message.includes("does not exist"))
+      ) {
         console.log("Detected missing publishers table error");
         const appError = createAppError(
           "Publishers table does not exist. Please run database migrations.",
@@ -92,7 +102,7 @@ export async function getAllPublishers(userId?: string) {
             statusCode: 500,
             details: {
               originalError: error,
-              suggestion: "Run 'npm run db:migrate' or check database setup"
+              suggestion: "Run 'npm run db:migrate' or check database setup",
             },
           },
         );
@@ -182,7 +192,10 @@ export async function deletePublisher(formData: FormData) {
   redirect("/admin/publishers");
 }
 
-export async function updatePublisher(_prevState: any, formData: FormData) {
+export async function updatePublisher(
+  _prevState: Record<string, unknown>,
+  formData: FormData,
+) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const website = formData.get("website") as string;
@@ -265,7 +278,10 @@ export async function updatePublisher(_prevState: any, formData: FormData) {
   redirect("/admin/publishers");
 }
 
-export async function createPublisher(_prevState: any, formData: FormData) {
+export async function createPublisher(
+  _prevState: Record<string, unknown>,
+  formData: FormData,
+) {
   const name = formData.get("name") as string;
   const website = formData.get("website") as string;
   const province_id = formData.get("province_id") as string;
@@ -355,7 +371,10 @@ export async function toggleBookmark(userId: string, publisherId: string) {
     const existingBookmark = await db
       .select()
       .from(userBookmarks)
-      .where(eq(userBookmarks.userId, userId) && eq(userBookmarks.publisherId, publisherId))
+      .where(
+        eq(userBookmarks.userId, userId) &&
+          eq(userBookmarks.publisherId, publisherId),
+      )
       .limit(1);
 
     if (existingBookmark.length > 0) {

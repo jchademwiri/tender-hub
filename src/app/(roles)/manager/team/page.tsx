@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { TeamMemberTable, type TeamMember } from "@/components/team/TeamMemberTable";
+import {
+  TeamMemberTable,
+  type TeamMember,
+} from "@/components/team/TeamMemberTable";
 import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { EditMemberDialog } from "@/components/team/EditMemberDialog";
 import { ConfirmDialog } from "@/components/team/ConfirmDialog";
 import { checkPermission } from "@/lib/permissions";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ManagerTeamManagement() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -27,6 +29,8 @@ export default function ManagerTeamManagement() {
     description: "",
     onConfirm: () => {},
   });
+
+  const queryClient = useQueryClient();
 
   // Mock current user - in real app this would come from auth context
   const currentUser = {
@@ -48,32 +52,28 @@ export default function ManagerTeamManagement() {
 
   const userPermissions = checkPermission(currentUser);
 
-  // Fetch team members
-  const fetchMembers = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/team");
-      if (!response.ok) {
-        throw new Error("Failed to fetch team members");
-      }
-      const data = await response.json();
-      // Filter to only show users (managers can only manage users, not other managers/admins)
-      const filteredMembers = data.members.filter((member: TeamMember) => member.role === "user");
-      setMembers(filteredMembers || []);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
-    } finally {
-      setIsLoading(false);
-    }
+  // Handle optimistic updates from TeamMemberTable
+  const handleOptimisticUpdate = useCallback(
+    (memberId: string, data: Partial<TeamMember>) => {
+      // The TeamMemberTable handles optimistic updates internally via React Query
+      // We can add any additional logic here if needed
+      console.log("Optimistic update:", memberId, data);
+    },
+    [],
+  );
+
+  const handleOptimisticDelete = useCallback((memberId: string) => {
+    // The TeamMemberTable handles optimistic deletes internally via React Query
+    // We can add any additional logic here if needed
+    console.log("Optimistic delete:", memberId);
   }, []);
 
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
-
   // Invite member (managers can only invite users)
-  const handleInviteMember = async (data: { email: string; name: string; role: string }) => {
+  const handleInviteMember = async (data: {
+    email: string;
+    name: string;
+    role: string;
+  }) => {
     // Force role to "user" for managers
     const inviteData = { ...data, role: "user" };
 
@@ -92,7 +92,8 @@ export default function ManagerTeamManagement() {
       }
 
       toast.success("Invitation sent successfully");
-      fetchMembers(); // Refresh the list
+      // Invalidate and refetch team members to show the new pending member
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
     } catch (error) {
       console.error("Error inviting member:", error);
       throw error;
@@ -100,7 +101,10 @@ export default function ManagerTeamManagement() {
   };
 
   // Edit member (managers can only edit users)
-  const handleEditMember = async (memberId: string, data: { name: string; role?: string; status?: string }) => {
+  const handleEditMember = async (
+    memberId: string,
+    data: { name: string; role?: string; status?: string },
+  ) => {
     // Remove role from data if present (managers can't change roles)
     const { role, ...updateData } = data;
 
@@ -119,7 +123,8 @@ export default function ManagerTeamManagement() {
       }
 
       toast.success("Member updated successfully");
-      fetchMembers(); // Refresh the list
+      // Invalidate and refetch team members
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
     } catch (error) {
       console.error("Error updating member:", error);
       throw error;
@@ -134,7 +139,10 @@ export default function ManagerTeamManagement() {
       description: `Are you sure you want to suspend ${member.name}? They will lose access to the platform.`,
       onConfirm: async () => {
         try {
-          await handleEditMember(member.id, { name: member.name, status: "suspended" });
+          await handleEditMember(member.id, {
+            name: member.name,
+            status: "suspended",
+          });
           setConfirmDialog({ ...confirmDialog, open: false });
         } catch (error) {
           // Error already handled in handleEditMember
@@ -152,7 +160,10 @@ export default function ManagerTeamManagement() {
       description: `Are you sure you want to reactivate ${member.name}? They will regain access to the platform.`,
       onConfirm: async () => {
         try {
-          await handleEditMember(member.id, { name: member.name, status: "active" });
+          await handleEditMember(member.id, {
+            name: member.name,
+            status: "active",
+          });
           setConfirmDialog({ ...confirmDialog, open: false });
         } catch (error) {
           // Error already handled in handleEditMember
@@ -169,8 +180,6 @@ export default function ManagerTeamManagement() {
       </div>
 
       <TeamMemberTable
-        members={members}
-        isLoading={isLoading}
         onInviteMember={() => setInviteDialogOpen(true)}
         onEditMember={(member) => {
           setSelectedMember(member);
@@ -183,6 +192,9 @@ export default function ManagerTeamManagement() {
         canSuspend={userPermissions.hasRoleOrHigher("manager")}
         canDelete={false} // Managers cannot delete users
         showAnalytics={false} // Managers don't see analytics
+        enablePolling={true}
+        onOptimisticUpdate={handleOptimisticUpdate}
+        onOptimisticDelete={handleOptimisticDelete}
       />
 
       <InviteMemberDialog

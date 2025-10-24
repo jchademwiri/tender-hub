@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { ErrorBoundary } from "@/components/error-boundary";

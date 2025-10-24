@@ -76,10 +76,14 @@ export default async function PublishersPage() {
     console.error("Error loading publishers page:", error);
 
     // Handle specific error types
-    if (error && typeof error === 'object' && 'code' in error) {
-      const appError = error as { code: string; message: string; details?: any };
+    if (error && typeof error === "object" && "code" in error) {
+      const appError = error as {
+        code: string;
+        message: string;
+        details?: any;
+      };
 
-      if (appError.code === 'TABLE_MISSING') {
+      if (appError.code === "TABLE_MISSING") {
         return (
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
             <div className="space-y-8">
@@ -111,7 +115,7 @@ export default async function PublishersPage() {
         );
       }
 
-      if (appError.code === 'DB_CONNECTION_FAILED') {
+      if (appError.code === "DB_CONNECTION_FAILED") {
         return (
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
             <div className="space-y-8">

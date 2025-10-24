@@ -76,7 +76,8 @@ export default async function BookmarksPage() {
         {bookmarkedPublishers.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No bookmarks yet. Visit the publishers page to bookmark your favorite publishers.
+              No bookmarks yet. Visit the publishers page to bookmark your
+              favorite publishers.
             </p>
             <Link
               href="/dashboard/publishers"

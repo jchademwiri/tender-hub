@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAdmin();
@@ -20,7 +20,7 @@ export async function PUT(
     if (!name || !code) {
       return NextResponse.json(
         { error: "Name and code are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,7 +34,7 @@ export async function PUT(
     if (existingProvince.length > 0 && existingProvince[0].id !== id) {
       return NextResponse.json(
         { error: "Province with this code already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,7 +51,7 @@ export async function PUT(
     if (!updatedProvince) {
       return NextResponse.json(
         { error: "Province not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -62,14 +62,14 @@ export async function PUT(
     console.error("Error updating province:", error);
     return NextResponse.json(
       { error: "Failed to update province" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAdmin();
@@ -82,7 +82,7 @@ export async function DELETE(
     if (publishersCount > 0) {
       return NextResponse.json(
         { error: "Cannot delete province with associated publishers" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,7 +94,7 @@ export async function DELETE(
     if (!deletedProvince) {
       return NextResponse.json(
         { error: "Province not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -105,7 +105,7 @@ export async function DELETE(
     console.error("Error deleting province:", error);
     return NextResponse.json(
       { error: "Failed to delete province" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -95,7 +95,12 @@ export function PublishersTableClient({
       console.log("Toggling bookmark for publisher:", publisherId);
       console.log("Publisher ID type:", typeof publisherId);
       console.log("Publisher ID length:", publisherId?.length);
-      console.log("Publisher ID is valid UUID:", /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(publisherId));
+      console.log(
+        "Publisher ID is valid UUID:",
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          publisherId,
+        ),
+      );
       const url = `/api/user/bookmarks/${publisherId}`;
       console.log("Fetch URL:", url);
       const response = await fetch(url, {
@@ -111,13 +116,17 @@ export function PublishersTableClient({
       if (response.ok) {
         const result = await response.json();
         console.log("Response result:", result);
-        toast.success(result.bookmarked ? "Added to bookmarks" : "Removed from bookmarks");
+        toast.success(
+          result.bookmarked ? "Added to bookmarks" : "Removed from bookmarks",
+        );
 
         // Update the local state instead of reloading the page
-        setPublishers(prevPublishers =>
-          prevPublishers.map(p =>
-            p.id === publisherId ? { ...p, isBookmarked: result.bookmarked } : p
-          )
+        setPublishers((prevPublishers) =>
+          prevPublishers.map((p) =>
+            p.id === publisherId
+              ? { ...p, isBookmarked: result.bookmarked }
+              : p,
+          ),
         );
       } else {
         const errorData = await response.json();
@@ -186,7 +195,9 @@ export function PublishersTableClient({
         <button
           onClick={() => handleBookmarkToggle(item.id)}
           className="p-1 hover:bg-muted rounded transition-colors"
-          title={item.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+          title={
+            item.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"
+          }
         >
           {item.isBookmarked ? (
             <BookmarkCheck className="w-4 h-4 text-primary" />

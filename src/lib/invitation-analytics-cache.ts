@@ -1,5 +1,4 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm";
-import { useCallback, useEffect, useState } from "react";
 import { db } from "@/db";
 import { analyticsCache } from "@/db/schema";
 
@@ -298,55 +297,8 @@ export class InvitationAnalyticsCache {
   }
 }
 
-/**
- * Real-time analytics update hook for React components
- */
-export function useRealtimeAnalytics<T>(
-  _cacheKey: string,
-  fetcher: () => Promise<T>,
-  interval: number = 30000, // 30 seconds default
-): {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-  lastUpdated: Date | null;
-  refresh: () => Promise<void>;
-} {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const result = await fetcher();
-      setData(result);
-      setLastUpdated(new Date());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch data");
-    } finally {
-      setLoading(false);
-    }
-  }, [fetcher]);
-
-  const refresh = useCallback(async () => {
-    await fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    fetchData();
-
-    if (interval > 0) {
-      const timer = setInterval(fetchData, interval);
-      return () => clearInterval(timer);
-    }
-  }, [fetchData, interval]);
-
-  return { data, loading, error, lastUpdated, refresh };
-}
+// Note: React hooks moved to separate client component file
+// This file is now server-compatible
 
 /**
  * Cache key generators for different analytics types

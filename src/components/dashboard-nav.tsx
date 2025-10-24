@@ -52,7 +52,6 @@ const DashboardNav = memo(() => {
       icon: <Building2 className="w-4 h-4" />,
       ariaLabel: "Go to Publishers",
     },
-  
   ];
 
   // Memoize navigation items to prevent recreation on every render
