@@ -77,7 +77,7 @@ export function PublishersTableClient({
             href={urlObj.toString()}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline hover:text-primary/80"
+            className="text-primary underline hover:text-primary/80 transition-colors"
           >
             {url}
           </a>
@@ -92,10 +92,14 @@ export function PublishersTableClient({
 
   const handleBookmarkToggle = async (publisherId: string) => {
     try {
-      console.log("Toggling bookmark for publisher:", publisherId);
       console.log("Publisher ID type:", typeof publisherId);
       console.log("Publisher ID length:", publisherId?.length);
-      console.log("Publisher ID is valid UUID:", /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(publisherId));
+      console.log(
+        "Publisher ID is valid UUID:",
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          publisherId,
+        ),
+      );
       const url = `/api/user/bookmarks/${publisherId}`;
       console.log("Fetch URL:", url);
       const response = await fetch(url, {
@@ -111,13 +115,17 @@ export function PublishersTableClient({
       if (response.ok) {
         const result = await response.json();
         console.log("Response result:", result);
-        toast.success(result.bookmarked ? "Added to bookmarks" : "Removed from bookmarks");
+        toast.success(
+          result.bookmarked ? "Added to bookmarks" : "Removed from bookmarks",
+        );
 
         // Update the local state instead of reloading the page
-        setPublishers(prevPublishers =>
-          prevPublishers.map(p =>
-            p.id === publisherId ? { ...p, isBookmarked: result.bookmarked } : p
-          )
+        setPublishers((prevPublishers) =>
+          prevPublishers.map((p) =>
+            p.id === publisherId
+              ? { ...p, isBookmarked: result.bookmarked }
+              : p,
+          ),
         );
       } else {
         const errorData = await response.json();
@@ -136,7 +144,7 @@ export function PublishersTableClient({
       header: (
         <button
           onClick={() => handleSort("name")}
-          className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
+          className="flex items-center gap-1 hover:bg-muted/50 px-2 py-1 rounded transition-colors font-medium"
         >
           Publisher
           <ArrowUpDown
@@ -150,7 +158,7 @@ export function PublishersTableClient({
         <div className="flex items-center gap-2">
           <Link
             href={`/publishers/${item.id}`}
-            className="text-primary hover:underline font-medium"
+            className="text-primary hover:underline font-medium transition-colors"
           >
             {value}
           </Link>
@@ -167,7 +175,7 @@ export function PublishersTableClient({
       header: (
         <button
           onClick={() => handleSort("website")}
-          className="flex items-center gap-1 hover:bg-muted/50 px-1 py-0.5 rounded transition-colors"
+          className="flex items-center gap-1 hover:bg-muted/50 px-2 py-1 rounded transition-colors font-medium"
         >
           Website
           <ArrowUpDown
@@ -185,8 +193,10 @@ export function PublishersTableClient({
       render: (_value: any, item: Publisher) => (
         <button
           onClick={() => handleBookmarkToggle(item.id)}
-          className="p-1 hover:bg-muted rounded transition-colors"
-          title={item.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+          className="p-2 hover:bg-muted rounded transition-colors"
+          title={
+            item.isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"
+          }
         >
           {item.isBookmarked ? (
             <BookmarkCheck className="w-4 h-4 text-primary" />

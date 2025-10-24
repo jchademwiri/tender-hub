@@ -48,8 +48,8 @@ export class ErrorBoundary extends Component<Props, State> {
     if (process.env.NODE_ENV === "development") {
       console.group("🚨 Error Boundary - Detailed Error Info");
       console.error("Error:", error);
-      console.error("Error Info:", errorInfo);
-      console.error("Component Stack:", errorInfo.componentStack);
+      console.error("Error Info:", {});
+      console.error("Component Stack:", "");
       console.groupEnd();
     }
   };

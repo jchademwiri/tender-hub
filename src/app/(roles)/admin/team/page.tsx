@@ -1,17 +1,21 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { TeamMemberTable, type TeamMember } from "@/components/team/TeamMemberTable";
+import {
+  TeamMemberTable,
+  type TeamMember,
+} from "@/components/team/TeamMemberTable";
+import { TeamAnalytics } from "@/components/team/TeamAnalytics";
+import { ActivityFeed } from "@/components/team/ActivityFeed";
 import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { EditMemberDialog } from "@/components/team/EditMemberDialog";
 import { ConfirmDialog } from "@/components/team/ConfirmDialog";
 import { checkPermission } from "@/lib/permissions";
+import { useQueryClient } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminTeamManagement() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -28,6 +32,8 @@ export default function AdminTeamManagement() {
     description: "",
     onConfirm: () => {},
   });
+
+  const queryClient = useQueryClient();
 
   // Mock current user - in real app this would come from auth context
   const currentUser = {
@@ -49,30 +55,28 @@ export default function AdminTeamManagement() {
 
   const userPermissions = checkPermission(currentUser);
 
-  // Fetch team members
-  const fetchMembers = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/team");
-      if (!response.ok) {
-        throw new Error("Failed to fetch team members");
-      }
-      const data = await response.json();
-      setMembers(data.members || []);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-      toast.error("Failed to load team members");
-    } finally {
-      setIsLoading(false);
-    }
+  // Handle optimistic updates from TeamMemberTable
+  const handleOptimisticUpdate = useCallback(
+    (memberId: string, data: Partial<TeamMember>) => {
+      // The TeamMemberTable handles optimistic updates internally via React Query
+      // We can add any additional logic here if needed
+      console.log("Optimistic update:", memberId, data);
+    },
+    [],
+  );
+
+  const handleOptimisticDelete = useCallback((memberId: string) => {
+    // The TeamMemberTable handles optimistic deletes internally via React Query
+    // We can add any additional logic here if needed
+    console.log("Optimistic delete:", memberId);
   }, []);
 
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
-
   // Invite member
-  const handleInviteMember = async (data: { email: string; name: string; role: string }) => {
+  const handleInviteMember = async (data: {
+    email: string;
+    name: string;
+    role: string;
+  }) => {
     try {
       const response = await fetch("/api/team", {
         method: "POST",
@@ -88,7 +92,8 @@ export default function AdminTeamManagement() {
       }
 
       toast.success("Invitation sent successfully");
-      fetchMembers(); // Refresh the list
+      // Invalidate and refetch team members to show the new pending member
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
     } catch (error) {
       console.error("Error inviting member:", error);
       throw error;
@@ -96,7 +101,10 @@ export default function AdminTeamManagement() {
   };
 
   // Edit member
-  const handleEditMember = async (memberId: string, data: { name: string; role?: string; status?: string }) => {
+  const handleEditMember = async (
+    memberId: string,
+    data: { name: string; role?: string; status?: string },
+  ) => {
     try {
       const response = await fetch(`/api/team/${memberId}`, {
         method: "PUT",
@@ -112,7 +120,8 @@ export default function AdminTeamManagement() {
       }
 
       toast.success("Member updated successfully");
-      fetchMembers(); // Refresh the list
+      // Invalidate and refetch team members
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
     } catch (error) {
       console.error("Error updating member:", error);
       throw error;
@@ -127,7 +136,10 @@ export default function AdminTeamManagement() {
       description: `Are you sure you want to suspend ${member.name}? They will lose access to the platform.`,
       onConfirm: async () => {
         try {
-          await handleEditMember(member.id, { name: member.name, status: "suspended" });
+          await handleEditMember(member.id, {
+            name: member.name,
+            status: "suspended",
+          });
           setConfirmDialog({ ...confirmDialog, open: false });
         } catch (error) {
           // Error already handled in handleEditMember
@@ -145,7 +157,10 @@ export default function AdminTeamManagement() {
       description: `Are you sure you want to reactivate ${member.name}? They will regain access to the platform.`,
       onConfirm: async () => {
         try {
-          await handleEditMember(member.id, { name: member.name, status: "active" });
+          await handleEditMember(member.id, {
+            name: member.name,
+            status: "active",
+          });
           setConfirmDialog({ ...confirmDialog, open: false });
         } catch (error) {
           // Error already handled in handleEditMember
@@ -173,11 +188,14 @@ export default function AdminTeamManagement() {
           }
 
           toast.success("Member deleted successfully");
-          fetchMembers(); // Refresh the list
+          // Invalidate and refetch team members
+          queryClient.invalidateQueries({ queryKey: ["team-members"] });
           setConfirmDialog({ ...confirmDialog, open: false });
         } catch (error) {
           console.error("Error deleting member:", error);
-          toast.error(error instanceof Error ? error.message : "Failed to delete member");
+          toast.error(
+            error instanceof Error ? error.message : "Failed to delete member",
+          );
         }
       },
       variant: "destructive",
@@ -188,26 +206,55 @@ export default function AdminTeamManagement() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Team Management</h1>
-        <p className="text-gray-600">Manage your team members and their permissions</p>
+        <p className="text-gray-600">
+          Manage your team members, permissions, and analytics
+        </p>
       </div>
 
-      <TeamMemberTable
-        members={members}
-        isLoading={isLoading}
-        onInviteMember={() => setInviteDialogOpen(true)}
-        onEditMember={(member) => {
-          setSelectedMember(member);
-          setEditDialogOpen(true);
-        }}
-        onSuspendMember={handleSuspendMember}
-        onActivateMember={handleActivateMember}
-        onDeleteMember={handleDeleteMember}
-        canInvite={userPermissions.canInviteUsers()}
-        canEdit={userPermissions.hasRole("admin")}
-        canSuspend={userPermissions.hasRoleOrHigher("manager")}
-        canDelete={userPermissions.canDeleteUser(currentUser)}
-        showAnalytics={true}
-      />
+      <Tabs defaultValue="members" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="members">Team Members</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="activity">Activity Feed</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="members" className="space-y-6">
+          <TeamMemberTable
+            onInviteMember={() => setInviteDialogOpen(true)}
+            onEditMember={(member) => {
+              setSelectedMember(member);
+              setEditDialogOpen(true);
+            }}
+            onSuspendMember={handleSuspendMember}
+            onActivateMember={handleActivateMember}
+            onDeleteMember={handleDeleteMember}
+            canInvite={userPermissions.canInviteUsers()}
+            canEdit={userPermissions.hasRole("admin")}
+            canSuspend={userPermissions.hasRoleOrHigher("manager")}
+            canDelete={userPermissions.canDeleteUser(currentUser)}
+            showAnalytics={true}
+            enablePolling={true}
+            onOptimisticUpdate={handleOptimisticUpdate}
+            onOptimisticDelete={handleOptimisticDelete}
+            showExport={true}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <TeamAnalytics />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ActivityFeed maxItems={50} />
+            </div>
+            <div className="space-y-6">
+              <TeamAnalytics className="lg:hidden" />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <InviteMemberDialog
         open={inviteDialogOpen}

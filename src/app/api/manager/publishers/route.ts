@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching publishers:", error);
     return NextResponse.json(
       { error: "Failed to fetch publishers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (!name || !province_id) {
       return NextResponse.json(
         { error: "Name and province are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (provinceExists.length === 0) {
       return NextResponse.json(
         { error: "Selected province does not exist" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating publisher:", error);
     return NextResponse.json(
       { error: "Failed to create publisher" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

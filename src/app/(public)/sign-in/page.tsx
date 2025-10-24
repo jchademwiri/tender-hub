@@ -94,18 +94,21 @@ export default function SignInPage() {
           switch (result.error.code) {
             case "INVALID_EMAIL_OR_PASSWORD":
               errorMessage = "Invalid email or password";
-              actionGuidance = "Double-check your email and password. If you forgot your password, contact your administrator.";
+              actionGuidance =
+                "Double-check your email and password. If you forgot your password, contact your administrator.";
               break;
             case "EMAIL_NOT_VERIFIED":
               errorMessage = "Please verify your email before signing in";
-              actionGuidance = "Check your email for a verification link. If you didn't receive it, contact your administrator.";
+              actionGuidance =
+                "Check your email for a verification link. If you didn't receive it, contact your administrator.";
               console.log(
                 "⚠️ DEBUG: User email not verified - this could be the issue!",
               );
               break;
             case "USER_NOT_FOUND":
               errorMessage = "No account found with this email";
-              actionGuidance = "Make sure you're using the email address from your invitation. If you haven't accepted an invitation yet, please do so first.";
+              actionGuidance =
+                "Make sure you're using the email address from your invitation. If you haven't accepted an invitation yet, please do so first.";
               console.log(
                 "⚠️ DEBUG: User not found - account may not have been created properly",
               );
@@ -113,11 +116,13 @@ export default function SignInPage() {
             case "TOO_MANY_REQUESTS":
               errorMessage =
                 "Too many sign-in attempts. Please try again later";
-              actionGuidance = "Wait a few minutes before trying again, or contact your administrator if this persists.";
+              actionGuidance =
+                "Wait a few minutes before trying again, or contact your administrator if this persists.";
               break;
             default:
               errorMessage = `Authentication error: ${result.error.code}`;
-              actionGuidance = "If this error persists, please contact your administrator.";
+              actionGuidance =
+                "If this error persists, please contact your administrator.";
           }
         } else {
           console.log(

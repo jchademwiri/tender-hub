@@ -2,7 +2,14 @@
   "mcpServers": {
     "next-devtools": {
       "command": "npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ],
+      "alwaysAllow": [
+        "browser_eval",
+        "nextjs_runtime"
+      ]
     }
   }
 }

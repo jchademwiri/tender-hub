@@ -247,17 +247,22 @@ export default function AdminInvitationsPage() {
   };
 
   // Handle invite member for single invitations
-  const handleInviteMember = async (data: { email: string; name: string; role: "admin" | "manager" | "user" }) => {
+  const handleInviteMember = async (data: {
+    email: string;
+    name: string;
+    role: "admin" | "manager" | "user";
+  }) => {
     try {
       setIsInviting(true);
 
       // Validate using the schema
-      const validationResult = invitationValidationHelpers.safeValidateCreateInvitation({
-        email: data.email,
-        name: data.name,
-        role: data.role,
-        sendEmail: true,
-      });
+      const validationResult =
+        invitationValidationHelpers.safeValidateCreateInvitation({
+          email: data.email,
+          name: data.name,
+          role: data.role,
+          sendEmail: true,
+        });
 
       if (!validationResult.success) {
         console.error("❌ Validation failed:", validationResult.error.issues);
@@ -289,7 +294,9 @@ export default function AdminInvitationsPage() {
         }
 
         if (response.status === 409) {
-          throw new Error(errorData.error || "User with this email already exists");
+          throw new Error(
+            errorData.error || "User with this email already exists",
+          );
         }
 
         if (response.status === 429) {

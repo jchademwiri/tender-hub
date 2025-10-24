@@ -1,12 +1,4 @@
 import { count, desc, eq } from "drizzle-orm";
-import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { db } from "@/db";
 import { provinces, publishers } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
@@ -34,9 +26,17 @@ export default async function Dashboard() {
     .orderBy(desc(publishers.createdAt))
     .limit(5);
 
+  // Serialize user object to prevent serialization errors
+  const serializedUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
   return (
     <DashboardContent
-      user={user}
+      user={serializedUser}
       provinceCount={provinceCount.count}
       publisherCount={publisherCount.count}
       recentPublishers={recentPublishers}

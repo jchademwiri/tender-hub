@@ -39,14 +39,16 @@ const getTourSteps = (role: string, name: string): TourStep[] => {
     {
       id: "dashboard",
       title: "Your Dashboard",
-      description: "This is your main dashboard where you'll find an overview of provinces and publishers in the system.",
+      description:
+        "This is your main dashboard where you'll find an overview of provinces and publishers in the system.",
       highlight: "dashboard-overview",
       action: "Next",
     },
     {
       id: "account",
       title: "Complete Your Account",
-      description: "Update your account information to personalize your experience and ensure you have access to all features.",
+      description:
+        "Update your account information to personalize your experience and ensure you have access to all features.",
       highlight: "account-setup",
       action: "Next",
     },
@@ -58,14 +60,16 @@ const getTourSteps = (role: string, name: string): TourStep[] => {
       {
         id: "admin-invitations",
         title: "Manage Invitations",
-        description: "As an administrator, you can invite new team members and manage their access levels.",
+        description:
+          "As an administrator, you can invite new team members and manage their access levels.",
         highlight: "admin-invitations",
         action: "Next",
       },
       {
         id: "admin-team",
         title: "Team Management",
-        description: "View and manage all team members, their roles, and permissions.",
+        description:
+          "View and manage all team members, their roles, and permissions.",
         highlight: "admin-team",
         action: "Next",
       },
@@ -74,7 +78,8 @@ const getTourSteps = (role: string, name: string): TourStep[] => {
       {
         id: "manager-approvals",
         title: "Approval Requests",
-        description: "Review and approve profile update requests from team members.",
+        description:
+          "Review and approve profile update requests from team members.",
         highlight: "manager-approvals",
         action: "Next",
       },
@@ -90,7 +95,8 @@ const getTourSteps = (role: string, name: string): TourStep[] => {
       {
         id: "user-publishers",
         title: "Browse Publishers",
-        description: "Explore and view information about publishers in different provinces.",
+        description:
+          "Explore and view information about publishers in different provinces.",
         highlight: "user-publishers",
         action: "Next",
       },
@@ -103,7 +109,8 @@ const getTourSteps = (role: string, name: string): TourStep[] => {
     {
       id: "complete",
       title: "You're All Set!",
-      description: "You've completed the onboarding tour. Feel free to explore the system and reach out if you need help.",
+      description:
+        "You've completed the onboarding tour. Feel free to explore the system and reach out if you need help.",
       action: "Get Started",
     },
   ];
@@ -111,7 +118,12 @@ const getTourSteps = (role: string, name: string): TourStep[] => {
   return finalSteps;
 };
 
-export function OnboardingTour({ userRole, userName, onComplete, onSkip }: OnboardingTourProps) {
+export function OnboardingTour({
+  userRole,
+  userName,
+  onComplete,
+  onSkip,
+}: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -176,7 +188,9 @@ export function OnboardingTour({ userRole, userName, onComplete, onSkip }: Onboa
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <DialogTitle className="text-left">{currentStepData.title}</DialogTitle>
+          <DialogTitle className="text-left">
+            {currentStepData.title}
+          </DialogTitle>
           <DialogDescription className="text-left">
             {currentStepData.description}
           </DialogDescription>

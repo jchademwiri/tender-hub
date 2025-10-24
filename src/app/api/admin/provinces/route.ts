@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching provinces:", error);
     return NextResponse.json(
       { error: "Failed to fetch provinces" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     if (!name || !code) {
       return NextResponse.json(
         { error: "Name and code are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     if (existingProvince.length > 0) {
       return NextResponse.json(
         { error: "Province with this code already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating province:", error);
     return NextResponse.json(
       { error: "Failed to create province" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

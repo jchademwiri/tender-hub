@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -305,7 +306,7 @@ export default async function InviteAcceptancePage({
             {/* Role Badge */}
             <div className="flex justify-center">
               <Badge className={`${roleInfo.color} flex items-center gap-1`}>
-                <roleInfo.icon className="w-3 h-3" />
+                {React.createElement(roleInfo.icon, { className: "w-3 h-3" })}
                 {roleInfo.name}
               </Badge>
             </div>

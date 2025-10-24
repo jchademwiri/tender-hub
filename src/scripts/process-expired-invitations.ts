@@ -17,7 +17,6 @@ import {
 } from "@/lib/invitation-tracking";
 
 async function processExpiredInvitations() {
-
   try {
     const now = new Date();
 
@@ -62,7 +61,6 @@ async function processExpiredInvitations() {
       }
     }
 
-
     // Log the batch processing event
     await db.insert(events).values({
       eventType: "system",
@@ -78,7 +76,6 @@ async function processExpiredInvitations() {
 
     return { processed: processedCount, errors: errorCount };
   } catch (error) {
-
     // Log the error event
     await db.insert(events).values({
       eventType: "system",

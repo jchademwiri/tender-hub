@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { and, asc, count, desc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user, auditLog } from "@/db/schema";
 import { checkPermission } from "@/lib/permissions";
+import { createInvitation } from "@/lib/invitation";
 
 // Team member interface for API responses
 interface TeamMember {
@@ -28,10 +29,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check permissions - both admin and manager can view team
@@ -43,23 +41,23 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (fullUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const userPermissions = checkPermission(fullUser[0]);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get("limit") || "20", 10)),
+    );
     const status = searchParams.get("status");
     const role = searchParams.get("role");
     const search = searchParams.get("search")?.trim();
@@ -71,21 +69,22 @@ export async function GET(request: NextRequest) {
 
     // Status filter
     if (status && ["active", "suspended", "pending"].includes(status)) {
-      whereConditions.push(eq(user.status, status as "active" | "suspended" | "pending"));
+      whereConditions.push(
+        eq(user.status, status as "active" | "suspended" | "pending"),
+      );
     }
 
     // Role filter
     if (role && ["owner", "admin", "manager", "user"].includes(role)) {
-      whereConditions.push(eq(user.role, role as "owner" | "admin" | "manager" | "user"));
+      whereConditions.push(
+        eq(user.role, role as "owner" | "admin" | "manager" | "user"),
+      );
     }
 
     // Search filter
     if (search) {
       whereConditions.push(
-        or(
-          ilike(user.name, `%${search}%`),
-          ilike(user.email, `%${search}%`)
-        )
+        or(ilike(user.name, `%${search}%`), ilike(user.email, `%${search}%`)),
       );
     }
 
@@ -168,7 +167,181 @@ export async function GET(request: NextRequest) {
     console.error("Team API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
+    );
+  }
+}
+
+// POST /api/team/bulk - Bulk operations for team members
+export async function PATCH(request: NextRequest) {
+  try {
+    // Authenticate user
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get full user data from database
+    const fullUser = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id))
+      .limit(1);
+
+    if (fullUser.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const userPermissions = checkPermission(fullUser[0]);
+    if (!userPermissions.hasRoleOrHigher("manager")) {
+      return NextResponse.json(
+        { error: "Insufficient permissions" },
+        { status: 403 },
+      );
+    }
+
+    const body = await request.json();
+    const { action, memberIds } = body;
+
+    // Validate input
+    if (
+      !action ||
+      !memberIds ||
+      !Array.isArray(memberIds) ||
+      memberIds.length === 0
+    ) {
+      return NextResponse.json(
+        { error: "Action and memberIds array are required" },
+        { status: 400 },
+      );
+    }
+
+    if (!["suspend", "activate", "delete"].includes(action)) {
+      return NextResponse.json(
+        { error: "Invalid action. Must be suspend, activate, or delete" },
+        { status: 400 },
+      );
+    }
+
+    // Validate member IDs
+    if (memberIds.length > 50) {
+      return NextResponse.json(
+        { error: "Cannot process more than 50 members at once" },
+        { status: 400 },
+      );
+    }
+
+    // Get target users for validation
+    const targetUsers = await db
+      .select()
+      .from(user)
+      .where(inArray(user.id, memberIds));
+
+    if (targetUsers.length !== memberIds.length) {
+      return NextResponse.json(
+        { error: "Some members not found" },
+        { status: 404 },
+      );
+    }
+
+    // Validate permissions for each target user
+    for (const targetUser of targetUsers) {
+      if (action === "delete") {
+        if (!userPermissions.canDeleteUser(targetUser)) {
+          return NextResponse.json(
+            { error: `Cannot delete user ${targetUser.email}` },
+            { status: 403 },
+          );
+        }
+      } else {
+        if (!userPermissions.canSuspendUser(targetUser)) {
+          return NextResponse.json(
+            { error: `Cannot modify user ${targetUser.email}` },
+            { status: 403 },
+          );
+        }
+      }
+    }
+
+    // Special validation for delete action
+    if (action === "delete") {
+      const adminUsers = targetUsers.filter((u) => u.role === "admin");
+      if (adminUsers.length > 0) {
+        const totalAdmins = await db
+          .select({ count: count() })
+          .from(user)
+          .where(eq(user.role, "admin"));
+
+        if (totalAdmins[0].count - adminUsers.length <= 0) {
+          return NextResponse.json(
+            { error: "Cannot delete the last admin" },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    // Execute bulk operation with transaction for atomicity
+    const results: Array<{ memberId: string; success: boolean }> = [];
+    const errors: Array<{ memberId: string; error: string }> = [];
+
+    // Use a transaction to ensure atomicity
+    await db.transaction(async (tx) => {
+      for (const memberId of memberIds) {
+        try {
+          if (action === "delete") {
+            await tx.delete(user).where(eq(user.id, memberId));
+            results.push({ memberId, success: true });
+          } else {
+            const status = action === "suspend" ? "suspended" : "active";
+            await tx
+              .update(user)
+              .set({ status, updatedAt: new Date() })
+              .where(eq(user.id, memberId));
+            results.push({ memberId, success: true });
+          }
+
+          // Audit log for each operation
+          await tx.insert(auditLog).values({
+            id: crypto.randomUUID(),
+            userId: session.user.id,
+            action: `team_member_bulk_${action}`,
+            targetUserId: memberId,
+            metadata: JSON.stringify({
+              bulkOperation: true,
+              totalMembers: memberIds.length,
+              action,
+            }),
+            ipAddress: request.headers.get("x-forwarded-for") || null,
+            createdAt: new Date(),
+          });
+        } catch (error) {
+          console.error(`Failed to ${action} member ${memberId}:`, error);
+          errors.push({ memberId, error: `Failed to ${action} member` });
+          // Re-throw to trigger transaction rollback
+          throw error;
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      results,
+      errors,
+      summary: {
+        total: memberIds.length,
+        successful: results.length,
+        failed: errors.length,
+      },
+    });
+  } catch (error) {
+    console.error("Bulk team operation API error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
@@ -182,10 +355,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get full user data from database to ensure we have all required fields
@@ -196,17 +366,14 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (fullUser.length === 0) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const userPermissions = checkPermission(fullUser[0]);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -217,7 +384,7 @@ export async function POST(request: NextRequest) {
     if (!email || !name || !role) {
       return NextResponse.json(
         { error: "Email, name, and role are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -225,14 +392,14 @@ export async function POST(request: NextRequest) {
     if (role === "admin" && !userPermissions.hasRole("admin")) {
       return NextResponse.json(
         { error: "Only admins can invite admin users" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (role === "manager" && !userPermissions.hasRole("admin")) {
       return NextResponse.json(
         { error: "Only admins can invite manager users" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -246,49 +413,50 @@ export async function POST(request: NextRequest) {
     if (existingUser.length > 0) {
       return NextResponse.json(
         { error: "User with this email already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
-    // Create invitation (we'll use the existing invitation system)
-    // For now, create a pending user directly
-    const newUserId = crypto.randomUUID();
-    const newUser = await db.insert(user).values({
-      id: newUserId,
-      name,
-      email,
-      role,
-      status: "pending",
-      invitedBy: session.user.id,
-      invitedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
-
-    // Audit log
-    await db.insert(auditLog).values({
-      id: crypto.randomUUID(),
-      userId: session.user.id,
-      action: "team_member_invited",
-      targetUserId: newUserId,
-      metadata: JSON.stringify({
+    // Create invitation using the existing invitation system
+    try {
+      const invitation = await createInvitation({
         email,
-        name,
         role,
-      }),
-      ipAddress: request.headers.get("x-forwarded-for") || null,
-      createdAt: new Date(),
-    });
+        invitedBy: session.user.id,
+      });
 
-    return NextResponse.json({
-      success: true,
-      member: newUser[0],
-    });
+      // Audit log
+      await db.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        userId: session.user.id,
+        action: "team_member_invited",
+        targetUserId: invitation.id, // Use invitation ID as target
+        metadata: JSON.stringify({
+          email,
+          name,
+          role,
+          invitationId: invitation.id,
+        }),
+        ipAddress: request.headers.get("x-forwarded-for") || null,
+        createdAt: new Date(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        invitation: invitation,
+      });
+    } catch (invitationError) {
+      console.error("Failed to create invitation:", invitationError);
+      return NextResponse.json(
+        { error: "Failed to create invitation" },
+        { status: 500 },
+      );
+    }
   } catch (error) {
     console.error("Team invite API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

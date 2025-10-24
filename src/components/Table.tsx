@@ -51,7 +51,7 @@ interface TableRowProps<T> {
 
 const TableRowComponent = memo(
   <T,>({ item, index, columns, actions }: TableRowProps<T>) => (
-    <TableRow key={index}>
+    <TableRow key={index} className="hover:bg-muted/50 transition-colors">
       {columns.map((col) => {
         const cellContent = col.compute
           ? col.compute(item)

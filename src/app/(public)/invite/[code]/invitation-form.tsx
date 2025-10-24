@@ -62,17 +62,23 @@ export function InvitationForm({
             {state.error}
             {state.error.includes("Passwords do not match") && (
               <div className="mt-2 text-sm">
-                <strong>What to do:</strong> Make sure both password fields contain exactly the same text.
+                <strong>What to do:</strong> Make sure both password fields
+                contain exactly the same text.
               </div>
             )}
-            {state.error.includes("Password must be at least 12 characters") && (
+            {state.error.includes(
+              "Password must be at least 12 characters",
+            ) && (
               <div className="mt-2 text-sm">
-                <strong>What to do:</strong> Create a strong password with at least 12 characters, including uppercase, lowercase, and numbers.
+                <strong>What to do:</strong> Create a strong password with at
+                least 12 characters, including uppercase, lowercase, and
+                numbers.
               </div>
             )}
             {state.error.includes("All fields are required") && (
               <div className="mt-2 text-sm">
-                <strong>What to do:</strong> Please fill in your full name and create a password to continue.
+                <strong>What to do:</strong> Please fill in your full name and
+                create a password to continue.
               </div>
             )}
           </AlertDescription>

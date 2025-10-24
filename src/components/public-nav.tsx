@@ -43,7 +43,6 @@ export default function PublicNav() {
           >
             Login
           </Link>
-         
         </div>
       </div>
     </nav>

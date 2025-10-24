@@ -1,5 +1,6 @@
 import AccountDeletionEmail from "@emails/account-deletion";
 import EmailVerificationEmail from "@emails/email-verification";
+import InvitationEmail from "@emails/invitation";
 import PasswordChangedEmail from "@emails/password-changed";
 import PasswordResetEmail from "@emails/password-reset";
 import { render } from "@react-email/render";
@@ -152,6 +153,48 @@ export async function sendPasswordChangedEmail(to: string) {
     return result;
   } catch (error) {
     console.error("Failed to send password changed email:", error);
+    throw new Error("Email service unavailable");
+  }
+}
+
+export async function sendInvitationEmail({
+  to,
+  inviterName,
+  inviterEmail,
+  role,
+  invitationUrl,
+  expirationTime = "7 days",
+}: {
+  to: string;
+  inviterName: string;
+  inviterEmail: string;
+  role: string;
+  invitationUrl: string;
+  expirationTime?: string;
+}) {
+  try {
+    const renderedHtml = await render(
+      React.createElement(InvitationEmail, {
+        inviteeEmail: to,
+        inviterName,
+        inviterEmail,
+        role,
+        invitationUrl,
+        expirationTime,
+      }),
+    );
+
+    const result = await resend.emails.send({
+      from:
+        process.env.RESEND_FROM_EMAIL || "Tender Hub <noreply@tenderhub.com>",
+      to: [to],
+      subject: "You've been invited to join Tender Hub",
+      html: renderedHtml,
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Failed to send invitation email:", error);
     throw new Error("Email service unavailable");
   }
 }
