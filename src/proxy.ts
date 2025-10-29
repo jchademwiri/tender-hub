@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { db } from "@/db";
+import { eq } from "drizzle-orm";
+import { user } from "@/db/schema";
 
 export default async function proxy(req: NextRequest) {
   // Skip middleware for API routes to avoid conflicts
@@ -10,13 +13,35 @@ export default async function proxy(req: NextRequest) {
 
   // Enable authentication for protected routes
   const { nextUrl } = req;
+  
+  // Check for suspended users during sign-in
+  if (nextUrl.pathname === "/sign-in") {
+    try {
+      const session = await auth.api.getSession({ headers: req.headers });
+      
+      // If user is already authenticated, check their status
+      if (session?.user) {
+        const userData = await db.query.user.findFirst({
+          where: (users, { eq }) => eq(users.id, session.user.id),
+        });
+
+        if (userData && userData.status === 'suspended') {
+          return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
+        }
+      }
+    } catch (error) {
+      console.warn('Could not check user status in middleware:', error);
+    }
+  }
+
+  // Normal authentication flow for other routes
   const session = await auth.api.getSession({ headers: req.headers });
 
   const isLoggedIn = !!session;
-  const user = session?.user;
+  const userSession = session?.user;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/sign-in", "/invite"];
+  const publicRoutes = ["/", "/sign-in", "/invite", "/suspended"];
   const isPublicRoute = publicRoutes.some(
     (route) =>
       nextUrl.pathname === route || nextUrl.pathname.startsWith(`${route}/`),
@@ -36,6 +61,21 @@ export default async function proxy(req: NextRequest) {
       nextUrl.pathname === route || nextUrl.pathname.startsWith(`${route}/`),
   );
 
+  // Check suspended status for authenticated users trying to access protected routes
+  if (isLoggedIn && (isAdminRoute || isDashboardRoute)) {
+    try {
+      const userData = await db.query.user.findFirst({
+        where: (users, { eq }) => eq(users.id, userSession!.id),
+      });
+
+      if (userData && userData.status === 'suspended') {
+        return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
+      }
+    } catch (error) {
+      console.warn('Could not check user status:', error);
+    }
+  }
+
   // Redirect unauthenticated users trying to access protected routes
   if (!isLoggedIn && (isAdminRoute || isDashboardRoute)) {
     const redirectUrl = new URL("/sign-in", nextUrl.origin);
@@ -47,8 +87,8 @@ export default async function proxy(req: NextRequest) {
   if (
     isLoggedIn &&
     isAdminRoute &&
-    user?.role !== "admin" &&
-    user?.role !== "owner"
+    userSession?.role !== "admin" &&
+    userSession?.role !== "owner"
   ) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl.origin));
   }
@@ -66,9 +106,9 @@ export default async function proxy(req: NextRequest) {
 
     // Redirect based on user role
     let redirectUrl: string;
-    if (user?.role === "admin" || user?.role === "owner") {
+    if (userSession?.role === "admin" || userSession?.role === "owner") {
       redirectUrl = "/admin";
-    } else if (user?.role === "manager") {
+    } else if (userSession?.role === "manager") {
       redirectUrl = "/manager";
     } else {
       redirectUrl = "/dashboard";
