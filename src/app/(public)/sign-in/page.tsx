@@ -56,6 +56,7 @@ export default function SignInPage() {
 
     try {
       console.log("🔍 DEBUG: Attempting to sign in with:", email);
+      
       const result = await authClient.signIn.email({
         email,
         password,
@@ -64,8 +65,8 @@ export default function SignInPage() {
       console.log("🔍 DEBUG: Sign in result:", result);
 
       if (result.error) {
-        console.error("❌ DEBUG: Sign in error:", result.error);
-        console.error("🔍 DEBUG: Full result object:", result);
+        console.error("❌ DEBUG: Sign in error details:", JSON.stringify(result.error, null, 2));
+        console.error("🔍 DEBUG: Full result object:", JSON.stringify(result, null, 2));
 
         // Handle different types of error responses from better-auth
         let errorMessage = "Invalid credentials";
@@ -137,6 +138,7 @@ export default function SignInPage() {
         });
       } else {
         console.log("✅ DEBUG: Sign in successful");
+        // The proxy middleware will handle suspended user checking and redirection
         toast.success("Welcome back!");
         router.push("/dashboard");
       }
@@ -191,11 +193,11 @@ export default function SignInPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
+          {/* <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
               Demo credentials: admin@test.com / testpassword123
             </p>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
