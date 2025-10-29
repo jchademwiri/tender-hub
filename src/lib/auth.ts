@@ -318,10 +318,12 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ||
       "https://tenders.livhuandmusa.co.za" ||
       "https://tender-hub-nine.vercel.app" ||
-      "https://tender-hub-tau.vercel.app/",
+      "https://tender-hub-tau.vercel.app/" ||
+      "https://app.sithemebe.co.za/",
     process.env.NEXT_PUBLIC_APP_URL ||
       "https://tenders.livhuandmusa.co.za" ||
       "https://tender-hub-nine.vercel.app" ||
-      "https://tender-hub-tau.vercel.app/",
+      "https://tender-hub-tau.vercel.app/" ||
+      "https://app.sithemebe.co.za/",
   ],
 });
