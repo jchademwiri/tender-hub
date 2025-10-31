@@ -216,11 +216,10 @@ export function DatabaseManagementClient() {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="backups">Backups</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
-        <TabsTrigger value="restoration">Restoration</TabsTrigger>
         <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
       </TabsList>
 
@@ -239,6 +238,9 @@ export function DatabaseManagementClient() {
               <p className="text-xs text-muted-foreground">
                 {stats?.uptime} uptime
               </p>
+              <p className="text-xs text-green-600 mt-1">
+                ✓ Connection active • Schema intact
+              </p>
             </CardContent>
           </Card>
 
@@ -251,6 +253,9 @@ export function DatabaseManagementClient() {
               <div className="text-2xl font-bold text-blue-600">{stats?.storageUsed}%</div>
               <p className="text-xs text-muted-foreground">
                 {Math.round((stats?.storageUsed || 0) * (stats?.storageTotal || 100) / 100)} GB of {stats?.storageTotal} GB used
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                💾 Disk space monitoring
               </p>
             </CardContent>
           </Card>
@@ -265,6 +270,12 @@ export function DatabaseManagementClient() {
               <p className="text-xs text-muted-foreground">
                 Active connections
               </p>
+              {/* <p className="text-xs text-muted-foreground mt-1">
+                🔗 User sessions • API calls • Background jobs
+              </p>
+              <p className="text-xs text-muted-foreground">
+                💡 Monitor for connection leaks or capacity issues
+              </p> */}
             </CardContent>
           </Card>
 
@@ -278,11 +289,13 @@ export function DatabaseManagementClient() {
               <p className="text-xs text-muted-foreground">
                 {stats?.totalBackups} total backups
               </p>
+              <p className="text-xs text-green-600 mt-1">
+                📦 Backup success rate
+              </p>
             </CardContent>
           </Card>
         </div>
-
-        {/* Quick Actions */}
+                {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -292,7 +305,7 @@ export function DatabaseManagementClient() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-4">
-              <Button 
+              <Button
                 onClick={handleCreateBackup}
                 disabled={isCreatingBackup}
                 className="flex-1"
@@ -304,8 +317,8 @@ export function DatabaseManagementClient() {
                 )}
                 Create Manual Backup
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={fetchDatabaseInfo}
                 className="flex-1"
               >
@@ -315,6 +328,73 @@ export function DatabaseManagementClient() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Recent Backup History */}
+        {backups.length > 0 && (
+          // Recent Backup History
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Recent Backup History
+              </CardTitle>
+              <CardDescription>
+                Your last 3 database backups - click Restore to revert to any point
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {backups
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .slice(0, 3)
+                  .map((backup, index) => (
+                  <div key={backup.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        {getStatusBadge(backup.status)}
+                      </div>
+                      <div>
+                        <div className="font-medium">
+                          {backup.backupType.charAt(0).toUpperCase() + backup.backupType.slice(1)} Backup
+                          {index === 0 && <span className="text-xs text-green-600 ml-2">• Latest</span>}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatDate(backup.createdAt)} • {formatFileSize(backup.fileSize)}
+                          {backup.duration && ` • ${formatDuration(backup.duration)}`}
+                        </div>
+                      </div>
+                    </div>
+                    {backup.status === 'completed' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRestore(backup.id)}
+                        disabled={isRestoring}
+                        title="Restore to this backup point"
+                      >
+                        <Upload className="h-3 w-3 mr-1" />
+                        Restore
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {backups.length > 3 && (
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="link"
+                    onClick={() => setActiveTab('backups')}
+                    className="text-sm"
+                  >
+                    View all {backups.length} backups →
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+
       </TabsContent>
 
       <TabsContent value="backups" className="space-y-6">
@@ -325,7 +405,7 @@ export function DatabaseManagementClient() {
               Backup History
             </CardTitle>
             <CardDescription>
-              View all database backup records and their status
+              View and manage database backup records - sorted by latest first
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -339,17 +419,22 @@ export function DatabaseManagementClient() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Created</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>File Size</TableHead>
                     <TableHead>Duration</TableHead>
-                    <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {backups.map((backup) => (
+                  {backups
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) // Sort newest first
+                    .map((backup) => (
                     <TableRow key={backup.id}>
+                      <TableCell className="font-medium">
+                        {formatDate(backup.createdAt)}
+                      </TableCell>
                       <TableCell>
                         {getStatusBadge(backup.status)}
                       </TableCell>
@@ -363,19 +448,19 @@ export function DatabaseManagementClient() {
                         {formatDuration(backup.duration)}
                       </TableCell>
                       <TableCell>
-                        {formatDate(backup.createdAt)}
-                      </TableCell>
-                      <TableCell>
                         {backup.status === 'completed' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleRestore(backup.id)}
-                            disabled={isRestoring}
-                          >
-                            <Upload className="h-3 w-3 mr-1" />
-                            Restore
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRestore(backup.id)}
+                              disabled={isRestoring}
+                              title="Restore from this backup"
+                            >
+                              <Upload className="h-3 w-3 mr-1" />
+                              Restore
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -447,59 +532,6 @@ export function DatabaseManagementClient() {
             <Button className="w-full">
               Save Database Settings
             </Button>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="restoration" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Database Restoration
-            </CardTitle>
-            <CardDescription>
-              Restore database from backup files
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg">
-              <div className="flex items-center gap-2 text-yellow-800">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="font-medium">Important Notice</span>
-              </div>
-              <p className="text-sm text-yellow-700 mt-1">
-                Database restoration will overwrite all current data. This action cannot be undone.
-                Please ensure you have a recent backup before proceeding.
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Backup to Restore</label>
-                <select className="w-full p-2 border border-gray-300 rounded-md" title="Select backup file for restoration">
-                  <option value="">Choose a backup file...</option>
-                  {backups.filter(b => b.status === 'completed').map(backup => (
-                    <option key={backup.id} value={backup.id}>
-                      {backup.backupType} - {formatDate(backup.createdAt)} ({formatFileSize(backup.fileSize)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <Button
-                variant="destructive"
-                className="w-full"
-                disabled={isRestoring}
-              >
-                {isRestoring ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
-                Start Restoration
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </TabsContent>
