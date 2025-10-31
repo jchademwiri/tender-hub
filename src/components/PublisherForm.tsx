@@ -118,7 +118,7 @@ export default function PublisherForm({
                   </InputGroupAddon>
                   <InputGroupInput
                     type="url"
-                    placeholder="https://example.com"
+                    placeholder="https://www.organization.gov.za"
                     {...field}
                   />
                 </InputGroup>

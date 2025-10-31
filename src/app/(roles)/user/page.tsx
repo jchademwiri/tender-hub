@@ -136,7 +136,7 @@ export default function UserDashboard() {
               <div>
                 <p className="text-sm font-medium">Email</p>
                 <p className="text-sm text-muted-foreground">
-                  john.doe@example.com
+                  user@company.com
                 </p>
               </div>
               <div>

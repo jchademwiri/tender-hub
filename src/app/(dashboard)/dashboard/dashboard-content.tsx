@@ -48,11 +48,17 @@ export function DashboardContent({
 
   // Check if user has completed onboarding
   useEffect(() => {
-    const completed = localStorage.getItem(`onboarding-completed-${user.id}`);
-    if (!completed) {
+    const onboardingStatus = localStorage.getItem(`onboarding-completed-${user.id}`);
+    if (!onboardingStatus) {
       setShowTour(true);
-    } else {
+      setTourCompleted(false);
+    } else if (onboardingStatus === "true") {
       setTourCompleted(true);
+      setShowTour(false);
+    } else {
+      // onboardingStatus === "skipped"
+      setTourCompleted(false);
+      setShowTour(false);
     }
   }, [user.id]);
 
@@ -64,7 +70,7 @@ export function DashboardContent({
 
   const handleTourSkip = () => {
     localStorage.setItem(`onboarding-completed-${user.id}`, "skipped");
-    setTourCompleted(true);
+    setTourCompleted(false);
     setShowTour(false);
   };
 

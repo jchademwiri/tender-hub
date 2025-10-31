@@ -176,7 +176,7 @@ export function BulkCreateInvitationDialog({
   // Download CSV template
   const downloadTemplate = () => {
     const csvContent =
-      "email,role,name,department,customMessage\nuser@example.com,user,John Doe,Engineering,Welcome to our platform!";
+      "email,role,name,department,customMessage\nemployee@company.com,user,Employee Name,Department,Welcome to our platform!";
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -440,7 +440,7 @@ export function BulkCreateInvitationDialog({
                     >
                       <div className="flex-1">
                         <Input
-                          placeholder="user@example.com"
+                          placeholder="Enter email address"
                           value={invitation.email}
                           onChange={(e) =>
                             updateInvitation(index, "email", e.target.value)
@@ -530,7 +530,7 @@ export function BulkCreateInvitationDialog({
                     >
                       Choose CSV File
                     </Button>
-                    <input
+                    <Input
                       ref={fileInputRef}
                       type="file"
                       accept=".csv"
