@@ -575,3 +575,50 @@ export const profileUpdateRequest = pgTable(
     statusIdx: index("profile_update_status_idx").on(table.status),
   }),
 );
+
+// ✅ System settings table for global configuration
+export const systemSettings = pgTable(
+  "system_settings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    settingKey: text("setting_key").notNull().unique(),
+    settingValue: jsonb("setting_value").notNull(),
+    description: text("description"),
+    updatedBy: text("updated_by").references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    settingKeyIdx: index("system_settings_key_idx").on(table.settingKey),
+  }),
+);
+
+// ✅ Database backup history table
+export const backupHistory = pgTable(
+  "backup_history",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    backupType: text("backup_type").notNull(), // manual, scheduled, auto
+    status: text("status").notNull(), // running, completed, failed
+    filePath: text("file_path"),
+    fileSize: bigint("file_size", { mode: "number" }),
+    errorMessage: text("error_message"),
+    duration: integer("duration"), // in seconds
+    initiatedBy: text("initiated_by").references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    backupTypeIdx: index("backup_history_type_idx").on(table.backupType),
+    statusIdx: index("backup_history_status_idx").on(table.status),
+    createdAtIdx: index("backup_history_created_at_idx").on(table.createdAt),
+  }),
+);
+
+// System Settings Types
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type NewSystemSetting = typeof systemSettings.$inferInsert;
+export type BackupHistory = typeof backupHistory.$inferSelect;
+export type NewBackupHistory = typeof backupHistory.$inferInsert;

@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import {
   Database,
   Shield,
@@ -24,44 +25,80 @@ import {
   Users,
   HardDrive,
   Server,
-  Mail,
+  Download,
 } from "lucide-react";
 import { requireAuth } from "@/lib/auth-utils";
+import { SystemSettings } from "./types";
+import { DatabaseSettingsClient } from "./database-settings-client";
+import { BackupHistoryClient } from "./backup-history-client";
 
 export default async function SystemSettingsPage() {
   // Get authenticated user
   const currentUser = await requireAuth();
 
-  // Mock system settings data - in a real app, this would come from a database
-  const systemSettings = {
-    general: {
-      siteName: "Tender Hub",
-      siteDescription: "Professional tender and procurement platform",
-      maintenanceMode: false,
-      registrationEnabled: true,
-      emailVerificationRequired: true,
-    },
-    security: {
-      passwordMinLength: 8,
-      sessionTimeout: 24,
-      maxLoginAttempts: 5,
-      twoFactorRequired: false,
-      forcePasswordChange: false,
-    },
-    email: {
-      smtpHost: "smtp.gmail.com",
-      smtpPort: 587,
-      smtpUsername: "admin@tenderhub.com",
-      fromAddress: "noreply@tenderhub.com",
-      rateLimitPerHour: 100,
-    },
-    database: {
-      backupFrequency: "daily",
-      retentionDays: 30,
-      autoOptimize: true,
-      monitoringEnabled: true,
-    },
-  };
+  // Fetch real system settings from database directly
+  let systemSettings;
+  try {
+    const { db } = await import("@/db");
+    const { systemSettings: systemSettingsTable } = await import("@/db/schema");
+    const { eq } = await import("drizzle-orm");
+    
+    const settings = await db.select().from(systemSettingsTable);
+    
+    // Transform the settings into the expected format
+    const settingsMap = settings.reduce((acc, setting) => {
+      acc[setting.settingKey] = setting.settingValue;
+      return acc;
+    }, {} as Record<string, any>);
+
+    systemSettings = {
+      general: settingsMap.general || {
+        siteName: "Tender Hub",
+        siteDescription: "Professional tender and procurement platform",
+        maintenanceMode: false,
+        registrationEnabled: true,
+        emailVerificationRequired: true,
+      },
+      security: settingsMap.security || {
+        passwordMinLength: 8,
+        sessionTimeout: 24,
+        maxLoginAttempts: 5,
+        twoFactorRequired: false,
+        forcePasswordChange: false,
+      },
+      database: settingsMap.database || {
+        backupFrequency: "daily",
+        retentionDays: 30,
+        autoOptimize: true,
+        monitoringEnabled: true,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+    // Fallback to default values if API fails
+    systemSettings = {
+      general: {
+        siteName: "Tender Hub",
+        siteDescription: "Professional tender and procurement platform",
+        maintenanceMode: false,
+        registrationEnabled: true,
+        emailVerificationRequired: true,
+      },
+      security: {
+        passwordMinLength: 8,
+        sessionTimeout: 24,
+        maxLoginAttempts: 5,
+        twoFactorRequired: false,
+        forcePasswordChange: false,
+      },
+      database: {
+        backupFrequency: "daily",
+        retentionDays: 30,
+        autoOptimize: true,
+        monitoringEnabled: true,
+      },
+    };
+  }
 
   return (
     <div className="space-y-6">
@@ -251,61 +288,6 @@ export default async function SystemSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Email Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Email Settings
-          </CardTitle>
-          <CardDescription>
-            SMTP configuration and email delivery settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="smtp-host">SMTP Host</Label>
-              <Input
-                id="smtp-host"
-                defaultValue={systemSettings.email.smtpHost}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="smtp-port">SMTP Port</Label>
-              <Input
-                id="smtp-port"
-                type="number"
-                defaultValue={systemSettings.email.smtpPort}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="smtp-username">SMTP Username</Label>
-              <Input
-                id="smtp-username"
-                defaultValue={systemSettings.email.smtpUsername}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="from-address">From Address</Label>
-              <Input
-                id="from-address"
-                defaultValue={systemSettings.email.fromAddress}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="rate-limit">Email Rate Limit (per hour)</Label>
-            <Input
-              id="rate-limit"
-              type="number"
-              defaultValue={systemSettings.email.rateLimitPerHour}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Database Settings */}
       <Card>
         <CardHeader>
@@ -365,14 +347,13 @@ export default async function SystemSettingsPage() {
               defaultChecked={systemSettings.database.monitoringEnabled}
             />
           </div>
+
+<DatabaseSettingsClient />
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-4">
-        <Button variant="outline">Cancel</Button>
-        <Button>Save Changes</Button>
-      </div>
+      {/* Backup History */}
+      <BackupHistoryClient />
     </div>
   );
 }
