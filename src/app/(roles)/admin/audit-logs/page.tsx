@@ -26,6 +26,9 @@ interface AuditLog {
   action: string;
   targetUserId?: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
   metadata: any;
   createdAt: string;
 }
@@ -62,6 +65,8 @@ export default function AuditLogsPage() {
     }
   };
 
+  
+  console.log("Audit Logs:", auditLogs); //testing
   return (
     <div className="space-y-6">
       <div>
@@ -121,10 +126,10 @@ export default function AuditLogsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Action</TableHead>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>Target User</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Details</TableHead>
-                  <TableHead>Timestamp</TableHead>
+                  <TableHead>Time</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -133,24 +138,28 @@ export default function AuditLogsPage() {
                     <TableRow key={log.id}>
                       <TableCell>
                         <Badge variant="outline">
-                          {log.action.replace(/_/g, " ")}
+                          {formatActionName(log.action)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-mono">{log.userId}</div>
-                      </TableCell>
-                      <TableCell>
                         <div className="text-sm">
-                          {log.targetUserId || "-"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm text-muted-foreground max-w-xs truncate">
-                          {renderMetadataDetails(log.metadata)}
+                          {formatUserDisplay(log)}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
+                          <Badge variant="secondary" className="text-xs">
+                            {log.userRole || "User"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground max-w-xs">
+                          {renderActionDetails(log.action, log.metadata)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-xs text-muted-foreground">
                           {formatTimeAgo(new Date(log.createdAt))}
                         </div>
                       </TableCell>
@@ -172,21 +181,123 @@ export default function AuditLogsPage() {
   );
 }
 
-// Helper function to render metadata details
-function renderMetadataDetails(metadata: any): string {
+// Helper function to format action names
+function formatActionName(action: string): string {
+  const actionMap: Record<string, string> = {
+    "team_members_viewed": "Team Viewed",
+    "team_member_updated": "Member Updated",
+    "team_member_created": "Member Created",
+    "team_member_deleted": "Member Deleted",
+    "sign_in_email": "Email Sign In",
+    "sign_out": "Sign Out",
+    "user_created": "User Created",
+    "user_updated": "User Updated",
+    "user_invited": "User Invited",
+    "user_activated": "User Activated",
+    "user_suspended": "User Suspended",
+    "role_changed": "Role Changed",
+    "permission_granted": "Permission Granted",
+    "system_backup": "Backup Completed",
+    "settings_updated": "Settings Updated",
+  };
+
+  return actionMap[action] || action.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
+
+// Helper function to format user display name
+function formatUserDisplay(log: AuditLog): string {
+  // If we have user name from API (when available)
+  if (log.userName && log.userName.trim() !== "") {
+    return log.userName;
+  }
+  
+  // If it's anonymous
+  if (log.userId === "anonymous") return "Anonymous";
+  
+  // If it's a UUID, show just the first 8 characters
+  if (log.userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    return log.userId.substring(0, 8) + "...";
+  }
+  
+  return log.userId;
+}
+
+// Helper function to format target user
+function formatTargetUser(targetUserId?: string): string {
+  if (!targetUserId) return "-";
+  
+  // If it's a UUID, show just the first 8 characters
+  if (targetUserId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    return targetUserId.substring(0, 8) + "...";
+  }
+  
+  return targetUserId;
+}
+
+// Helper function to render action-specific details
+function renderActionDetails(action: string, metadata: any): string {
   if (!metadata) return "-";
 
   try {
-    if (typeof metadata === "object") {
-      const details = [];
-      if (metadata.role) details.push(`Role: ${metadata.role}`);
-      if (metadata.status) details.push(`Status: ${metadata.status}`);
-      if (metadata.email) details.push(`Email: ${metadata.email}`);
-      return details.join(", ") || JSON.stringify(metadata).substring(0, 50) + "...";
+    // Parse metadata if it's a string
+    const meta = typeof metadata === "string" ? JSON.parse(metadata) : metadata;
+
+    switch (action) {
+      case "team_member_updated":
+        if (meta.changes?.updatedAt) {
+          return "Member details updated";
+        }
+        if (meta.changes?.role) {
+          return `Role changed to ${meta.changes.role}`;
+        }
+        return "Member profile updated";
+
+      case "sign_in_email":
+        return meta.success ? "Successful sign in" : "Failed sign in";
+
+      case "sign_out":
+        return "User signed out";
+
+      case "team_members_viewed":
+        return "Viewed team member list";
+
+      case "user_invited":
+        if (meta.email) {
+          return `Invitation sent to ${meta.email}`;
+        }
+        return "User invitation sent";
+
+      case "role_changed":
+        if (meta.role) {
+          return `Role changed to ${meta.role}`;
+        }
+        return "User role updated";
+
+      case "settings_updated":
+        if (meta.setting) {
+          return `${meta.setting} updated`;
+        }
+        return "System settings modified";
+
+      default:
+        // Generic handling for other actions
+        if (meta.success === false) {
+          return "Action failed";
+        }
+        if (meta.success === true) {
+          return "Action completed successfully";
+        }
+        
+        // Extract common useful fields
+        const details = [];
+        if (meta.email) details.push(`Email: ${meta.email}`);
+        if (meta.role) details.push(`Role: ${meta.role}`);
+        if (meta.status) details.push(`Status: ${meta.status}`);
+        
+        return details.length > 0 ? details.join(", ") : "System activity";
     }
-    return String(metadata);
   } catch (error) {
-    return "Invalid metadata";
+    return "Activity logged";
   }
 }
 
