@@ -82,11 +82,11 @@ const getNavigationItems = (userRole: string) => {
         url: "/manager/team",
         icon: Users,
       },
-      {
-        title: "Approvals",
-        url: "/manager/approvals",
-        icon: CheckCircle,
-      },
+      // {
+      //   title: "Approvals",
+      //   url: "/manager/approvals",
+      //   icon: CheckCircle,
+      // },
       {
         title: "Provinces",
         url: "/manager/provinces",
