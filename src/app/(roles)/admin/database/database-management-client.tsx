@@ -205,23 +205,49 @@ export function DatabaseManagementClient() {
     return new Date(dateString).toLocaleString();
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading database management...</span>
-      </div>
-    );
-  }
-
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="backups">Backups</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
-        <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-      </TabsList>
+    <div className="space-y-6">
+      {/* Global Action Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Database Management</h1>
+          <p className="text-muted-foreground">
+            Manage database backups, restorations, and monitoring
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleCreateBackup}
+            disabled={isCreatingBackup}
+            size="sm"
+          >
+            {isCreatingBackup ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Create Manual Backup
+          </Button>
+          <Button
+            variant="outline"
+            onClick={fetchDatabaseInfo}
+            size="sm"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh Status
+          </Button>
+        </div>
+      </div>
+
+      <div className="h-2"></div> {/* Space between header and tabs */}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="backups">Backups</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+        </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
         {/* Database Status Cards */}
@@ -295,40 +321,6 @@ export function DatabaseManagementClient() {
             </CardContent>
           </Card>
         </div>
-                {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>
-              Common database management operations
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4">
-              <Button
-                onClick={handleCreateBackup}
-                disabled={isCreatingBackup}
-                className="flex-1"
-              >
-                {isCreatingBackup ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                Create Manual Backup
-              </Button>
-              <Button
-                variant="outline"
-                onClick={fetchDatabaseInfo}
-                className="flex-1"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Status
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Recent Backup History */}
         {backups.length > 0 && (
           // Recent Backup History
@@ -398,22 +390,55 @@ export function DatabaseManagementClient() {
       </TabsContent>
 
       <TabsContent value="backups" className="space-y-6">
+        {/* Backup Actions Header */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Backup History
-            </CardTitle>
-            <CardDescription>
-              View and manage database backup records - sorted by latest first
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Backup History
+                </CardTitle>
+                <CardDescription>
+                  View and manage database backup records - sorted by latest first
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleCreateBackup}
+                  disabled={isCreatingBackup}
+                  size="sm"
+                >
+                  {isCreatingBackup ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  Create Manual Backup
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={fetchDatabaseInfo}
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Status
+                </Button>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+        </Card>
+
+        <div className="h-4"></div> {/* Space between header and table */}
+
+        {/* Backup History Table */}
+        <Card>
+          <CardContent className="pt-6">
             {backups.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Download className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No backup records found</p>
-                <p className="text-sm">Create your first backup using the overview tab</p>
+                <p className="text-sm">Create your first backup using the button above</p>
               </div>
             ) : (
               <Table>
@@ -609,5 +634,6 @@ export function DatabaseManagementClient() {
         </div>
       </TabsContent>
     </Tabs>
+    </div>
   );
 }
