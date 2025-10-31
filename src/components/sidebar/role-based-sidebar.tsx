@@ -70,6 +70,16 @@ const getNavigationItems = (userRole: string) => {
         url: "/admin/invitations",
         icon: Mail,
       },
+      {
+        title: "Audit Logs",
+        url: "/admin/audit-logs",
+        icon: FileText,
+      },
+      {
+        title: "Settings",
+        url: "/admin/settings",
+        icon: Command,
+      },
     ],
     manager: [
       {

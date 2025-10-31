@@ -12,6 +12,7 @@ import { db } from "@/db";
 import { auditLog, invitation, user } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
 import { subDays } from "date-fns";
+import Link from "next/link";
 
 /**
  * TODO: Admin Dashboard Implementation Checklist
@@ -190,14 +191,20 @@ export default async function AdminDashboard() {
             <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full justify-start" variant="outline">
-              Invite New User
+              <Button className="w-full justify-start" variant="outline" asChild>
+            <Link href="/admin/invitations">
+                Invite New User
+            </Link>
+              </Button>
+              <Button className="w-full justify-start" variant="outline" asChild>
+            <Link href="/admin/audit-logs">
+                View Audit Logs
+              </Link>
             </Button>
-            <Button className="w-full justify-start" variant="outline">
-              View Audit Logs
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
-              System Settings
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/admin/settings">
+                System Settings
+              </Link>
             </Button>
             <Button className="w-full justify-start" variant="outline">
               Backup Database
@@ -222,3 +229,4 @@ function formatTimeAgo(date: Date): string {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
+

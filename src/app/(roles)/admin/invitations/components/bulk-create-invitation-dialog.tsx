@@ -530,7 +530,7 @@ export function BulkCreateInvitationDialog({
                     >
                       Choose CSV File
                     </Button>
-                    <input
+                    <Input
                       ref={fileInputRef}
                       type="file"
                       accept=".csv"
