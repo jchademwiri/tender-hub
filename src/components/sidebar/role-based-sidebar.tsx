@@ -5,6 +5,7 @@ import {
   Bookmark,
   CheckCircle,
   Command,
+  Database,
   FileText,
   Home,
   Mail,
@@ -45,36 +46,13 @@ const getNavigationItems = (userRole: string) => {
     Array<{ title: string; url: string; icon: React.ComponentType<any> }>
   > = {
     admin: [
-      {
-        title: "Dashboard",
-        url: "/admin",
-        icon: Command,
-      },
-      {
-        title: "Team",
-        url: "/admin/team",
-        icon: Users,
-      },
-      {
-        title: "Provinces",
-        url: "/admin/provinces",
-        icon: Map,
-      },
-      {
-        title: "Publishers",
-        url: "/admin/publishers",
-        icon: BookOpen,
-      },
-      {
-        title: "Invitations",
-        url: "/admin/invitations",
-        icon: Mail,
-      },
-      {
-        title: "Audit Logs",
-        url: "/admin/audit-logs",
-        icon: FileText,
-      },
+      { title: "Dashboard", url: "/admin", icon: Command },
+      { title: "Team", url: "/admin/team", icon: Users },
+      { title: "Provinces", url: "/admin/provinces", icon: Map },
+      { title: "Publishers", url: "/admin/publishers", icon: BookOpen },
+      { title: "Invitations", url: "/admin/invitations", icon: Mail },
+      { title: "Database", url: "/admin/database", icon: Database },
+      { title: "Audit Logs", url: "/admin/audit-logs", icon: FileText },
       {
         title: "Settings",
         url: "/admin/settings",
