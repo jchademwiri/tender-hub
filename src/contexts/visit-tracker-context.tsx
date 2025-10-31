@@ -128,7 +128,6 @@ export function VisitTrackerProvider({
    */
   const refreshStats = useCallback(() => {
     // The useVisitStats hook handles its own refresh
-    // We can force a re-render by updating a dummy state if needed
     refreshTodayVisits();
   }, [refreshTodayVisits]);
 

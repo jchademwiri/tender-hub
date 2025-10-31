@@ -107,7 +107,7 @@ export function InviteMemberDialog({
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="john.doe@example.com"
+                      placeholder="Enter email address"
                       type="email"
                       {...field}
                     />
