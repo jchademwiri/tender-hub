@@ -175,7 +175,7 @@ async function createPostgresBackup(backupId: string, backupPath: string, databa
   
   console.log(`Starting pg_dump: ${pgDumpCommand.replace(password, '***')}`);
   
-  // Execute pg_dump
+  // Execute pg_dump with password in environment (not exposed in command line)
   execSync(pgDumpCommand, {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, PGPASSWORD: password }
@@ -205,33 +205,33 @@ async function createNeonBackup(backupId: string, backupPath: string, databaseUr
   // Instead, we create a guidance document and mark as informational
   const guidance = `-- Neon Database Backup Guidance
 -- Generated on: ${new Date().toISOString()}
--- Database: ${databaseUrl}
 
 -- IMPORTANT: Neon databases do not support direct pg_dump/restore operations
 -- due to their serverless, connection-pooled architecture.
 
 -- RECOMMENDED BACKUP OPTIONS FOR NEON:
 
-1. NEON DASHBOARD EXPORT:
+1. NEON DASHBOARD EXPORT (Recommended):
    - Go to your Neon dashboard: https://neon.tech
    - Navigate to your project → Database → Export
    - Download full database export as SQL file
-   - This is the recommended production backup method
+   - This is the secure production backup method
 
-2. PROGRAMMATIC EXPORT:
-   - Use Neon's HTTP API to export data
+2. READ REPLICA BACKUP (Automated):
+   - Set up a read replica with direct PostgreSQL access
+   - Use pg_dump on the replica for automated backups
+   - Keep the replica in sync for disaster recovery
+
+3. PROGRAMMATIC EXPORT:
+   - Use Neon's HTTP API to export data programmatically
    - Consider using a separate connection pooling service
    - Implement custom data export logic
-
-3. READ REPLICA BACKUP:
-   - Set up a read replica with direct PostgreSQL access
-   - Use pg_dump on the replica for backups
-   - Keep the replica in sync for disaster recovery
 
 4. THIRD-PARTY BACKUP SERVICES:
    - Use services like pgBackRest with Neon
    - Consider managed backup solutions
 
+-- SECURITY NOTE: Never include database credentials in backup files
 -- Current backup marked as "guidance" rather than actual backup
 -- Visit: https://neon.tech/docs/introduction/export-import-datasets/
 `;

@@ -39,3 +39,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Database backup files - SECURITY: Never commit backup files with credentials
+backups/*.sql
+backups/*.dump
+backups/*.backup
+backups/*.gz
+
+# Database configuration and credentials
+*.backup.conf
+*.credentials
+database-*.txt
+database-urls.txt
+
+# Security: Prevent credential leaks in any backup-related files
+*backup*credentials*
+*backup*password*
+*backup*secret*

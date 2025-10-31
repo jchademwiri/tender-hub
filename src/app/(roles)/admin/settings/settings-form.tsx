@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { SystemSettings } from "./types";
 
+
 interface SettingsFormProps {
   initialSettings: SystemSettings;
 }
