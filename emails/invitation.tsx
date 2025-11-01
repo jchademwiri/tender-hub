@@ -186,6 +186,13 @@ const InvitationEmail = (props: InvitationEmailProps) => {
                     className="text-gray-500 underline"
                   >
                     Privacy Policy
+                  </Link>{" "}
+                  |{" "}
+                  <Link
+                    href="https://tenderhub.com/unsubscribe"
+                    className="text-gray-500 underline"
+                  >
+                    Unsubscribe
                   </Link>
                 </Text>
                 <Text className="text-[12px] text-gray-500 text-center leading-[16px] m-0">
