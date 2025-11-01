@@ -2,7 +2,7 @@ import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { auditLog, user } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-utils";
 import { createInvitation } from "@/lib/invitation";
 import { checkPermission } from "@/lib/permissions";
 
@@ -23,28 +23,11 @@ interface TeamMember {
 // GET /api/team - List all team members (admin/manager access)
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate user
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Authenticate user and get full user data including role
+    const session = await requireAuth();
 
     // Check permissions - both admin and manager can view team
-    // Get full user data from database to ensure we have all required fields
-    const fullUser = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
-
-    if (fullUser.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userPermissions = checkPermission(fullUser[0]);
+    const userPermissions = checkPermission(session.user);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
@@ -174,27 +157,11 @@ export async function GET(request: NextRequest) {
 // POST /api/team/bulk - Bulk operations for team members
 export async function PATCH(request: NextRequest) {
   try {
-    // Authenticate user
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    // Authenticate user and get full user data including role
+    const session = await requireAuth();
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get full user data from database
-    const fullUser = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
-
-    if (fullUser.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userPermissions = checkPermission(fullUser[0]);
+    // Check permissions - both admin and manager can perform bulk operations
+    const userPermissions = checkPermission(session.user);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
@@ -348,27 +315,11 @@ export async function PATCH(request: NextRequest) {
 // POST /api/team - Create/invite new team member
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    // Authenticate user and get full user data including role
+    const session = await requireAuth();
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get full user data from database to ensure we have all required fields
-    const fullUser = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
-
-    if (fullUser.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userPermissions = checkPermission(fullUser[0]);
+    // Check permissions - both admin and manager can create team members
+    const userPermissions = checkPermission(session.user);
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },

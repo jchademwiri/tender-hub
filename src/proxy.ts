@@ -5,6 +5,46 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+async function getSessionWithRole(headers: Headers) {
+  try {
+    const session = await auth.api.getSession({ headers });
+    
+    if (!session?.user?.id) {
+      return null;
+    }
+
+    // Fetch full user data from database including role and status
+    const userData = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id))
+      .limit(1);
+
+    if (userData.length === 0) {
+      return null;
+    }
+
+    const fullUser = userData[0];
+
+    return {
+      ...session,
+      user: {
+        ...session.user,
+        role: fullUser.role,
+        status: fullUser.status,
+        banned: fullUser.banned,
+        banReason: fullUser.banReason,
+        banExpires: fullUser.banExpires,
+        invitedBy: fullUser.invitedBy,
+        invitedAt: fullUser.invitedAt,
+      },
+    };
+  } catch (error) {
+    console.error("Error getting session with role in middleware:", error);
+    return null;
+  }
+}
+
 export default async function proxy(req: NextRequest) {
   // Skip middleware for API routes to avoid conflicts
   if (req.nextUrl.pathname.startsWith("/api/")) {
@@ -17,17 +57,11 @@ export default async function proxy(req: NextRequest) {
   // Check for suspended users during sign-in
   if (nextUrl.pathname === "/sign-in") {
     try {
-      const session = await auth.api.getSession({ headers: req.headers });
+      const session = await getSessionWithRole(req.headers);
 
       // If user is already authenticated, check their status
-      if (session?.user) {
-        const userData = await db.query.user.findFirst({
-          where: (users, { eq }) => eq(users.id, session.user.id),
-        });
-
-        if (userData && userData.status === "suspended") {
-          return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
-        }
+      if (session?.user && session.user.status === "suspended") {
+        return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
       }
     } catch (error) {
       console.warn("Could not check user status in middleware:", error);
@@ -35,7 +69,7 @@ export default async function proxy(req: NextRequest) {
   }
 
   // Normal authentication flow for other routes
-  const session = await auth.api.getSession({ headers: req.headers });
+  const session = await getSessionWithRole(req.headers);
 
   const isLoggedIn = !!session;
   const userSession = session?.user;
@@ -63,16 +97,8 @@ export default async function proxy(req: NextRequest) {
 
   // Check suspended status for authenticated users trying to access protected routes
   if (isLoggedIn && (isAdminRoute || isDashboardRoute)) {
-    try {
-      const userData = await db.query.user.findFirst({
-        where: (users, { eq }) => eq(users.id, userSession?.id),
-      });
-
-      if (userData && userData.status === "suspended") {
-        return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
-      }
-    } catch (error) {
-      console.warn("Could not check user status:", error);
+    if (userSession?.status === "suspended") {
+      return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
     }
   }
 
