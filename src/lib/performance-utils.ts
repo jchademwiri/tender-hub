@@ -50,8 +50,24 @@ export function usePerformanceMonitor(
 }
 
 /**
- * Memoization utilities for localStorage operations
+ * Enhanced caching utilities with production cache integration
  */
+let dashboardCache: any = null;
+let publisherCache: any = null;
+let CacheKeys: any = null;
+
+// Dynamically import cache-production only in server environment
+if (typeof window === 'undefined') {
+  try {
+    const cacheModule = require('./cache-production');
+    dashboardCache = cacheModule.dashboardCache;
+    publisherCache = cacheModule.publisherCache;
+    CacheKeys = cacheModule.CacheKeys;
+  } catch (error) {
+    console.warn('Failed to load cache-production module:', error);
+  }
+}
+
 const localStorageCache = new Map<
   string,
   { value: any; timestamp: number; ttl: number }
@@ -130,6 +146,53 @@ export function clearExpiredCache(): void {
     if (now - cached.timestamp >= cached.ttl) {
       localStorageCache.delete(key);
     }
+  }
+}
+
+/**
+ * Enhanced caching with production cache integration
+ */
+export function getCachedData<T>(
+  key: string,
+  cacheType: 'dashboard' | 'publisher' | 'local' = 'local',
+  ttl?: number
+): T | null {
+  switch (cacheType) {
+    case 'dashboard':
+      return dashboardCache ? dashboardCache.get(key) : null;
+    case 'publisher':
+      return publisherCache ? publisherCache.get(key) : null;
+    case 'local':
+    default:
+      return getCachedLocalStorage<T>(key, ttl);
+  }
+}
+
+/**
+ * Set cached data with production cache integration
+ */
+export function setCachedData<T>(
+  key: string,
+  data: T,
+  cacheType: 'dashboard' | 'publisher' | 'local' = 'local',
+  ttl?: number
+): boolean {
+  switch (cacheType) {
+    case 'dashboard':
+      if (dashboardCache) {
+        dashboardCache.set(key, data, ttl);
+        return true;
+      }
+      return false;
+    case 'publisher':
+      if (publisherCache) {
+        publisherCache.set(key, data, ttl);
+        return true;
+      }
+      return false;
+    case 'local':
+    default:
+      return setCachedLocalStorage(key, data, ttl);
   }
 }
 
@@ -301,9 +364,31 @@ export function useBatchedState<T>(
 }
 
 /**
- * Cleanup function for performance monitoring
+ * Enhanced cleanup function for performance monitoring
  */
 export function cleanupPerformanceUtils(): void {
   clearExpiredCache();
   localStorageCache.clear();
+  
+  // Cleanup production caches if available
+  if (dashboardCache) {
+    dashboardCache.cleanup();
+  }
+  if (publisherCache) {
+    publisherCache.cleanup();
+  }
+}
+
+/**
+ * Get comprehensive cache statistics
+ */
+export function getCacheStatistics() {
+  return {
+    localStorage: {
+      entries: localStorageCache.size,
+      // Add more localStorage stats if needed
+    },
+    dashboard: dashboardCache ? dashboardCache.getStats() : null,
+    publisher: publisherCache ? publisherCache.getStats() : null,
+  };
 }
