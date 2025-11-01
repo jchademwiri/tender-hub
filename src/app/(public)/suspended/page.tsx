@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authClient } from "@/lib/auth-client";
 
 export default function SuspendedPage() {
   const router = useRouter();
@@ -28,10 +28,15 @@ export default function SuspendedPage() {
         </CardHeader>
         <CardContent>
           <p className="mb-4">
-            Your account has been suspended. Please contact a manager or administrator for further assistance.
+            Your account has been suspended. Please contact a manager or
+            administrator for further assistance.
           </p>
           <div className="flex gap-2">
-            <Button onClick={handleLogout} variant="outline" className="cursor-pointer">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="cursor-pointer"
+            >
               Logout
             </Button>
             <Link href="/">

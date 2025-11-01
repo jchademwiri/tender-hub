@@ -1,24 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  Activity,
+  Clock,
+  RefreshCw,
+  UserCheck,
+  Users,
+  UserX,
+} from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import {
-  UserCheck,
-  UserX,
-  Users,
-  Crown,
-  Shield,
-  User,
-  Activity,
-  RefreshCw,
-  Clock,
-} from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
 
 interface ActivityItem {
   id: string;

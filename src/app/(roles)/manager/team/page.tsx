@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
-import {
-  TeamMemberTable,
-  type TeamMember,
-} from "@/components/team/TeamMemberTable";
-import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
-import { EditMemberDialog } from "@/components/team/EditMemberDialog";
-import { ConfirmDialog } from "@/components/team/ConfirmDialog";
-import { checkPermission } from "@/lib/permissions";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/team/ConfirmDialog";
+import { EditMemberDialog } from "@/components/team/EditMemberDialog";
+import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
+import {
+  type TeamMember,
+  TeamMemberTable,
+} from "@/components/team/TeamMemberTable";
+import { checkPermission } from "@/lib/permissions";
 
 export default function ManagerTeamManagement() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -144,7 +144,7 @@ export default function ManagerTeamManagement() {
             status: "suspended",
           });
           setConfirmDialog({ ...confirmDialog, open: false });
-        } catch (error) {
+        } catch (_error) {
           // Error already handled in handleEditMember
         }
       },
@@ -165,7 +165,7 @@ export default function ManagerTeamManagement() {
             status: "active",
           });
           setConfirmDialog({ ...confirmDialog, open: false });
-        } catch (error) {
+        } catch (_error) {
           // Error already handled in handleEditMember
         }
       },

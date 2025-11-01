@@ -1,10 +1,10 @@
+import { ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
-import { Building2, ArrowLeft } from "lucide-react";
+import { NoDataEmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { getAllPublishers } from "@/server/publisher";
 import { PublishersTableClient } from "./publishers-table-client";
-import { getCurrentUser } from "@/lib/auth-utils";
-import { ErrorState } from "@/components/ui/error-state";
-import { NoDataEmptyState } from "@/components/ui/empty-state";
 
 export default async function PublishersPage() {
   const user = await getCurrentUser();
@@ -83,7 +83,7 @@ export default async function PublishersPage() {
       const appError = error as {
         code: string;
         message: string;
-        details?: any;
+        details?: Record<string, unknown>;
       };
 
       if (appError.code === "TABLE_MISSING") {

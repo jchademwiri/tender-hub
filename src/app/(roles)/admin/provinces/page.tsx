@@ -1,27 +1,9 @@
 "use client";
 
+import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import ProvinceForm from "@/components/ProvinceForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -41,7 +24,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import ProvinceForm from "@/components/ProvinceForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Province {
   id: string;
@@ -92,7 +91,7 @@ export default function AdminProvincesPage() {
     }
   };
 
-  const handleCreateProvince = async (prevState: any, formData: FormData) => {
+  const handleCreateProvince = async (_prevState: any, formData: FormData) => {
     try {
       const response = await fetch("/api/admin/provinces", {
         method: "POST",
@@ -117,7 +116,7 @@ export default function AdminProvincesPage() {
     }
   };
 
-  const handleUpdateProvince = async (prevState: any, formData: FormData) => {
+  const handleUpdateProvince = async (_prevState: any, formData: FormData) => {
     if (!editingProvince) return { error: "No province selected" };
 
     try {
@@ -174,7 +173,7 @@ export default function AdminProvincesPage() {
 
   useEffect(() => {
     fetchProvinces();
-  }, []);
+  }, [fetchProvinces]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

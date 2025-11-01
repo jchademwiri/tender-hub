@@ -3,9 +3,9 @@
 import { ArrowUpDown, Bookmark, BookmarkCheck } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { PublisherVisitBadge } from "@/components/publisher-visit-badge";
 import Table from "@/components/Table";
-import { toast } from "sonner";
 
 interface Publisher {
   id: string;
@@ -143,6 +143,7 @@ export function PublishersTableClient({
       key: "name",
       header: (
         <button
+          type="button"
           onClick={() => handleSort("name")}
           className="flex items-center gap-1 hover:bg-muted/50 px-2 py-1 rounded transition-colors font-medium"
         >
@@ -174,6 +175,7 @@ export function PublishersTableClient({
       key: "website",
       header: (
         <button
+          type="button"
           onClick={() => handleSort("website")}
           className="flex items-center gap-1 hover:bg-muted/50 px-2 py-1 rounded transition-colors font-medium"
         >
@@ -190,8 +192,9 @@ export function PublishersTableClient({
     {
       key: "bookmark",
       header: "Bookmark",
-      render: (_value: any, item: Publisher) => (
+      render: (_value: unknown, item: Publisher) => (
         <button
+          type="button"
           onClick={() => handleBookmarkToggle(item.id)}
           className="p-2 hover:bg-muted rounded transition-colors"
           title={

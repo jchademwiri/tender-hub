@@ -1,10 +1,10 @@
+import { eq } from "drizzle-orm";
+import jsPDF from "jspdf";
 import { type NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
-import jsPDF from "jspdf";
 
 // POST /api/team/export - Export team member data
 export async function POST(request: NextRequest) {
@@ -179,7 +179,7 @@ async function generateMembersPDF(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
 
-  members.forEach((member, index) => {
+  members.forEach((member, _index) => {
     if (yPosition > 270) {
       doc.addPage();
       yPosition = 30;
@@ -198,11 +198,11 @@ async function generateMembersPDF(
 
     const name =
       member.name.length > 15
-        ? member.name.substring(0, 15) + "..."
+        ? `${member.name.substring(0, 15)}...`
         : member.name;
     const email =
       member.email.length > 20
-        ? member.email.substring(0, 20) + "..."
+        ? `${member.email.substring(0, 20)}...`
         : member.email;
 
     doc.text(name, 20, yPosition);

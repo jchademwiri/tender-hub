@@ -1,9 +1,18 @@
-import { createAuthClient } from "better-auth/client";
+// TODO: Fix Better Auth client imports
+// import { createAuthClient } from "better-auth/client";
 
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
-  secret: process.env.BETTER_AUTH_SECRET,
-});
+// Temporary placeholder until Better Auth imports are fixed
+export const authClient = {
+  signOut: async () => {
+    throw new Error("Auth client not configured");
+  },
+  signIn: async () => {
+    throw new Error("Auth client not configured");
+  },
+  signUp: async () => {
+    throw new Error("Auth client not configured");
+  },
+};
 
 // Export commonly used auth methods
 export const { signOut, signIn, signUp } = authClient;

@@ -1,10 +1,26 @@
 "use client";
 
+import { Edit, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Plus, Search, Edit } from "lucide-react";
 import { toast } from "sonner";
-
+import ProvinceForm from "@/components/ProvinceForm";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -14,23 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import ProvinceForm from "@/components/ProvinceForm";
 
 interface Province {
   id: string;
@@ -81,7 +80,7 @@ export default function ManagerProvincesPage() {
     }
   };
 
-  const handleCreateProvince = async (prevState: any, formData: FormData) => {
+  const handleCreateProvince = async (_prevState: any, formData: FormData) => {
     try {
       const response = await fetch("/api/manager/provinces", {
         method: "POST",
@@ -106,7 +105,7 @@ export default function ManagerProvincesPage() {
     }
   };
 
-  const handleUpdateProvince = async (prevState: any, formData: FormData) => {
+  const handleUpdateProvince = async (_prevState: any, formData: FormData) => {
     if (!editingProvince) return { error: "No province selected" };
 
     try {
@@ -144,7 +143,7 @@ export default function ManagerProvincesPage() {
 
   useEffect(() => {
     fetchProvinces();
-  }, []);
+  }, [fetchProvinces]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

@@ -11,13 +11,12 @@ import {
   UserPlus,
   XCircle,
 } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BulkCreateInvitationDialog } from "@/app/(roles)/admin/invitations/components/bulk-create-invitation-dialog";
-import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { InvitationAnalyticsDashboard } from "@/app/(roles)/admin/invitations/components/invitation-analytics-dashboard";
-import { invitationValidationHelpers } from "@/lib/validations/invitations";
 import { InvitationTable } from "@/app/(roles)/admin/invitations/components/invitation-table";
+import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { invitationValidationHelpers } from "@/lib/validations/invitations";
 
 interface InvitationStats {
   total: number;
@@ -289,7 +289,7 @@ export default function AdminInvitationsPage() {
         let errorData;
         try {
           errorData = await response.json();
-        } catch (parseError) {
+        } catch (_parseError) {
           errorData = { error: "Invalid response from server" };
         }
 

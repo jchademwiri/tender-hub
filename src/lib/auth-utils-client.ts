@@ -113,7 +113,6 @@ export function getRoleBasedRedirectUrl(user: User | null): string {
       return "/admin";
     case "manager":
       return "/manager";
-    case "user":
     default:
       return "/dashboard";
   }

@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { and, asc, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { user, auditLog } from "@/db/schema";
-import { checkPermission } from "@/lib/permissions";
+import { auditLog, user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { createInvitation } from "@/lib/invitation";
+import { checkPermission } from "@/lib/permissions";
 
 // Team member interface for API responses
 interface TeamMember {
@@ -113,7 +113,6 @@ export async function GET(request: NextRequest) {
       case "status":
         orderBy = sortOrder(user.status);
         break;
-      case "createdAt":
       default:
         orderBy = sortOrder(user.createdAt);
         break;

@@ -14,13 +14,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const _router = useRouter();
 
   // Check for invitation acceptance message in URL
   useEffect(() => {
@@ -56,17 +55,26 @@ export default function SignInPage() {
 
     try {
       console.log("🔍 DEBUG: Attempting to sign in with:", email);
-      
-      const result = await authClient.signIn.email({
-        email,
-        password,
-      });
 
+      // TODO: Fix when auth client is properly configured
+      // const result = await authClient.signIn.email({
+      //   email,
+      //   password,
+      // });
+      throw new Error("Authentication not configured yet");
+
+      /*
       console.log("🔍 DEBUG: Sign in result:", result);
 
       if (result.error) {
-        console.error("❌ DEBUG: Sign in error details:", JSON.stringify(result.error, null, 2));
-        console.error("🔍 DEBUG: Full result object:", JSON.stringify(result, null, 2));
+        console.error(
+          "❌ DEBUG: Sign in error details:",
+          JSON.stringify(result.error, null, 2),
+        );
+        console.error(
+          "🔍 DEBUG: Full result object:",
+          JSON.stringify(result, null, 2),
+        );
 
         // Handle different types of error responses from better-auth
         let errorMessage = "Invalid credentials";
@@ -142,6 +150,7 @@ export default function SignInPage() {
         toast.success("Welcome back!");
         router.push("/dashboard");
       }
+      */
     } catch (error) {
       console.error("❌ DEBUG: Sign in exception:", error);
       toast.error("Sign in failed", {

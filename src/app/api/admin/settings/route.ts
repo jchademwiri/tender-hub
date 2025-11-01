@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { systemSettings } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { auditLog, systemSettings } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
-import { auditLog } from "@/db/schema";
 
 // GET /api/admin/settings - Fetch all system settings
 export async function GET() {
   try {
     const currentUser = await requireAuth();
-    
+
     // Only admins and owners can view settings
     if (currentUser.role !== "admin" && currentUser.role !== "owner") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -18,10 +16,13 @@ export async function GET() {
     const settings = await db.select().from(systemSettings);
 
     // Transform the settings into the expected format
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.settingKey] = setting.settingValue;
-      return acc;
-    }, {} as Record<string, any>);
+    const settingsMap = settings.reduce(
+      (acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     return NextResponse.json({
       general: settingsMap.general || {
@@ -49,7 +50,7 @@ export async function GET() {
     console.error("Error fetching settings:", error);
     return NextResponse.json(
       { error: "Failed to fetch settings" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -58,7 +59,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const currentUser = await requireAuth();
-    
+
     // Only admins and owners can update settings
     if (currentUser.role !== "admin" && currentUser.role !== "owner") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -70,14 +71,14 @@ export async function POST(request: NextRequest) {
     if (!settings) {
       return NextResponse.json(
         { error: "Settings data is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Update each setting category
     for (const [category, values] of Object.entries(settings)) {
       const settingKey = category;
-      
+
       await db
         .insert(systemSettings)
         .values({
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     console.error("Error updating settings:", error);
     return NextResponse.json(
       { error: "Failed to update settings" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

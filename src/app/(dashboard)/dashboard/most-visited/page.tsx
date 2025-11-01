@@ -1,4 +1,4 @@
-import { desc, eq, count } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import {
   Card,
@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db";
-import { pageViews, publishers, provinces } from "@/db/schema";
+import { pageViews, provinces, publishers } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
 
 export default async function MostVisitedPage() {

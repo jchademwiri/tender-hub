@@ -1,12 +1,10 @@
+import { eq } from "drizzle-orm";
+import jsPDF from "jspdf";
 import { type NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
-import { InvitationAnalyticsCache } from "@/lib/invitation-analytics-cache";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 function getPeriodLabel(period: string): string {
   switch (period) {
@@ -327,7 +325,7 @@ async function generatePDF(
   return Buffer.from(doc.output("arraybuffer"));
 }
 
-function generateHTML(analyticsData: any, timestamp: string): string {
+function _generateHTML(analyticsData: any, timestamp: string): string {
   return `
 <!DOCTYPE html>
 <html>

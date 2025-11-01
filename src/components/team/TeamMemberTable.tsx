@@ -1,18 +1,25 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+  Crown,
+  Download,
+  MoreHorizontal,
+  Search,
+  Shield,
+  User,
+  UserCheck,
+  Users,
+  UserX,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -28,24 +36,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  MoreHorizontal,
-  Search,
-  Users,
-  UserCheck,
-  UserX,
-  Crown,
-  Shield,
-  User,
-  CheckSquare,
-  Square,
-  Download,
-} from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
-import { toast } from "sonner";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 export interface TeamMember {
@@ -101,8 +99,8 @@ export function TeamMemberTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, _setSortBy] = useState<string>("createdAt");
+  const [sortOrder, _setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set(),
   );
@@ -121,7 +119,7 @@ export function TeamMemberTable({
     progress: null,
   });
 
-  const [exportDialog, setExportDialog] = useState<{
+  const [_exportDialog, setExportDialog] = useState<{
     open: boolean;
     format: "csv" | "json" | "pdf";
     isLoading: boolean;
@@ -152,7 +150,7 @@ export function TeamMemberTable({
 
   // Use prop members if provided, otherwise use query data
   const members = propMembers || queryData || [];
-  const isLoadingState = isLoading || (enablePolling && isQueryLoading);
+  const _isLoadingState = isLoading || (enablePolling && isQueryLoading);
 
   // Mutations for optimistic updates
   const updateMemberMutation = useMutation({
@@ -199,7 +197,7 @@ export function TeamMemberTable({
 
       return { previousMembers };
     },
-    onError: (err, variables, context) => {
+    onError: (err, _variables, context) => {
       // Rollback on error
       if (context?.previousMembers) {
         queryClient.setQueryData(["team-members"], context.previousMembers);
@@ -208,7 +206,7 @@ export function TeamMemberTable({
         err instanceof Error ? err.message : "Failed to update member",
       );
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       toast.success("Member updated successfully");
       // Call optimistic update callback if provided
       if (onOptimisticUpdate) {
@@ -245,7 +243,7 @@ export function TeamMemberTable({
 
       return { previousMembers };
     },
-    onError: (err, variables, context) => {
+    onError: (err, _variables, context) => {
       // Rollback on error
       if (context?.previousMembers) {
         queryClient.setQueryData(["team-members"], context.previousMembers);
@@ -254,7 +252,7 @@ export function TeamMemberTable({
         err instanceof Error ? err.message : "Failed to delete member",
       );
     },
-    onSuccess: (data, memberId) => {
+    onSuccess: (_data, memberId) => {
       toast.success("Member deleted successfully");
       // Call optimistic delete callback if provided
       if (onOptimisticDelete) {
@@ -293,7 +291,7 @@ export function TeamMemberTable({
   useMemo(() => {
     setSelectedMembers(new Set());
     setSelectAll(false);
-  }, [searchTerm, statusFilter, roleFilter]);
+  }, []);
 
   // Bulk action handler
   const handleBulkAction = (action: "suspend" | "activate" | "delete") => {
@@ -409,7 +407,7 @@ export function TeamMemberTable({
   const filteredAndSortedMembers = useMemo(() => {
     if (!members || members.length === 0) return [];
 
-    let filtered = members.filter((member: TeamMember) => {
+    const filtered = members.filter((member: TeamMember) => {
       const matchesSearch =
         member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -442,7 +440,6 @@ export function TeamMemberTable({
           aValue = a.status;
           bValue = b.status;
           break;
-        case "createdAt":
         default:
           aValue = new Date(a.createdAt).getTime();
           bValue = new Date(b.createdAt).getTime();

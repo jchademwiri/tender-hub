@@ -1,10 +1,26 @@
 "use client";
 
+import { Edit, ExternalLink, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Plus, Search, Edit, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-
+import PublisherForm from "@/components/PublisherForm";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -14,23 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import PublisherForm from "@/components/PublisherForm";
 
 interface Province {
   id: string;
@@ -105,7 +104,7 @@ export default function ManagerPublishersPage() {
     }
   };
 
-  const handleCreatePublisher = async (prevState: any, formData: FormData) => {
+  const handleCreatePublisher = async (_prevState: any, formData: FormData) => {
     try {
       const response = await fetch("/api/manager/publishers", {
         method: "POST",
@@ -130,7 +129,7 @@ export default function ManagerPublishersPage() {
     }
   };
 
-  const handleUpdatePublisher = async (prevState: any, formData: FormData) => {
+  const handleUpdatePublisher = async (_prevState: any, formData: FormData) => {
     if (!editingPublisher) return { error: "No publisher selected" };
 
     try {
@@ -169,7 +168,7 @@ export default function ManagerPublishersPage() {
   useEffect(() => {
     fetchProvinces();
     fetchPublishers();
-  }, []);
+  }, [fetchProvinces, fetchPublishers]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

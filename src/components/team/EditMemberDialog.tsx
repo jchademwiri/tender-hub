@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -27,9 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import type { TeamMember } from "./TeamMemberTable";
 
 const editMemberSchema = z.object({
@@ -97,7 +97,7 @@ export function EditMemberDialog({
         status: canEditStatus ? member.status : undefined,
       });
     }
-  }, [member, canEditRole, canEditStatus]);
+  }, [member, canEditRole, canEditStatus, form.reset]);
 
   const onSubmit = async (data: EditMemberForm) => {
     if (!member) return;

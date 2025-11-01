@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db";
-import { userBookmarks, publishers, provinces } from "@/db/schema";
+import { provinces, publishers, userBookmarks } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
 
 export default async function BookmarksPage() {

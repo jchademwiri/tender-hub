@@ -1,10 +1,10 @@
+import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
-import { and, eq, gte, lte, sql, desc, count } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user, auditLog } from "@/db/schema";
-import { checkPermission } from "@/lib/permissions";
+import { auditLog, user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { InvitationAnalyticsCache } from "@/lib/invitation-analytics-cache";
+import { checkPermission } from "@/lib/permissions";
 
 interface TeamAnalytics {
   overview: {
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function calculateOverviewMetrics(from: Date, to: Date) {
+async function calculateOverviewMetrics(_from: Date, _to: Date) {
   // Get total members
   const totalResult = await db.select({ count: count() }).from(user);
 
