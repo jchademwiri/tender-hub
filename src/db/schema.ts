@@ -617,8 +617,87 @@ export const backupHistory = pgTable(
   }),
 );
 
+// ✅ Email preferences table for user notification settings
+export const emailPreferences = pgTable(
+  "email_preferences",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" })
+      .unique(),
+    // Email type preferences
+    invitations: boolean("invitations").default(true).notNull(),
+    passwordReset: boolean("password_reset").default(true).notNull(),
+    emailVerification: boolean("email_verification").default(true).notNull(),
+    accountDeletion: boolean("account_deletion").default(true).notNull(),
+    passwordChanged: boolean("password_changed").default(true).notNull(),
+    approvalDecisions: boolean("approval_decisions").default(true).notNull(),
+    systemMaintenance: boolean("system_maintenance").default(true).notNull(),
+    userStatusChanges: boolean("user_status_changes").default(true).notNull(),
+    // Frequency preferences
+    marketingEmails: boolean("marketing_emails").default(false).notNull(),
+    weeklyDigest: boolean("weekly_digest").default(true).notNull(),
+    monthlyReport: boolean("monthly_report").default(true).notNull(),
+    // Notification preferences
+    immediateNotifications: boolean("immediate_notifications").default(true).notNull(),
+    dailyDigest: boolean("daily_digest").default(false).notNull(),
+    weeklyDigestNotifications: boolean("weekly_digest_notifications").default(false).notNull(),
+    // Unsubscribe tracking
+    unsubscribeToken: text("unsubscribe_token").unique(),
+    unsubscribedAt: timestamp("unsubscribed_at"),
+    unsubscribeReason: text("unsubscribe_reason"),
+    // Metadata
+    lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("email_preferences_user_idx").on(table.userId),
+    unsubscribeTokenIdx: index("email_preferences_unsubscribe_idx").on(table.unsubscribeToken),
+  }),
+);
+
+// ✅ Email delivery log for tracking sent emails
+export const emailDeliveryLog = pgTable(
+  "email_delivery_log",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    recipient: text("recipient").notNull(),
+    emailType: text("email_type").notNull(),
+    subject: text("subject").notNull(),
+    messageId: text("message_id"),
+    status: text("status").notNull(), // sent, delivered, bounced, failed
+    deliveryTime: integer("delivery_time"), // in milliseconds
+    retryCount: integer("retry_count").default(0).notNull(),
+    errorMessage: text("error_message"),
+    metadata: jsonb("metadata"),
+    sentAt: timestamp("sent_at").defaultNow().notNull(),
+    deliveredAt: timestamp("delivered_at"),
+    bouncedAt: timestamp("bounced_at"),
+    openedAt: timestamp("opened_at"),
+    clickedAt: timestamp("clicked_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index("email_delivery_user_idx").on(table.userId),
+    recipientIdx: index("email_delivery_recipient_idx").on(table.recipient),
+    emailTypeIdx: index("email_delivery_type_idx").on(table.emailType),
+    statusIdx: index("email_delivery_status_idx").on(table.status),
+    sentAtIdx: index("email_delivery_sent_at_idx").on(table.sentAt),
+  }),
+);
+
 // System Settings Types
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type NewSystemSetting = typeof systemSettings.$inferInsert;
 export type BackupHistory = typeof backupHistory.$inferSelect;
 export type NewBackupHistory = typeof backupHistory.$inferInsert;
+export type EmailPreferences = typeof emailPreferences.$inferSelect;
+export type NewEmailPreferences = typeof emailPreferences.$inferInsert;
+export type EmailDeliveryLog = typeof emailDeliveryLog.$inferSelect;
+export type NewEmailDeliveryLog = typeof emailDeliveryLog.$inferInsert;
