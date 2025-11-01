@@ -1,9 +1,38 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import {
+  Crown,
+  Download,
+  Shield,
+  TrendingUp,
+  User,
+  UserCheck,
+  Users,
+  UserX,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart as RechartsPieChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import {
   Select,
   SelectContent,
@@ -12,46 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-} from "@/components/ui/chart";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Download,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  UserCheck,
-  UserX,
-  Crown,
-  Shield,
-  User,
-  Activity,
-  BarChart3,
-  PieChart,
-  LineChart,
-} from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  LineChart as RechartsLineChart,
-  Line,
-  Area,
-  AreaChart,
-} from "recharts";
-import { format, subDays, subWeeks, subMonths } from "date-fns";
 
 interface TeamAnalyticsData {
   overview: {
@@ -118,7 +107,7 @@ const ROLE_COLORS = {
   user: COLORS.secondary,
 };
 
-const STATUS_COLORS = {
+const _STATUS_COLORS = {
   active: COLORS.success,
   suspended: COLORS.danger,
   pending: COLORS.warning,
@@ -126,7 +115,7 @@ const STATUS_COLORS = {
 
 export function TeamAnalytics({ className }: TeamAnalyticsProps) {
   const [period, setPeriod] = useState<string>("30d");
-  const [includeActivity, setIncludeActivity] = useState(false);
+  const [includeActivity, _setIncludeActivity] = useState(false);
 
   const {
     data: analyticsData,

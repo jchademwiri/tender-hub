@@ -9,11 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface FormState {
+  error?: string;
+  success?: boolean;
+  message?: string;
+  redirectTo?: string;
+}
+
 interface InvitationFormProps {
   invitationId: string;
   email: string;
   action: (
-    prevState: any,
+    prevState: FormState,
     formData: FormData,
   ) => Promise<
     | { error: string }

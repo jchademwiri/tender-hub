@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireManager } from "@/lib/auth-utils";
+import { desc, eq, ilike } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { publishers, provinces } from "@/db/schema";
-import { eq, ilike, desc } from "drizzle-orm";
+import { provinces, publishers } from "@/db/schema";
+import { requireManager } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireManager();
+    const _user = await requireManager();
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = (page - 1) * limit;
 
     let publishersList;
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireManager();
+    const _user = await requireManager();
 
     const formData = await request.formData();
     const name = formData.get("name") as string;

@@ -10,7 +10,9 @@ export default async function DatabaseManagementPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-2">
+            Access Denied
+          </h2>
           <p className="text-muted-foreground">
             You don't have permission to access database management.
           </p>

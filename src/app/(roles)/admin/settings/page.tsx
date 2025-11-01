@@ -1,5 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+  Database,
+  HardDrive,
+  Server,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,34 +16,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Shield,
-  Settings,
-  Users,
-  HardDrive,
-  Server,
-  Database,
-} from "lucide-react";
 import { requireAuth } from "@/lib/auth-utils";
-import { SystemSettings } from "./types";
 
 export default async function SystemSettingsPage() {
   // Get authenticated user
-  const currentUser = await requireAuth();
+  const _currentUser = await requireAuth();
 
   // Fetch real system settings from database directly
   let systemSettings;
   try {
     const { db } = await import("@/db");
     const { systemSettings: systemSettingsTable } = await import("@/db/schema");
-    
+
     const settings = await db.select().from(systemSettingsTable);
-    
+
     // Transform the settings into the expected format
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.settingKey] = setting.settingValue;
-      return acc;
-    }, {} as Record<string, any>);
+    const settingsMap = settings.reduce(
+      (acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     systemSettings = {
       general: settingsMap.general || {
@@ -94,7 +94,9 @@ export default async function SystemSettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">Online</div>
-            <p className="text-xs text-muted-foreground">All services running</p>
+            <p className="text-xs text-muted-foreground">
+              All services running
+            </p>
           </CardContent>
         </Card>
 
@@ -182,7 +184,9 @@ export default async function SystemSettingsPage() {
                 Allow new user registrations
               </p>
             </div>
-            <Switch defaultChecked={systemSettings.general.registrationEnabled} />
+            <Switch
+              defaultChecked={systemSettings.general.registrationEnabled}
+            />
           </div>
 
           <div className="flex items-center justify-between">
@@ -213,7 +217,9 @@ export default async function SystemSettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="password-min-length">Minimum Password Length</Label>
+              <Label htmlFor="password-min-length">
+                Minimum Password Length
+              </Label>
               <Input
                 id="password-min-length"
                 type="number"

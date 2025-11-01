@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.logErrorToService(error, errorInfo);
   }
 
-  private logErrorToService = (error: Error, errorInfo: ErrorInfo) => {
+  private logErrorToService = (error: Error, _errorInfo: ErrorInfo) => {
     // This is where you would integrate with your error reporting service
     // For now, we'll just log to console in development
     if (process.env.NODE_ENV === "development") {

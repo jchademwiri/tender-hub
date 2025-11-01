@@ -56,7 +56,7 @@ async function processExpiredInvitations() {
         });
 
         processedCount++;
-      } catch (error) {
+      } catch (_error) {
         errorCount++;
       }
     }

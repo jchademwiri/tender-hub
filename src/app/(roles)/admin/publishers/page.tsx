@@ -1,27 +1,9 @@
 "use client";
 
+import { Edit, ExternalLink, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Plus, Search, Edit, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import PublisherForm from "@/components/PublisherForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -41,7 +24,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import PublisherForm from "@/components/PublisherForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Province {
   id: string;
@@ -123,7 +122,7 @@ export default function AdminPublishersPage() {
     }
   };
 
-  const handleCreatePublisher = async (prevState: any, formData: FormData) => {
+  const handleCreatePublisher = async (_prevState: any, formData: FormData) => {
     try {
       const response = await fetch("/api/admin/publishers", {
         method: "POST",
@@ -148,7 +147,7 @@ export default function AdminPublishersPage() {
     }
   };
 
-  const handleUpdatePublisher = async (prevState: any, formData: FormData) => {
+  const handleUpdatePublisher = async (_prevState: any, formData: FormData) => {
     if (!editingPublisher) return { error: "No publisher selected" };
 
     try {
@@ -206,7 +205,7 @@ export default function AdminPublishersPage() {
   useEffect(() => {
     fetchProvinces();
     fetchPublishers();
-  }, []);
+  }, [fetchProvinces, fetchPublishers]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

@@ -1,8 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,

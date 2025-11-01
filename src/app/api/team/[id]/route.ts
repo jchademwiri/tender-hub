@@ -1,8 +1,8 @@
+import { count, eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
-import { eq, count } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user, auditLog } from "@/db/schema";
+import { auditLog, user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { checkPermission } from "@/lib/permissions";
 
 // PUT /api/team/[id] - Update team member

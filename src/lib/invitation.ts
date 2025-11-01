@@ -1,5 +1,4 @@
 import { auth } from "@/lib/auth";
-import { sendEmail } from "@/lib/email";
 import {
   invitationTracking,
   invitationTrackingUtils,

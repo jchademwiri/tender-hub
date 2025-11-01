@@ -29,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { formatUserRole, getUserInitials } from "@/lib/auth-utils-client";
 import { cn } from "@/lib/utils";
 import {
@@ -67,8 +66,8 @@ interface PendingRequest {
 
 export default function AccountPage() {
   // Update page title and metadata
-  const pageTitle = "Account";
-  const pageDescription =
+  const _pageTitle = "Account";
+  const _pageDescription =
     "Manage your account settings and account information";
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [completeness, setCompleteness] = useState<ProfileCompleteness | null>(
@@ -78,7 +77,9 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [saveMethod, setSaveMethod] = useState<"direct" | "approval">("direct");
+  const [saveMethod, _setSaveMethod] = useState<"direct" | "approval">(
+    "direct",
+  );
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -131,7 +132,7 @@ export default function AccountPage() {
   // Fetch user account data
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [fetchProfile]);
 
   const onSubmit = async (data: UpdateProfileFormData) => {
     try {

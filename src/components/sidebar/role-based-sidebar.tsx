@@ -1,9 +1,8 @@
 "use client";
 
 import {
-  BookOpen,
   Bookmark,
-  CheckCircle,
+  BookOpen,
   Command,
   Database,
   FileText,
@@ -14,8 +13,8 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
-import type * as React from "react";
 import Link from "next/link";
+import type * as React from "react";
 
 import { NavUser } from "@/components/nav-user";
 import {

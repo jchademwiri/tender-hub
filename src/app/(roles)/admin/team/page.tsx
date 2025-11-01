@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
-import {
-  TeamMemberTable,
-  type TeamMember,
-} from "@/components/team/TeamMemberTable";
-import { TeamAnalytics } from "@/components/team/TeamAnalytics";
-import { ActivityFeed } from "@/components/team/ActivityFeed";
-import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
-import { EditMemberDialog } from "@/components/team/EditMemberDialog";
-import { ConfirmDialog } from "@/components/team/ConfirmDialog";
-import { checkPermission } from "@/lib/permissions";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { ActivityFeed } from "@/components/team/ActivityFeed";
+import { ConfirmDialog } from "@/components/team/ConfirmDialog";
+import { EditMemberDialog } from "@/components/team/EditMemberDialog";
+import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
+import { TeamAnalytics } from "@/components/team/TeamAnalytics";
+import {
+  type TeamMember,
+  TeamMemberTable,
+} from "@/components/team/TeamMemberTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { checkPermission } from "@/lib/permissions";
 
 export default function AdminTeamManagement() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -141,7 +141,7 @@ export default function AdminTeamManagement() {
             status: "suspended",
           });
           setConfirmDialog({ ...confirmDialog, open: false });
-        } catch (error) {
+        } catch (_error) {
           // Error already handled in handleEditMember
         }
       },
@@ -162,7 +162,7 @@ export default function AdminTeamManagement() {
             status: "active",
           });
           setConfirmDialog({ ...confirmDialog, open: false });
-        } catch (error) {
+        } catch (_error) {
           // Error already handled in handleEditMember
         }
       },

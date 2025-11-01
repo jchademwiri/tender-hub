@@ -1,6 +1,8 @@
 "use client";
 
+import { ArrowLeft, ArrowRight, CheckCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,8 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, X, ArrowRight, ArrowLeft } from "lucide-react";
 import { formatUserRole } from "@/lib/auth-utils-client";
 
 interface OnboardingTourProps {

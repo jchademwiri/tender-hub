@@ -1,3 +1,6 @@
+import { subDays } from "date-fns";
+import { count, desc, eq, gte } from "drizzle-orm";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,12 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { count, desc, eq, gte } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLog, invitation, user } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
-import { subDays } from "date-fns";
-import Link from "next/link";
 
 /**
  * TODO: Admin Dashboard Implementation Checklist
@@ -55,7 +55,7 @@ import Link from "next/link";
 
 export default async function AdminDashboard() {
   // Get authenticated user
-  const currentUser = await requireAuth();
+  const _currentUser = await requireAuth();
 
   // Get real statistics from database
   const [totalUsers] = await db.select({ count: count() }).from(user);
@@ -63,14 +63,14 @@ export default async function AdminDashboard() {
     .select({ count: count() })
     .from(invitation)
     .where(eq(invitation.status, "pending"));
-  
+
   // Get recently created users (users created within last 30 days)
   const thirtyDaysAgo = subDays(new Date(), 30);
   const [recentUsers] = await db
     .select({ count: count() })
     .from(user)
     .where(gte(user.createdAt, thirtyDaysAgo));
-  
+
   // Get recent audit logs
   const recentAuditLogs = await db
     .select({
@@ -136,9 +136,7 @@ export default async function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Users
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalUsers.count}</div>
@@ -165,12 +163,23 @@ export default async function AdminDashboard() {
                     {log.action === "user_created" && `User account created`}
                     {log.action === "user_invited" && `Invitation sent`}
                     {log.action === "role_changed" && `User role updated`}
-                    {log.action === "permission_granted" && `Permission granted`}
-                    {log.action === "system_backup" && `System backup completed`}
-                    {log.action === "user_suspended" && `User account suspended`}
-                    {log.action === "user_activated" && `User account activated`}
-                    {!["user_created", "user_invited", "role_changed", "permission_granted", "system_backup", "user_suspended", "user_activated"].includes(log.action) &&
-                      log.action.replace(/_/g, " ")}
+                    {log.action === "permission_granted" &&
+                      `Permission granted`}
+                    {log.action === "system_backup" &&
+                      `System backup completed`}
+                    {log.action === "user_suspended" &&
+                      `User account suspended`}
+                    {log.action === "user_activated" &&
+                      `User account activated`}
+                    {![
+                      "user_created",
+                      "user_invited",
+                      "role_changed",
+                      "permission_granted",
+                      "system_backup",
+                      "user_suspended",
+                      "user_activated",
+                    ].includes(log.action) && log.action.replace(/_/g, " ")}
                   </span>
                   <span className="text-xs text-muted-foreground ml-auto">
                     {formatTimeAgo(log.createdAt)}
@@ -191,20 +200,14 @@ export default async function AdminDashboard() {
             <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-              <Button className="w-full justify-start" variant="outline" asChild>
-            <Link href="/admin/invitations">
-                Invite New User
-            </Link>
-              </Button>
-              <Button className="w-full justify-start" variant="outline" asChild>
-            <Link href="/admin/audit-logs">
-                View Audit Logs
-              </Link>
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/admin/invitations">Invite New User</Link>
             </Button>
             <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/admin/settings">
-                System Settings
-              </Link>
+              <Link href="/admin/audit-logs">View Audit Logs</Link>
+            </Button>
+            <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/admin/settings">System Settings</Link>
             </Button>
             <Button className="w-full justify-start" variant="outline">
               Backup Database
@@ -223,10 +226,9 @@ export default async function AdminDashboard() {
 function formatTimeAgo(date: Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) return "Just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }
-

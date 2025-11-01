@@ -64,7 +64,14 @@ export async function deleteProvince(formData: FormData) {
   redirect("/admin/provinces");
 }
 
-export async function createProvince(_prevState: any, formData: FormData) {
+interface FormState {
+  error?: string;
+}
+
+export async function createProvince(
+  _prevState: FormState,
+  formData: FormData,
+) {
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;
   const description = formData.get("description") as string;
@@ -151,7 +158,10 @@ export async function createProvince(_prevState: any, formData: FormData) {
   redirect("/admin/provinces");
 }
 
-export async function updateProvince(_prevState: any, formData: FormData) {
+export async function updateProvince(
+  _prevState: FormState,
+  formData: FormData,
+) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const code = formData.get("code") as string;

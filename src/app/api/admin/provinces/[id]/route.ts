@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { provinces } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/lib/auth-utils";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user = await requireAdmin();
+    const _user = await requireAdmin();
     const { id } = await params;
 
     const formData = await request.formData();
@@ -68,11 +68,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user = await requireAdmin();
+    const _user = await requireAdmin();
     const { id } = await params;
 
     // Check if province has associated publishers

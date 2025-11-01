@@ -1,9 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { eq } from "drizzle-orm";
-import { user } from "@/db/schema";
+import { auth } from "@/lib/auth";
 
 export default async function proxy(req: NextRequest) {
   // Skip middleware for API routes to avoid conflicts
@@ -13,24 +11,24 @@ export default async function proxy(req: NextRequest) {
 
   // Enable authentication for protected routes
   const { nextUrl } = req;
-  
+
   // Check for suspended users during sign-in
   if (nextUrl.pathname === "/sign-in") {
     try {
       const session = await auth.api.getSession({ headers: req.headers });
-      
+
       // If user is already authenticated, check their status
       if (session?.user) {
         const userData = await db.query.user.findFirst({
           where: (users, { eq }) => eq(users.id, session.user.id),
         });
 
-        if (userData && userData.status === 'suspended') {
+        if (userData && userData.status === "suspended") {
           return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
         }
       }
     } catch (error) {
-      console.warn('Could not check user status in middleware:', error);
+      console.warn("Could not check user status in middleware:", error);
     }
   }
 
@@ -65,14 +63,14 @@ export default async function proxy(req: NextRequest) {
   if (isLoggedIn && (isAdminRoute || isDashboardRoute)) {
     try {
       const userData = await db.query.user.findFirst({
-        where: (users, { eq }) => eq(users.id, userSession!.id),
+        where: (users, { eq }) => eq(users.id, userSession?.id),
       });
 
-      if (userData && userData.status === 'suspended') {
+      if (userData && userData.status === "suspended") {
         return NextResponse.redirect(new URL("/suspended", nextUrl.origin));
       }
     } catch (error) {
-      console.warn('Could not check user status:', error);
+      console.warn("Could not check user status:", error);
     }
   }
 

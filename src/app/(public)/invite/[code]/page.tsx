@@ -70,9 +70,16 @@ async function getInvitationDetails(
   }
 }
 
+interface InviteFormState {
+  error?: string;
+  success?: boolean;
+  message?: string;
+  redirectTo?: string;
+}
+
 // Server action for handling form submission
 async function handleInviteAcceptance(
-  _prevState: any,
+  _prevState: InviteFormState,
   formData: FormData,
 ): Promise<
   { error: string } | { success: boolean; message: string; redirectTo: string }

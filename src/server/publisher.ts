@@ -35,7 +35,9 @@ export async function getAllPublishers(userId?: string) {
             .from(userBookmarks)
             .where(eq(userBookmarks.userId, userId));
 
-          const bookmarkedSet = new Set(bookmarkedIds.map(b => b.publisherId));
+          const bookmarkedSet = new Set(
+            bookmarkedIds.map((b) => b.publisherId),
+          );
 
           return publishersList.map((p) => ({
             id: p.id,

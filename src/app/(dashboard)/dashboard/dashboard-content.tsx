@@ -1,7 +1,11 @@
 "use client";
 
+import { Building, CheckCircle, FileText, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { OnboardingTour } from "@/components/onboarding-tour";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,11 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { OnboardingTour } from "@/components/onboarding-tour";
 import { formatUserRole } from "@/lib/auth-utils-client";
-import { Users, Building, FileText, Settings, CheckCircle } from "lucide-react";
 
 interface User {
   id: string;
@@ -48,7 +48,9 @@ export function DashboardContent({
 
   // Check if user has completed onboarding
   useEffect(() => {
-    const onboardingStatus = localStorage.getItem(`onboarding-completed-${user.id}`);
+    const onboardingStatus = localStorage.getItem(
+      `onboarding-completed-${user.id}`,
+    );
     if (!onboardingStatus) {
       setShowTour(true);
       setTourCompleted(false);
