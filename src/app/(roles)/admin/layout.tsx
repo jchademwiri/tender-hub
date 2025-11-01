@@ -55,13 +55,13 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }>) {
   // Enable admin authentication check
-  const user = await requireAdmin();
+  const session = await requireAdmin();
 
   const userData = {
-    name: user.name || "Admin",
-    email: user.email,
-    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
-    role: user.role || "admin",
+    name: session.user.name || "Admin",
+    email: session.user.email,
+    avatar: session.user.image || `https://avatar.vercel.sh/${session.user.email}`,
+    role: session.user.role || "admin",
   };
 
   return (

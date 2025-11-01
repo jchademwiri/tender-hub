@@ -31,13 +31,13 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   // Enable authentication for dashboard
-  const user = await requireAuth();
+  const session = await requireAuth();
 
   const userData = {
-    name: user.name || "User",
-    email: user.email,
-    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
-    role: user.role || "user",
+    name: session.user.name || "User",
+    email: session.user.email,
+    avatar: session.user.image || `https://avatar.vercel.sh/${session.user.email}`,
+    role: session.user.role || "user",
   };
 
   return (

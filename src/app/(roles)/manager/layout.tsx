@@ -62,13 +62,13 @@ export default async function ManagerLayout({
 }>) {
   // Enable manager authentication check
   const { requireManager } = await import("@/lib/auth-utils");
-  const user = await requireManager();
+  const session = await requireManager();
 
   const userData = {
-    name: user.name || "Manager",
-    email: user.email,
-    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
-    role: user.role || "manager",
+    name: session.user.name || "Manager",
+    email: session.user.email,
+    avatar: session.user.image || `https://avatar.vercel.sh/${session.user.email}`,
+    role: session.user.role || "manager",
   };
 
   return (
