@@ -3,10 +3,10 @@ import { DatabaseManagementClient } from "./database-management-client";
 
 export default async function DatabaseManagementPage() {
   // Get authenticated user
-  const currentUser = await requireAuth();
+  const session = await requireAuth();
 
   // Only admins and owners can access database management
-  if (currentUser.role !== "admin" && currentUser.role !== "owner") {
+  if (session.user.role !== "admin" && session.user.role !== "owner") {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

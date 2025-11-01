@@ -144,9 +144,10 @@ export default function SignInPage() {
         });
       } else {
         console.log("✅ DEBUG: Sign in successful");
-        // The proxy middleware will handle suspended user checking and redirection
+        
+        // Redirect to home page and let middleware handle role-based redirection
         toast.success("Welcome back!");
-        router.push("/dashboard");
+        router.push("/");
       }
     } catch (error) {
       console.error("❌ DEBUG: Sign in exception:", error);
