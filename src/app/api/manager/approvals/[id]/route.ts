@@ -11,7 +11,8 @@ import {
   handleValidationError,
   handleNotFoundError,
   ApiErrorType,
-  createErrorResponse
+  createErrorResponse,
+  APIErrors
 } from "@/lib/api-error-handler";
 import {
   uuidSchema,
@@ -33,10 +34,7 @@ export const GET = withErrorHandling(async (
     const validation = uuidSchema.safeParse(id);
     
     if (!validation.success) {
-      return createErrorResponse(
-        ApiErrorType.VALIDATION_ERROR,
-        "Invalid approval ID format"
-      );
+      throw APIErrors.validation("Invalid approval ID format");
     }
 
     // Get approval request with user details
@@ -63,7 +61,7 @@ export const GET = withErrorHandling(async (
       .limit(1);
 
     if (approval.length === 0) {
-      return handleNotFoundError("Approval request");
+      throw APIErrors.notFound("Approval request not found");
     }
 
     const approvalData = approval[0];
@@ -113,7 +111,7 @@ export const GET = withErrorHandling(async (
       }
     });
 
-  return createSuccessResponse(response, "Approval request details retrieved successfully");
+  return createSuccessResponse(response);
 });
 
 export const POST = withErrorHandling(async (
@@ -130,43 +128,54 @@ export const POST = withErrorHandling(async (
     const idValidation = uuidSchema.safeParse(id);
     
     if (!idValidation.success) {
-      return createErrorResponse(
-        ApiErrorType.VALIDATION_ERROR,
-        "Invalid approval ID format"
-      );
+      throw APIErrors.validation("Invalid approval ID format");
     }
 
     // Validate request body
-    const bodyValidation = validateRequestBody(approvalRequestSchema)(body);
+    const bodyValidation = approvalRequestSchema.safeParse(body);
     if (!bodyValidation.success) {
-      return handleValidationError(bodyValidation.error);
+      throw APIErrors.validation("Invalid request body", bodyValidation.error.issues);
     }
 
     const { action, reason, notifyUser } = bodyValidation.data;
 
     // Validate rejection reason
     if (action === "reject" && (!reason || reason.trim() === "")) {
-      return createErrorResponse(
-        ApiErrorType.VALIDATION_ERROR,
-        "Rejection reason is required"
-      );
+      throw APIErrors.validation("Rejection reason is required");
     }
 
-    // Forward to main approvals endpoint
-    const forwardBody = {
-      approvalId: id,
-      action,
-      reason,
-      notifyUser
-    };
+    // Process the approval directly
+    const result = await db
+      .update(profileUpdateRequest)
+      .set({
+        status: action === "approve" ? "approved" : "rejected",
+        reviewedBy: currentUser.id,
+        reviewedAt: new Date(),
+        rejectionReason: action === "reject" ? reason : null,
+      })
+      .where(eq(profileUpdateRequest.id, id))
+      .returning();
 
-    const forwardRequest = new NextRequest(request.url.replace(`/${id}`, ''), {
-      method: "POST",
-      headers: request.headers,
-      body: JSON.stringify(forwardBody),
+    if (result.length === 0) {
+      throw APIErrors.notFound("Approval request not found");
+    }
+
+    // Log audit event
+    await AuditLogger.logSystemAccess(currentUser.id, `approval_${action}`, {
+      userId: currentUser.id,
+      metadata: {
+        approvalId: id,
+        action,
+        reason: reason || null,
+        notifyUser,
+      }
     });
 
-    // Import and call the main POST handler
-    const { POST: mainHandler } = await import("../route");
-  return await mainHandler(forwardRequest);
+    return createSuccessResponse({
+      id,
+      action,
+      status: action === "approve" ? "approved" : "rejected",
+      reviewedAt: new Date(),
+      reviewedBy: currentUser.id,
+    });
 });

@@ -9,6 +9,7 @@ import {
   Home,
   Mail,
   Map,
+  Monitor,
   TrendingUp,
   UserCheck,
   Users,
@@ -46,6 +47,7 @@ const getNavigationItems = (userRole: string) => {
   > = {
     admin: [
       { title: "Dashboard", url: "/admin", icon: Command },
+      { title: "Monitoring", url: "/admin/monitoring", icon: Monitor },
       { title: "Team", url: "/admin/team", icon: Users },
       { title: "Provinces", url: "/admin/provinces", icon: Map },
       { title: "Publishers", url: "/admin/publishers", icon: BookOpen },

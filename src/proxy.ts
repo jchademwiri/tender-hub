@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
+import { user } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 export default async function proxy(req: NextRequest) {

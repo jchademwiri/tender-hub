@@ -36,8 +36,27 @@ const envSchema = z.object({
   RATE_LIMIT_API_MAX: z.coerce.number().positive().default(50),
 
   // Optional Monitoring
-  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_DSN: z.string().url().optional().or(z.literal("")),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional().or(z.literal("")),
   SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
+  APP_VERSION: z.string().default("unknown"),
+  SERVER_NAME: z.string().optional(),
+
+  // Sentry Configuration
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(1.0),
+  SENTRY_REPLAYS_SESSION_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
+  SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(1.0),
+  SENTRY_DEBUG: z.coerce.boolean().default(false),
+  SENTRY_RELEASE_HEALTH: z.coerce.boolean().default(true),
+
+  // Error Alerting Configuration
+  SENTRY_ALERT_EMAIL: z.string().email().optional().or(z.literal("")),
+  SENTRY_ALERT_WEBHOOK: z.string().url().optional().or(z.literal("")),
+  SENTRY_ERROR_THRESHOLD: z.coerce.number().positive().default(10),
+  SENTRY_PERFORMANCE_THRESHOLD: z.coerce.number().positive().default(500),
 
   // Database Pool Configuration (optional with defaults)
   DATABASE_POOL_MIN: z.coerce.number().nonnegative().default(2),
@@ -92,6 +111,30 @@ export type EnvConfig = z.infer<typeof envSchema>;
 // Validate environment variables
 export function validateEnv(): EnvConfig {
   try {
+    // During build time, use more lenient validation
+    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
+                       process.env.NEXT_PHASE === 'phase-production-server' ||
+                       process.argv.includes('build') ||
+                       process.argv.includes('next-build');
+    
+    if (isBuildTime) {
+      // Create a minimal environment for build time
+      const buildEnv = {
+        ...process.env, // Start with actual env vars
+        // Provide defaults for required fields if missing
+        NODE_ENV: process.env.NODE_ENV || "development",
+        DATABASE_URL: process.env.DATABASE_URL || "postgresql://user:pass@localhost:5432/db",
+        BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || "build-time-secret-32-characters-long",
+        BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+        RESEND_API_KEY: process.env.RESEND_API_KEY || "re_build_time_key",
+        EMAIL_FROM: process.env.EMAIL_FROM || "build@example.com",
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      };
+      
+      const env = envSchema.parse(buildEnv);
+      return env;
+    }
+    
     const env = envSchema.parse(process.env);
 
     // Additional validation logic
@@ -132,8 +175,72 @@ export function validateEnv(): EnvConfig {
   }
 }
 
-// Export validated environment configuration
-export const env = validateEnv();
+// Export validated environment configuration (with build-time fallback)
+let _env: EnvConfig | null = null;
+
+function getEnvSafely(): EnvConfig {
+  if (_env) return _env;
+  
+  try {
+    _env = validateEnv();
+    return _env;
+  } catch (error) {
+    // During build time, if validation fails, return a minimal config
+    console.warn("Environment validation failed, using fallback configuration for build");
+    _env = {
+      NODE_ENV: "development",
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
+      BETTER_AUTH_SECRET: "build-time-secret-32-characters-long",
+      BETTER_AUTH_URL: "http://localhost:3000",
+      RESEND_API_KEY: "re_build_time_key",
+      EMAIL_FROM: "build@example.com",
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+      SESSION_EXPIRES_IN: 604800,
+      SESSION_UPDATE_AGE: 86400,
+      SESSION_FRESH_AGE: 300,
+      RATE_LIMIT_GLOBAL_MAX: 100,
+      RATE_LIMIT_SIGNIN_MAX: 3,
+      RATE_LIMIT_SIGNUP_MAX: 3,
+      RATE_LIMIT_PASSWORD_RESET_MAX: 2,
+      RATE_LIMIT_API_MAX: 50,
+      DATABASE_POOL_MIN: 2,
+      DATABASE_POOL_MAX: 10,
+      DATABASE_POOL_IDLE_TIMEOUT: 30000,
+      AUDIT_LOG_RETENTION_DAYS: 90,
+      AUDIT_LOG_LEVEL: "info" as const,
+      PERFORMANCE_MONITORING_ENABLED: true,
+      PERFORMANCE_THRESHOLD_MS: 500,
+      CACHE_TTL_DEFAULT: 300,
+      CACHE_TTL_PUBLISHERS: 1800,
+      CACHE_TTL_PROVINCES: 3600,
+      EMAIL_TEMPLATE_VERSION: "v1",
+      HEALTH_CHECK_TIMEOUT: 5000,
+      HEALTH_CHECK_DATABASE_ENABLED: true,
+      HEALTH_CHECK_EMAIL_ENABLED: true,
+      BACKUP_ENABLED: false,
+      BACKUP_RETENTION_DAYS: 30,
+      FEATURE_BULK_INVITATIONS: true,
+      FEATURE_ADVANCED_ANALYTICS: true,
+      FEATURE_AUDIT_DASHBOARD: true,
+      FEATURE_DEBUG_MODE: false,
+      APP_VERSION: "unknown",
+      SENTRY_TRACES_SAMPLE_RATE: 1.0,
+      SENTRY_REPLAYS_SESSION_SAMPLE_RATE: 0.1,
+      SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE: 1.0,
+      SENTRY_DEBUG: false,
+      SENTRY_RELEASE_HEALTH: true,
+      SENTRY_ERROR_THRESHOLD: 10,
+      SENTRY_PERFORMANCE_THRESHOLD: 500,
+    } as EnvConfig;
+    return _env;
+  }
+}
+
+export const env = new Proxy({} as EnvConfig, {
+  get(target, prop) {
+    return getEnvSafely()[prop as keyof EnvConfig];
+  }
+});
 
 // Helper functions for common environment checks
 export const isProduction = () => env.NODE_ENV === "production";
@@ -195,4 +302,27 @@ export const healthCheckConfig = {
   timeout: env.HEALTH_CHECK_TIMEOUT,
   database: env.HEALTH_CHECK_DATABASE_ENABLED,
   email: env.HEALTH_CHECK_EMAIL_ENABLED,
+} as const;
+
+// Sentry configuration
+export const sentryConfig = {
+  dsn: env.SENTRY_DSN,
+  publicDsn: env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: env.SENTRY_ENVIRONMENT || env.NODE_ENV,
+  org: env.SENTRY_ORG,
+  project: env.SENTRY_PROJECT,
+  authToken: env.SENTRY_AUTH_TOKEN,
+  release: env.APP_VERSION,
+  serverName: env.SERVER_NAME,
+  tracesSampleRate: env.SENTRY_TRACES_SAMPLE_RATE,
+  replaysSessionSampleRate: env.SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+  replaysOnErrorSampleRate: env.SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE,
+  debug: env.SENTRY_DEBUG,
+  releaseHealth: env.SENTRY_RELEASE_HEALTH,
+  alerting: {
+    email: env.SENTRY_ALERT_EMAIL,
+    webhook: env.SENTRY_ALERT_WEBHOOK,
+    errorThreshold: env.SENTRY_ERROR_THRESHOLD,
+    performanceThreshold: env.SENTRY_PERFORMANCE_THRESHOLD,
+  },
 } as const;

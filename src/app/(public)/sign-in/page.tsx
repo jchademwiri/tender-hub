@@ -14,12 +14,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const _router = useRouter();
+  const router = useRouter();
 
   // Check for invitation acceptance message in URL
   useEffect(() => {
@@ -56,14 +57,11 @@ export default function SignInPage() {
     try {
       console.log("🔍 DEBUG: Attempting to sign in with:", email);
 
-      // TODO: Fix when auth client is properly configured
-      // const result = await authClient.signIn.email({
-      //   email,
-      //   password,
-      // });
-      throw new Error("Authentication not configured yet");
+      const result = await authClient.signIn.email({
+        email,
+        password,
+      });
 
-      /*
       console.log("🔍 DEBUG: Sign in result:", result);
 
       if (result.error) {
@@ -150,7 +148,6 @@ export default function SignInPage() {
         toast.success("Welcome back!");
         router.push("/dashboard");
       }
-      */
     } catch (error) {
       console.error("❌ DEBUG: Sign in exception:", error);
       toast.error("Sign in failed", {

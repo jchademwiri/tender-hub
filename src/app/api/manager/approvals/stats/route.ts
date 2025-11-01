@@ -159,5 +159,5 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       }
     });
 
-  return createSuccessResponse(stats, "Approval statistics retrieved successfully");
+  return createSuccessResponse(stats);
 });
