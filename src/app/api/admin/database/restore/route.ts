@@ -9,10 +9,10 @@ import { requireAuth } from "@/lib/auth-utils";
 // POST /api/admin/database/restore - Restore database from backup
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await requireAuth();
+    const session = await requireAuth();
 
     // Only admins and owners can restore database
-    if (currentUser.role !== "admin" && currentUser.role !== "owner") {
+    if (session.user.role !== "admin" && session.user.role !== "owner") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

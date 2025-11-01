@@ -10,10 +10,10 @@ import { requireAuth } from "@/lib/auth-utils";
 // GET /api/admin/database - Get database status and backup history
 export async function GET() {
   try {
-    const currentUser = await requireAuth();
+    const session = await requireAuth();
 
     // Only admins and owners can view database info
-    if (currentUser.role !== "admin" && currentUser.role !== "owner") {
+    if (session.user.role !== "admin" && session.user.role !== "owner") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -54,10 +54,10 @@ export async function GET() {
 // POST /api/admin/database/backup - Create manual backup
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await requireAuth();
+    const session = await requireAuth();
 
     // Only admins and owners can create backups
-    if (currentUser.role !== "admin" && currentUser.role !== "owner") {
+    if (session.user.role !== "admin" && session.user.role !== "owner") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

@@ -8,8 +8,8 @@ import { requireAuth } from "@/lib/auth-utils";
 export async function GET(request: NextRequest) {
   try {
     // Require admin authentication
-    const currentUser = await requireAuth();
-    if (currentUser.role !== "admin") {
+    const session = await requireAuth();
+    if (session.user.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized access" },
         { status: 403 },
