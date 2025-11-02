@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -35,27 +36,45 @@ interface AuditLog {
 
 export default function AuditLogsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const action = searchParams?.get("action") || "all";
   const days = parseInt(searchParams?.get("days") || "30", 10);
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAuditLogs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams({
         action: action || "all",
         days: days.toString(),
       });
 
       const response = await fetch(`/api/admin/audit-logs?${params}`);
+      
       if (response.ok) {
         const data = await response.json();
         setAuditLogs(data.auditLogs || []);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("API Error:", response.status, errorData);
+        
+        if (response.status === 403) {
+          setError("Access denied. Admin privileges required.");
+          router.push("/sign-in?redirect=/admin/audit-logs");
+        } else if (response.status === 401) {
+          setError("Authentication required. Please sign in.");
+          router.push("/sign-in?redirect=/admin/audit-logs");
+        } else {
+          setError("Failed to load audit logs. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Error fetching audit logs:", error);
+      setError("Failed to load audit logs. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -63,9 +82,7 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     fetchAuditLogs();
-  }, [fetchAuditLogs]);
-
-  console.log("Audit Logs:", auditLogs); //testing
+  }, [action, days]);
   return (
     <div className="space-y-6">
       <div>
@@ -114,9 +131,20 @@ export default function AuditLogsPage() {
           <CardDescription>System events and user actions</CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+{loading ? (
             <div className="text-center py-4 text-muted-foreground">
               Loading audit logs...
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <div className="text-red-500 text-sm mb-4">{error}</div>
+              <Button
+                onClick={fetchAuditLogs}
+                variant="outline"
+                size="sm"
+              >
+                Retry
+              </Button>
             </div>
           ) : (
             <Table>
