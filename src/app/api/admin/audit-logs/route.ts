@@ -1,5 +1,5 @@
 import { subDays } from "date-fns";
-import { desc, eq, gte } from "drizzle-orm";
+import { desc, eq, gte, count } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { auditLog, user } from "@/db/schema";
@@ -20,11 +20,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action") || "all";
     const days = parseInt(searchParams.get("days") || "30", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "25", 10);
+
+    // Validate pagination parameters
+    const validatedPage = Math.max(1, page);
+    const validatedPageSize = Math.min(Math.max(1, pageSize), 100); // Max 100 items per page
+    const offset = (validatedPage - 1) * validatedPageSize;
 
     // Calculate date filter
     const fromDate = subDays(new Date(), days);
 
-    // Get audit logs
+    // Get audit logs (get more than needed since we'll filter after)
     const auditLogsData = await db
       .select({
         id: auditLog.id,
@@ -37,7 +44,7 @@ export async function GET(request: NextRequest) {
       .from(auditLog)
       .where(gte(auditLog.createdAt, fromDate))
       .orderBy(desc(auditLog.createdAt))
-      .limit(100);
+      .limit(1000); // Get more data to filter from
 
     // Get unique user IDs for lookup (excluding anonymous and null values)
     const userIds = [
@@ -134,9 +141,24 @@ export async function GET(request: NextRequest) {
         ? enrichedAuditLogs.filter((log) => log.action === action)
         : enrichedAuditLogs;
 
+    // Calculate pagination info
+    const totalPages = Math.ceil(filteredLogs.length / validatedPageSize);
+    const startIndex = offset;
+    const endIndex = Math.min(startIndex + validatedPageSize, filteredLogs.length);
+    const currentPageData = filteredLogs.slice(startIndex, endIndex);
+
     return NextResponse.json({
-      auditLogs: filteredLogs,
-      total: filteredLogs.length,
+      auditLogs: currentPageData,
+      pagination: {
+        page: validatedPage,
+        pageSize: validatedPageSize,
+        total: filteredLogs.length,
+        totalPages,
+        hasNextPage: validatedPage < totalPages,
+        hasPreviousPage: validatedPage > 1,
+        startIndex,
+        endIndex,
+      },
       filters: {
         action,
         days,
