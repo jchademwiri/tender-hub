@@ -51,6 +51,7 @@ export default function AdminTeamManagement() {
     invitedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    password: null, // Added missing password property
   };
 
   const userPermissions = checkPermission(currentUser);

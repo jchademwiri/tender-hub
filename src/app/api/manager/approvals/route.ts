@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { profileUpdateRequest, user } from "@/db/schema";
-import { getCurrentUser, requireManager } from "@/lib/auth-utils";
+import { requireAuth, requireManager } from "@/lib/auth-utils";
 import { sendEmail } from "@/lib/email";
 import { AuditLogger } from "@/lib/audit-logger";
 import { 
@@ -132,8 +132,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     const total = totalResult[0]?.count || 0;
 
     // Log audit event
-    await AuditLogger.logSystemAccess(currentUser.id, "manager_approvals_list", {
-      userId: currentUser.id,
+    await AuditLogger.logSystemAccess(currentUser.user.id, "manager_approvals_list", {
+      userId: currentUser.user.id,
       metadata: {
         page,
         limit,

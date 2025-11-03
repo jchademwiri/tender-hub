@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { invitation, user } from "@/db/schema";
 import { AuditLogger } from "@/lib/audit-logger";
-import { requireAdminForAPI } from "@/lib/auth-utils";
+import { requireAdmin } from "@/lib/auth-utils";
 import { sendEmail } from "@/lib/email";
 
 /**
@@ -24,7 +24,7 @@ export async function POST(
 ) {
   try {
     // Authenticate and authorize admin user
-    const currentUser = await requireAdminForAPI();
+    const currentUser = await requireAdmin();
 
     const { id: invitationId } = await params;
 
@@ -157,9 +157,9 @@ export async function POST(
       await AuditLogger.logInvitationResent(
         invite.email,
         invitationId,
-        currentUser.id,
+        currentUser.user.id,
         {
-          userId: currentUser.id,
+          userId: currentUser.user.id,
           metadata: {
             customMessage: !!customMessage,
             resentAt: new Date().toISOString(),

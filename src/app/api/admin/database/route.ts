@@ -91,13 +91,13 @@ export async function POST(request: NextRequest) {
         id: backupId,
         backupType: "manual",
         status: "running",
-        initiatedBy: currentUser.id,
+        initiatedBy: session.user.id,
       });
 
       // Log the backup action
       await db.insert(auditLog).values({
         id: crypto.randomUUID(),
-        userId: currentUser.id,
+        userId: session.user.id,
         action: "manual_database_backup",
         metadata: { backupId, backupPath },
         ipAddress: request.headers.get("x-forwarded-for") || "unknown",

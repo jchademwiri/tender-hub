@@ -103,8 +103,8 @@ export const GET = withErrorHandling(async (
     };
 
     // Log audit event
-    await AuditLogger.logSystemAccess(currentUser.id, "manager_approval_details", {
-      userId: currentUser.id,
+    await AuditLogger.logSystemAccess(currentUser.user.id, "manager_approval_details", {
+      userId: currentUser.user.id,
       metadata: {
         approvalId: id,
         approvalStatus: approvalData.status
@@ -149,7 +149,7 @@ export const POST = withErrorHandling(async (
       .update(profileUpdateRequest)
       .set({
         status: action === "approve" ? "approved" : "rejected",
-        reviewedBy: currentUser.id,
+        reviewedBy: currentUser.user.id,
         reviewedAt: new Date(),
         rejectionReason: action === "reject" ? reason : null,
       })
@@ -161,8 +161,8 @@ export const POST = withErrorHandling(async (
     }
 
     // Log audit event
-    await AuditLogger.logSystemAccess(currentUser.id, `approval_${action}`, {
-      userId: currentUser.id,
+    await AuditLogger.logSystemAccess(currentUser.user.id, `approval_${action}`, {
+      userId: currentUser.user.id,
       metadata: {
         approvalId: id,
         action,
@@ -176,6 +176,6 @@ export const POST = withErrorHandling(async (
       action,
       status: action === "approve" ? "approved" : "rejected",
       reviewedAt: new Date(),
-      reviewedBy: currentUser.id,
+      reviewedBy: currentUser.user.id,
     });
 });

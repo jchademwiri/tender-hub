@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         const newInvitation = await createInvitation({
           email,
           role,
-          invitedBy: currentUser.id,
+          invitedBy: currentUser.user.id,
         });
 
         // Apply template if specified
@@ -145,9 +145,9 @@ export async function POST(request: NextRequest) {
     await AuditLogger.logInvitationCreated(
       "bulk-operation",
       "multiple",
-      currentUser.id,
+      currentUser.user.id,
       {
-        userId: currentUser.id,
+        userId: currentUser.user.id,
         metadata: {
           totalInvitations: invitations.length,
           successfulInvitations: results.length,
@@ -229,8 +229,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Log analytics access
-    await AuditLogger.logSystemAccess(currentUser.id, "invitation_analytics", {
-      userId: currentUser.id,
+    await AuditLogger.logSystemAccess(currentUser.user.id, "invitation_analytics", {
+      userId: currentUser.user.id,
       metadata: {
         includeAnalytics,
         includeTemplates,

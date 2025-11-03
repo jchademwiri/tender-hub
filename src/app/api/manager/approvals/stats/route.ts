@@ -151,8 +151,8 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     };
 
     // Log audit event
-    await AuditLogger.logSystemAccess(currentUser.id, "manager_approval_stats", {
-      userId: currentUser.id,
+    await AuditLogger.logSystemAccess(currentUser.user.id, "manager_approval_stats", {
+      userId: currentUser.user.id,
       metadata: {
         period: periodDays,
         statsGenerated: true

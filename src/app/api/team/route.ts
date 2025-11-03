@@ -27,7 +27,13 @@ export async function GET(request: NextRequest) {
     const session = await requireAuth();
 
     // Check permissions - both admin and manager can view team
-    const userPermissions = checkPermission(session.user);
+    const userPermissions = checkPermission({
+      ...session.user,
+      password: null,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
@@ -161,7 +167,13 @@ export async function PATCH(request: NextRequest) {
     const session = await requireAuth();
 
     // Check permissions - both admin and manager can perform bulk operations
-    const userPermissions = checkPermission(session.user);
+    const userPermissions = checkPermission({
+      ...session.user,
+      password: null,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },
@@ -319,7 +331,13 @@ export async function POST(request: NextRequest) {
     const session = await requireAuth();
 
     // Check permissions - both admin and manager can create team members
-    const userPermissions = checkPermission(session.user);
+    const userPermissions = checkPermission({
+      ...session.user,
+      password: null,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     if (!userPermissions.hasRoleOrHigher("manager")) {
       return NextResponse.json(
         { error: "Insufficient permissions" },

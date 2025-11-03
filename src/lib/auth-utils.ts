@@ -41,6 +41,7 @@ export async function getSessionWithRole() {
       ...session,
       user: {
         ...session.user,
+        id: fullUser.id,
         role: fullUser.role,
         status: fullUser.status,
         banned: fullUser.banned,
@@ -48,6 +49,7 @@ export async function getSessionWithRole() {
         banExpires: fullUser.banExpires,
         invitedBy: fullUser.invitedBy,
         invitedAt: fullUser.invitedAt,
+        image: fullUser.image,
       },
     };
   } catch (error) {

@@ -50,7 +50,7 @@ export async function GET(_request: NextRequest) {
         // TODO: Add profile picture, bio, contact info fields
       })
       .from(user)
-      .where(eq(user.id, currentUser.id))
+      .where(eq(user.id, currentUser.user.id))
       .limit(1);
 
     if (userAccount.length === 0) {
@@ -115,7 +115,7 @@ export async function PUT(request: NextRequest) {
       .where(
         and(
           eq(user.email, validatedData.email.toLowerCase()),
-          ne(user.id, currentUser.id),
+          ne(user.id, currentUser.user.id),
         ),
       )
       .limit(1);
@@ -129,8 +129,8 @@ export async function PUT(request: NextRequest) {
 
     // Store previous values for audit logging
     const previousValues = {
-      name: currentUser.name,
-      email: currentUser.email,
+      name: currentUser.user.name,
+      email: currentUser.user.email,
     };
 
     // Update user account
@@ -141,7 +141,7 @@ export async function PUT(request: NextRequest) {
         email: validatedData.email.toLowerCase(),
         updatedAt: new Date(),
       })
-      .where(eq(user.id, currentUser.id))
+      .where(eq(user.id, currentUser.user.id))
       .returning();
 
     if (updatedUser.length === 0) {
@@ -150,13 +150,13 @@ export async function PUT(request: NextRequest) {
 
     // Audit log the account update
     await AuditLogger.logUserUpdated(
-      currentUser.id,
+      currentUser.user.id,
       {
         name: validatedData.name,
         email: validatedData.email.toLowerCase(),
       },
       {
-        userId: currentUser.id,
+        userId: currentUser.user.id,
         previousValues,
         metadata: {
           updateType: "direct",
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
       .from(profileUpdateRequest)
       .where(
         and(
-          eq(profileUpdateRequest.userId, currentUser.id),
+          eq(profileUpdateRequest.userId, currentUser.user.id),
           eq(profileUpdateRequest.status, "pending"),
         ),
       )
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
         .where(
           and(
             eq(user.email, changes.email.toLowerCase()),
-            ne(user.id, currentUser.id),
+            ne(user.id, currentUser.user.id),
           ),
         )
         .limit(1);
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
       .insert(profileUpdateRequest)
       .values({
         id: crypto.randomUUID(),
-        userId: currentUser.id,
+        userId: currentUser.user.id,
         requestedChanges: {
           ...changes,
           email: changes.email?.toLowerCase(),
@@ -295,13 +295,13 @@ export async function POST(request: NextRequest) {
 
     // Audit log the account update request
     await AuditLogger.logProfileUpdateRequested(
-      currentUser.id,
+      currentUser.user.id,
       {
         ...changes,
         email: changes.email?.toLowerCase(),
       },
       {
-        userId: currentUser.id,
+        userId: currentUser.user.id,
         metadata: {
           requestId: newRequest[0].id,
           reason: reason || "No reason provided",

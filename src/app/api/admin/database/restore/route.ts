@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Log the restoration attempt
     await db.insert(auditLog).values({
       id: crypto.randomUUID(),
-      userId: currentUser.id,
+      userId: session.user.id,
       action: "database_restoration",
       metadata: {
         backupId,

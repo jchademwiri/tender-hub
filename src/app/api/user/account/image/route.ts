@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const base64Image = `data:${imageFile.type};base64,${buffer.toString("base64")}`;
 
     // Store previous image for audit logging
-    const previousImage = currentUser.image;
+    const previousImage = currentUser.user.image;
 
     // Update user account with new image
     const updatedUser = await db
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         image: base64Image,
         updatedAt: new Date(),
       })
-      .where(eq(user.id, currentUser.id))
+      .where(eq(user.id, currentUser.user.id))
       .returning();
 
     if (updatedUser.length === 0) {
@@ -76,12 +76,12 @@ export async function POST(request: NextRequest) {
 
     // Audit log the account image update
     await AuditLogger.logUserUpdated(
-      currentUser.id,
+      currentUser.user.id,
       {
         image: base64Image,
       },
       {
-        userId: currentUser.id,
+        userId: currentUser.user.id,
         previousValues: {
           image: previousImage,
         },

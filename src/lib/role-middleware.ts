@@ -409,7 +409,7 @@ async function validateSessionSecurity(
   request: NextRequest,
   session: {
     user: { id: string; role?: string };
-    id: string;
+    id?: string;
     metadata?: Record<string, unknown>;
   },
 ): Promise<boolean> {
@@ -433,7 +433,7 @@ async function validateSessionSecurity(
           suspiciousActivity: "ip_address_change",
           originalIP,
           currentIP,
-          sessionId: session.id,
+          sessionId: session.id || "unknown",
         },
       });
 
@@ -451,7 +451,7 @@ async function validateSessionSecurity(
           activity: "user_agent_change",
           originalUserAgent,
           currentUserAgent,
-          sessionId: session.id,
+          sessionId: session.id || "unknown",
         },
       });
     }

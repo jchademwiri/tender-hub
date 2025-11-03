@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
-import { requireAdminForAPI } from "@/lib/auth-utils";
+import { requireAdmin } from "@/lib/auth-utils";
 import { withErrorHandler, createSuccessResponse } from "@/lib/api-error-handler";
 import { errorMonitor } from "@/lib/sentry-alerting";
 import { getSentryInfo } from "@/lib/sentry-utils";
@@ -41,14 +41,14 @@ interface MonitoringMetrics {
 
 async function monitoringHandler(request: NextRequest) {
   // Ensure user has admin access
-  const user = await requireAdminForAPI();
+  const user = await requireAdmin();
 
   try {
     // Collect monitoring metrics
     const metrics = await collectMonitoringMetrics();
 
     // Log monitoring access
-    await AuditLogger.logSystemAccess(user.id, "monitoring_access", {
+    await AuditLogger.logSystemAccess(user.user.id, "monitoring_access", {
       metadata: {
         endpoint: "/api/admin/monitoring",
         timestamp: new Date().toISOString(),

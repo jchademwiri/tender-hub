@@ -2,13 +2,13 @@ import { ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
 import { NoDataEmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { getCurrentUser } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils";
 import { getAllPublishers } from "@/server/publisher";
 import { PublishersTableClient } from "./publishers-table-client";
 
 export default async function PublishersPage() {
-  const user = await getCurrentUser();
-  const userId = user?.id;
+  const user = await requireAuth();
+  const userId = user?.user?.id;
 
   try {
     const publishers = await getAllPublishers(userId);
