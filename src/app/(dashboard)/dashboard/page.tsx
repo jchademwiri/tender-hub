@@ -6,7 +6,7 @@ import { DashboardContent } from "./dashboard-content";
 
 export default async function Dashboard() {
   // Get authenticated user
-  const user = await requireAuth();
+  const session = await requireAuth();
 
   // Get dashboard data
   const [provinceCount] = await db.select({ count: count() }).from(provinces);
@@ -28,10 +28,10 @@ export default async function Dashboard() {
 
   // Serialize user object to prevent serialization errors
   const serializedUser = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    role: session.user.role,
   };
 
   return (

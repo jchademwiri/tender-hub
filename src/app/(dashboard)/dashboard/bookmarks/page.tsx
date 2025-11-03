@@ -13,7 +13,7 @@ import { requireAuth } from "@/lib/auth-utils";
 
 export default async function BookmarksPage() {
   // Get authenticated user
-  const user = await requireAuth();
+  const session = await requireAuth();
 
   // Get user's bookmarked publishers
   const bookmarkedPublishers = await db
@@ -27,7 +27,7 @@ export default async function BookmarksPage() {
     .from(userBookmarks)
     .innerJoin(publishers, eq(userBookmarks.publisherId, publishers.id))
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-    .where(eq(userBookmarks.userId, user.id))
+    .where(eq(userBookmarks.userId, session.user.id))
     .orderBy(desc(userBookmarks.createdAt));
 
   return (

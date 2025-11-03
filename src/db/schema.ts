@@ -31,6 +31,7 @@ export const user = pgTable(
     email: text("email").notNull().unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image"),
+    password: text("password"),
     role: role("role").default("user").notNull(),
     banned: boolean("banned").default(false),
     banReason: text("ban_reason"),

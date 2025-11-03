@@ -1,81 +1,121 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { trackAPIError, trackDatabaseError, trackAuthError } from "./sentry-utils";
+import { AuditLogger } from "./audit-logger";
 
 /**
- * Standard API error types
+ * Standard API error response interface
  */
-export enum ApiErrorType {
-  VALIDATION_ERROR = "VALIDATION_ERROR",
-  AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
-  AUTHORIZATION_ERROR = "AUTHORIZATION_ERROR",
-  NOT_FOUND_ERROR = "NOT_FOUND_ERROR",
-  CONFLICT_ERROR = "CONFLICT_ERROR",
-  RATE_LIMIT_ERROR = "RATE_LIMIT_ERROR",
-  DATABASE_ERROR = "DATABASE_ERROR",
-  EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR",
-  INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
-  BAD_REQUEST_ERROR = "BAD_REQUEST_ERROR",
-  FORBIDDEN_ERROR = "FORBIDDEN_ERROR",
-  METHOD_NOT_ALLOWED_ERROR = "METHOD_NOT_ALLOWED_ERROR",
-  PAYLOAD_TOO_LARGE_ERROR = "PAYLOAD_TOO_LARGE_ERROR",
-  UNSUPPORTED_MEDIA_TYPE_ERROR = "UNSUPPORTED_MEDIA_TYPE_ERROR"
-}
-
-/**
- * Standard API error interface
- */
-export interface ApiError {
+export interface APIErrorResponse {
   success: false;
   error: {
-    type: ApiErrorType;
     code: string;
     message: string;
     details?: any;
     timestamp: string;
     requestId: string;
-    path?: string;
-    method?: string;
   };
 }
 
 /**
- * HTTP status code mappings
+ * Standard API success response interface
  */
-const ERROR_STATUS_MAP: Record<ApiErrorType, number> = {
-  [ApiErrorType.VALIDATION_ERROR]: 400,
-  [ApiErrorType.BAD_REQUEST_ERROR]: 400,
-  [ApiErrorType.AUTHENTICATION_ERROR]: 401,
-  [ApiErrorType.AUTHORIZATION_ERROR]: 403,
-  [ApiErrorType.FORBIDDEN_ERROR]: 403,
-  [ApiErrorType.NOT_FOUND_ERROR]: 404,
-  [ApiErrorType.METHOD_NOT_ALLOWED_ERROR]: 405,
-  [ApiErrorType.CONFLICT_ERROR]: 409,
-  [ApiErrorType.PAYLOAD_TOO_LARGE_ERROR]: 413,
-  [ApiErrorType.UNSUPPORTED_MEDIA_TYPE_ERROR]: 415,
-  [ApiErrorType.RATE_LIMIT_ERROR]: 429,
-  [ApiErrorType.INTERNAL_SERVER_ERROR]: 500,
-  [ApiErrorType.DATABASE_ERROR]: 500,
-  [ApiErrorType.EXTERNAL_SERVICE_ERROR]: 502,
-};
+export interface APISuccessResponse<T = any> {
+  success: true;
+  data: T;
+  timestamp: string;
+  requestId: string;
+}
 
 /**
- * User-friendly error messages for production
+ * API response type
  */
-const USER_FRIENDLY_MESSAGES: Record<ApiErrorType, string> = {
-  [ApiErrorType.VALIDATION_ERROR]: "The provided data is invalid. Please check your input and try again.",
-  [ApiErrorType.BAD_REQUEST_ERROR]: "The request could not be processed. Please check your input.",
-  [ApiErrorType.AUTHENTICATION_ERROR]: "Authentication required. Please sign in to continue.",
-  [ApiErrorType.AUTHORIZATION_ERROR]: "You don't have permission to perform this action.",
-  [ApiErrorType.FORBIDDEN_ERROR]: "Access to this resource is forbidden.",
-  [ApiErrorType.NOT_FOUND_ERROR]: "The requested resource was not found.",
-  [ApiErrorType.METHOD_NOT_ALLOWED_ERROR]: "This method is not allowed for this endpoint.",
-  [ApiErrorType.CONFLICT_ERROR]: "This action conflicts with the current state. Please refresh and try again.",
-  [ApiErrorType.PAYLOAD_TOO_LARGE_ERROR]: "The request payload is too large. Please reduce the size and try again.",
-  [ApiErrorType.UNSUPPORTED_MEDIA_TYPE_ERROR]: "The media type is not supported for this endpoint.",
-  [ApiErrorType.RATE_LIMIT_ERROR]: "Too many requests. Please wait a moment before trying again.",
-  [ApiErrorType.INTERNAL_SERVER_ERROR]: "An internal server error occurred. Please try again later.",
-  [ApiErrorType.DATABASE_ERROR]: "A database error occurred. Please try again later.",
-  [ApiErrorType.EXTERNAL_SERVICE_ERROR]: "An external service is temporarily unavailable. Please try again later.",
+export type APIResponse<T = any> = APISuccessResponse<T> | APIErrorResponse;
+
+/**
+ * Error types for classification
+ */
+export enum ErrorType {
+  VALIDATION = "VALIDATION_ERROR",
+  AUTHENTICATION = "AUTHENTICATION_ERROR",
+  AUTHORIZATION = "AUTHORIZATION_ERROR",
+  NOT_FOUND = "NOT_FOUND",
+  CONFLICT = "CONFLICT",
+  RATE_LIMIT = "RATE_LIMIT_EXCEEDED",
+  DATABASE = "DATABASE_ERROR",
+  EXTERNAL_SERVICE = "EXTERNAL_SERVICE_ERROR",
+  INTERNAL = "INTERNAL_SERVER_ERROR",
+  BAD_REQUEST = "BAD_REQUEST",
+}
+
+/**
+ * Custom API error class
+ */
+export class APIError extends Error {
+  public readonly code: string;
+  public readonly statusCode: number;
+  public readonly details?: any;
+  public readonly isOperational: boolean;
+
+  constructor(
+    message: string,
+    code: string,
+    statusCode: number,
+    details?: any,
+    isOperational = true
+  ) {
+    super(message);
+    this.name = "APIError";
+    this.code = code;
+    this.statusCode = statusCode;
+    this.details = details;
+    this.isOperational = isOperational;
+
+    // Maintains proper stack trace for where our error was thrown
+    Error.captureStackTrace(this, APIError);
+  }
+}
+
+/**
+ * Predefined API errors
+ */
+export const APIErrors = {
+  // 400 Bad Request
+  badRequest: (message = "Bad request", details?: any) =>
+    new APIError(message, ErrorType.BAD_REQUEST, 400, details),
+
+  validation: (message = "Validation failed", details?: any) =>
+    new APIError(message, ErrorType.VALIDATION, 400, details),
+
+  // 401 Unauthorized
+  unauthorized: (message = "Authentication required", details?: any) =>
+    new APIError(message, ErrorType.AUTHENTICATION, 401, details),
+
+  // 403 Forbidden
+  forbidden: (message = "Access denied", details?: any) =>
+    new APIError(message, ErrorType.AUTHORIZATION, 403, details),
+
+  // 404 Not Found
+  notFound: (message = "Resource not found", details?: any) =>
+    new APIError(message, ErrorType.NOT_FOUND, 404, details),
+
+  // 409 Conflict
+  conflict: (message = "Resource conflict", details?: any) =>
+    new APIError(message, ErrorType.CONFLICT, 409, details),
+
+  // 429 Too Many Requests
+  rateLimit: (message = "Rate limit exceeded", details?: any) =>
+    new APIError(message, ErrorType.RATE_LIMIT, 429, details),
+
+  // 500 Internal Server Error
+  internal: (message = "Internal server error", details?: any) =>
+    new APIError(message, ErrorType.INTERNAL, 500, details, false),
+
+  database: (message = "Database error", details?: any) =>
+    new APIError(message, ErrorType.DATABASE, 500, details, false),
+
+  externalService: (message = "External service error", details?: any) =>
+    new APIError(message, ErrorType.EXTERNAL_SERVICE, 502, details, false),
 };
 
 /**
@@ -86,330 +126,205 @@ function generateRequestId(): string {
 }
 
 /**
- * Create a standardized API error response
+ * Extract user context from request
  */
-export function createApiError(
-  type: ApiErrorType,
-  message?: string,
-  details?: any,
-  requestId?: string,
-  path?: string,
-  method?: string
-): ApiError {
+function extractUserContext(request: NextRequest) {
+  // This would typically extract user info from JWT token or session
+  // For now, we'll return basic info that can be extracted from headers
   return {
+    userAgent: request.headers.get("user-agent") || "unknown",
+    ipAddress: request.headers.get("x-forwarded-for") || 
+               request.headers.get("x-real-ip") || 
+               "unknown",
+    referer: request.headers.get("referer") || undefined,
+  };
+}
+
+/**
+ * Handle different types of errors and convert them to APIError
+ */
+function normalizeError(error: unknown, requestContext: any): APIError {
+  // Already an APIError
+  if (error instanceof APIError) {
+    return error;
+  }
+
+  // Zod validation errors
+  if (error instanceof ZodError) {
+    return new APIError(
+      "Validation failed",
+      ErrorType.VALIDATION,
+      400,
+      {
+        validationErrors: error.issues.map((err: any) => ({
+          path: err.path.join("."),
+          message: err.message,
+          code: err.code,
+        })),
+      }
+    );
+  }
+
+  // Database errors (common patterns)
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    
+    // PostgreSQL/Neon specific errors
+    if (message.includes("connection") || message.includes("timeout")) {
+      return new APIError(
+        "Database connection error",
+        ErrorType.DATABASE,
+        503,
+        { originalError: error.message },
+        false
+      );
+    }
+
+    if (message.includes("unique constraint") || message.includes("duplicate")) {
+      return new APIError(
+        "Resource already exists",
+        ErrorType.CONFLICT,
+        409,
+        { constraint: "unique_violation" }
+      );
+    }
+
+    if (message.includes("foreign key") || message.includes("violates")) {
+      return new APIError(
+        "Invalid reference",
+        ErrorType.BAD_REQUEST,
+        400,
+        { constraint: "foreign_key_violation" }
+      );
+    }
+
+    if (message.includes("not found") || message.includes("does not exist")) {
+      return new APIError(
+        "Resource not found",
+        ErrorType.NOT_FOUND,
+        404
+      );
+    }
+
+    // Authentication/Authorization errors
+    if (message.includes("unauthorized") || message.includes("authentication")) {
+      return new APIError(
+        "Authentication failed",
+        ErrorType.AUTHENTICATION,
+        401
+      );
+    }
+
+    if (message.includes("forbidden") || message.includes("access denied")) {
+      return new APIError(
+        "Access denied",
+        ErrorType.AUTHORIZATION,
+        403
+      );
+    }
+  }
+
+  // Generic error fallback
+  return new APIError(
+    error instanceof Error ? error.message : "Unknown error occurred",
+    ErrorType.INTERNAL,
+    500,
+    { originalError: error instanceof Error ? error.message : String(error) },
+    false
+  );
+}
+
+/**
+ * Main error handler function
+ */
+export async function handleAPIError(
+  error: unknown,
+  request: NextRequest,
+  context?: {
+    endpoint?: string;
+    method?: string;
+    userId?: string;
+    userRole?: string;
+  }
+): Promise<NextResponse<APIErrorResponse>> {
+  const requestId = generateRequestId();
+  const userContext = extractUserContext(request);
+  const endpoint = context?.endpoint || request.nextUrl.pathname;
+  const method = context?.method || request.method;
+
+  // Normalize the error
+  const apiError = normalizeError(error, { request, context });
+
+  // Create error response
+  const errorResponse: APIErrorResponse = {
     success: false,
     error: {
-      type,
-      code: type,
-      message: message || USER_FRIENDLY_MESSAGES[type],
-      details,
+      code: apiError.code,
+      message: apiError.message,
+      details: process.env.NODE_ENV === "development" ? apiError.details : undefined,
       timestamp: new Date().toISOString(),
-      requestId: requestId || generateRequestId(),
-      path,
-      method,
+      requestId,
     },
   };
-}
 
-/**
- * Create a NextResponse with standardized error format
- */
-export function createErrorResponse(
-  type: ApiErrorType,
-  message?: string,
-  details?: any,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  const error = createApiError(type, message, details, requestId, path, method);
-  const status = ERROR_STATUS_MAP[type];
-  
-  return NextResponse.json(error, { status });
-}
-
-/**
- * Handle Zod validation errors
- */
-export function handleValidationError(
-  error: ZodError,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  const details = {
-    issues: error.issues.map(issue => ({
-      field: issue.path.join('.'),
-      message: issue.message,
-      code: issue.code,
-    })),
-    formattedErrors: error.format(),
-  };
-
-  return createErrorResponse(
-    ApiErrorType.VALIDATION_ERROR,
-    "Validation failed. Please check the provided data.",
-    details,
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Handle database errors
- */
-export function handleDatabaseError(
-  error: any,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  console.error("Database error:", error);
-
-  // Don't expose internal database errors in production
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  let message = USER_FRIENDLY_MESSAGES[ApiErrorType.DATABASE_ERROR];
-  let details = undefined;
-
-  if (!isProduction) {
-    details = {
-      originalError: error.message,
-      code: error.code,
-      constraint: error.constraint,
-    };
-  }
-
-  // Handle specific database error types
-  if (error.code === "23505") { // Unique constraint violation
-    return createErrorResponse(
-      ApiErrorType.CONFLICT_ERROR,
-      "This resource already exists.",
-      isProduction ? undefined : details,
-      requestId,
-      path,
-      method
-    );
-  }
-
-  if (error.code === "23503") { // Foreign key constraint violation
-    return createErrorResponse(
-      ApiErrorType.BAD_REQUEST_ERROR,
-      "Referenced resource does not exist.",
-      isProduction ? undefined : details,
-      requestId,
-      path,
-      method
-    );
-  }
-
-  if (error.code === "23502") { // Not null constraint violation
-    return createErrorResponse(
-      ApiErrorType.VALIDATION_ERROR,
-      "Required field is missing.",
-      isProduction ? undefined : details,
-      requestId,
-      path,
-      method
-    );
-  }
-
-  return createErrorResponse(
-    ApiErrorType.DATABASE_ERROR,
-    message,
-    details,
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Handle authentication errors
- */
-export function handleAuthenticationError(
-  message?: string,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  return createErrorResponse(
-    ApiErrorType.AUTHENTICATION_ERROR,
-    message,
-    undefined,
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Handle authorization errors
- */
-export function handleAuthorizationError(
-  message?: string,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  return createErrorResponse(
-    ApiErrorType.AUTHORIZATION_ERROR,
-    message,
-    undefined,
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Handle not found errors
- */
-export function handleNotFoundError(
-  resource?: string,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  const message = resource 
-    ? `${resource} not found.`
-    : USER_FRIENDLY_MESSAGES[ApiErrorType.NOT_FOUND_ERROR];
-
-  return createErrorResponse(
-    ApiErrorType.NOT_FOUND_ERROR,
-    message,
-    undefined,
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Handle rate limit errors
- */
-export function handleRateLimitError(
-  retryAfter?: number,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  const response = createErrorResponse(
-    ApiErrorType.RATE_LIMIT_ERROR,
-    undefined,
-    { retryAfter },
-    requestId,
-    path,
-    method
-  );
-
-  if (retryAfter) {
-    response.headers.set("Retry-After", retryAfter.toString());
-  }
-
-  return response;
-}
-
-/**
- * Handle external service errors
- */
-export function handleExternalServiceError(
-  service: string,
-  error: any,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  console.error(`External service error (${service}):`, error);
-
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  return createErrorResponse(
-    ApiErrorType.EXTERNAL_SERVICE_ERROR,
-    `${service} service is temporarily unavailable.`,
-    isProduction ? undefined : { originalError: error.message },
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Generic error handler for API routes
- */
-export function handleApiError(
-  error: any,
-  requestId?: string,
-  path?: string,
-  method?: string
-): NextResponse {
-  console.error("API error:", error);
-
-  // Handle specific error types
-  if (error instanceof ZodError) {
-    return handleValidationError(error, requestId, path, method);
-  }
-
-  if (error.message === "Authentication required") {
-    return handleAuthenticationError(undefined, requestId, path, method);
-  }
-
-  if (error.message === "Admin access required" || error.message === "Manager access required") {
-    return handleAuthorizationError(error.message, requestId, path, method);
-  }
-
-  if (error.message === "Email service unavailable") {
-    return handleExternalServiceError("Email", error, requestId, path, method);
-  }
-
-  // Handle database errors
-  if (error.code && typeof error.code === "string") {
-    return handleDatabaseError(error, requestId, path, method);
-  }
-
-  // Default to internal server error
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  return createErrorResponse(
-    ApiErrorType.INTERNAL_SERVER_ERROR,
-    undefined,
-    isProduction ? undefined : { originalError: error.message, stack: error.stack },
-    requestId,
-    path,
-    method
-  );
-}
-
-/**
- * Middleware wrapper for API routes with error handling
- */
-export function withErrorHandling(
-  handler: (request: NextRequest, context?: any) => Promise<NextResponse>
-) {
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
-    const requestId = generateRequestId();
-    const path = new URL(request.url).pathname;
-    const method = request.method;
-
-    try {
-      return await handler(request, context);
-    } catch (error) {
-      // Log error with Sentry integration (if available)
-      // TODO: Add Sentry integration when @sentry/nextjs is installed
-      if (process.env.SENTRY_DSN) {
-        console.error("Error logged for Sentry:", {
-          error: error instanceof Error ? error.message : String(error),
-          requestId,
-          path,
-          method,
-          url: request.url,
-        });
-      }
-
-      return handleApiError(error, requestId, path, method);
+  // Track error in Sentry based on error type
+  try {
+    if (apiError.code === ErrorType.DATABASE) {
+      trackDatabaseError(apiError, {
+        operation: method,
+        userId: context?.userId,
+      });
+    } else if (apiError.code === ErrorType.AUTHENTICATION || apiError.code === ErrorType.AUTHORIZATION) {
+      trackAuthError(apiError, {
+        action: "login", // Default to login for API access errors
+        userId: context?.userId,
+        ipAddress: userContext.ipAddress,
+      });
+    } else {
+      trackAPIError(apiError, {
+        endpoint,
+        method,
+        statusCode: apiError.statusCode,
+        userId: context?.userId,
+        userRole: context?.userRole,
+        requestId,
+      });
     }
-  };
+  } catch (sentryError) {
+    console.error("Failed to track error in Sentry:", sentryError);
+  }
+
+  // Log error to audit trail for critical errors
+  try {
+    if (apiError.statusCode >= 500 || !apiError.isOperational) {
+      await AuditLogger.logSystemAccess(context?.userId || "anonymous", "api_error", {
+        metadata: {
+          endpoint,
+          method,
+          statusCode: apiError.statusCode,
+          errorCode: apiError.code,
+          errorMessage: apiError.message,
+          requestId,
+          userAgent: userContext.userAgent,
+          ipAddress: userContext.ipAddress,
+        },
+      });
+    }
+  } catch (auditError) {
+    console.error("Failed to log error to audit trail:", auditError);
+  }
+
+  // Log to console in development
+  if (process.env.NODE_ENV === "development") {
+    console.error(`API Error [${requestId}]:`, {
+      endpoint,
+      method,
+      error: apiError,
+      stack: apiError.stack,
+    });
+  }
+
+  return NextResponse.json(errorResponse, { status: apiError.statusCode });
 }
 
 /**
@@ -417,20 +332,168 @@ export function withErrorHandling(
  */
 export function createSuccessResponse<T>(
   data: T,
-  message?: string,
-  meta?: any
-): NextResponse {
-  return NextResponse.json({
+  status = 200
+): NextResponse<APISuccessResponse<T>> {
+  const response: APISuccessResponse<T> = {
     success: true,
     data,
-    message,
-    meta,
     timestamp: new Date().toISOString(),
-  });
+    requestId: generateRequestId(),
+  };
+
+  return NextResponse.json(response, { status });
 }
 
 /**
- * Paginated success response helper
+ * Wrapper for API route handlers with automatic error handling
+ */
+export function withErrorHandler<T = any>(
+  handler: (request: NextRequest, context?: any) => Promise<NextResponse<APISuccessResponse<T>>>,
+  options?: {
+    endpoint?: string;
+    requireAuth?: boolean;
+  }
+) {
+  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+    try {
+      return await handler(request, context);
+    } catch (error) {
+      return handleAPIError(error, request, {
+        endpoint: options?.endpoint,
+        method: request.method,
+        // Add user context extraction here if needed
+      });
+    }
+  };
+}
+
+/**
+ * Middleware for automatic error boundary in API routes
+ */
+export function createErrorMiddleware() {
+  return async (
+    request: NextRequest,
+    handler: (req: NextRequest) => Promise<NextResponse>
+  ): Promise<NextResponse> => {
+    try {
+      return await handler(request);
+    } catch (error) {
+      return handleAPIError(error, request);
+    }
+  };
+}
+
+/**
+ * Validate request body with Zod schema
+ */
+export async function validateRequestBody<T>(
+  request: NextRequest,
+  schema: any // Zod schema
+): Promise<T> {
+  try {
+    const body = await request.json();
+    return schema.parse(body);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw error; // Will be handled by normalizeError
+    }
+    throw APIErrors.badRequest("Invalid JSON in request body");
+  }
+}
+
+/**
+ * Validate query parameters with Zod schema
+ */
+export function validateQueryParams<T>(
+  request: NextRequest,
+  schema: any // Zod schema
+): T {
+  try {
+    const searchParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    return schema.parse(searchParams);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw error; // Will be handled by normalizeError
+    }
+    throw APIErrors.badRequest("Invalid query parameters");
+  }
+}
+
+/**
+ * Check if error should be reported to external services
+ */
+export function shouldReportError(error: APIError): boolean {
+  // Don't report operational errors (4xx status codes)
+  if (error.statusCode < 500 && error.isOperational) {
+    return false;
+  }
+
+  // Don't report certain error types
+  const ignoredErrorTypes = [
+    ErrorType.VALIDATION,
+    ErrorType.AUTHENTICATION,
+    ErrorType.AUTHORIZATION,
+    ErrorType.NOT_FOUND,
+    ErrorType.RATE_LIMIT,
+  ];
+
+  return !ignoredErrorTypes.includes(error.code as ErrorType);
+}
+
+/**
+ * Legacy export aliases for backward compatibility
+ */
+export const withErrorHandling = withErrorHandler;
+export const ApiErrorType = ErrorType;
+
+/**
+ * Create error response helper
+ */
+export function createErrorResponse(
+  error: APIError,
+  requestId?: string
+): NextResponse<APIErrorResponse> {
+  const errorResponse: APIErrorResponse = {
+    success: false,
+    error: {
+      code: error.code,
+      message: error.message,
+      details: process.env.NODE_ENV === "development" ? error.details : undefined,
+      timestamp: new Date().toISOString(),
+      requestId: requestId || generateRequestId(),
+    },
+  };
+
+  return NextResponse.json(errorResponse, { status: error.statusCode });
+}
+
+/**
+ * Handle validation errors
+ */
+export function handleValidationError(error: ZodError): never {
+  throw new APIError(
+    "Validation failed",
+    ErrorType.VALIDATION,
+    400,
+    {
+      validationErrors: error.issues.map((err: any) => ({
+        path: err.path.join("."),
+        message: err.message,
+        code: err.code,
+      })),
+    }
+  );
+}
+
+/**
+ * Handle not found errors
+ */
+export function handleNotFoundError(resource: string = "Resource"): never {
+  throw APIErrors.notFound(`${resource} not found`);
+}
+
+/**
+ * Create paginated response helper
  */
 export function createPaginatedResponse<T>(
   data: T[],
@@ -438,17 +501,47 @@ export function createPaginatedResponse<T>(
     page: number;
     limit: number;
     total: number;
-    pages: number;
-    hasNext?: boolean;
-    hasPrev?: boolean;
   },
-  message?: string
-): NextResponse {
-  return NextResponse.json({
+  status = 200
+): NextResponse<APISuccessResponse<{
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}>> {
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
+  
+  const response: APISuccessResponse<{
+    items: T[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> = {
     success: true,
-    data,
-    pagination,
-    message,
+    data: {
+      items: data,
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: pagination.total,
+        totalPages,
+        hasNext: pagination.page < totalPages,
+        hasPrev: pagination.page > 1,
+      },
+    },
     timestamp: new Date().toISOString(),
-  });
+    requestId: generateRequestId(),
+  };
+
+  return NextResponse.json(response, { status });
 }

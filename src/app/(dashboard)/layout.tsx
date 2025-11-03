@@ -4,14 +4,7 @@ import type { Metadata } from "next";
 // import { requireAuth } from "@/lib/auth-utils";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -31,13 +24,13 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   // Enable authentication for dashboard
-  const user = await requireAuth();
+  const session = await requireAuth();
 
   const userData = {
-    name: user.name || "User",
-    email: user.email,
-    avatar: user.image || `https://avatar.vercel.sh/${user.email}`,
-    role: user.role || "user",
+    name: session.user.name || "User",
+    email: session.user.email,
+    avatar: session.user.image || `https://avatar.vercel.sh/${session.user.email}`,
+    role: session.user.role || "user",
   };
 
   return (
@@ -52,17 +45,7 @@ export default async function DashboardLayout({
                 orientation="vertical"
                 className="mr-2 data-[orientation=vertical]:h-4"
               />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
+              <DynamicBreadcrumb />
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>

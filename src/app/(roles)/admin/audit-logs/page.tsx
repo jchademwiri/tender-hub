@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface AuditLog {
   id: string;
@@ -33,29 +43,82 @@ interface AuditLog {
   createdAt: string;
 }
 
+interface PaginationInfo {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startIndex: number;
+  endIndex: number;
+}
+
 export default function AuditLogsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const action = searchParams?.get("action") || "all";
   const days = parseInt(searchParams?.get("days") || "30", 10);
+  const page = parseInt(searchParams?.get("page") || "1", 10);
+  const pageSize = parseInt(searchParams?.get("pageSize") || "10", 10);
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    pageSize: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+    startIndex: 0,
+    endIndex: 0,
+  });
 
   const fetchAuditLogs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams({
         action: action || "all",
         days: days.toString(),
+        page: page.toString(),
+        pageSize: pageSize.toString(),
       });
 
       const response = await fetch(`/api/admin/audit-logs?${params}`);
+      
       if (response.ok) {
         const data = await response.json();
         setAuditLogs(data.auditLogs || []);
+        setPagination(data.pagination || {
+          page: 1,
+          pageSize: 10,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startIndex: 0,
+          endIndex: 0,
+        });
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("API Error:", response.status, errorData);
+        
+        if (response.status === 403) {
+          setError("Access denied. Admin privileges required.");
+          router.push("/sign-in?redirect=/admin/audit-logs");
+        } else if (response.status === 401) {
+          setError("Authentication required. Please sign in.");
+          router.push("/sign-in?redirect=/admin/audit-logs");
+        } else {
+          setError("Failed to load audit logs. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Error fetching audit logs:", error);
+      setError("Failed to load audit logs. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -63,16 +126,71 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     fetchAuditLogs();
-  }, [fetchAuditLogs]);
+  }, [action, days, page, pageSize]);
 
-  console.log("Audit Logs:", auditLogs); //testing
+  const updatePage = (newPage: number) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set("page", newPage.toString());
+    router.push(`/admin/audit-logs?${params.toString()}`);
+  };
+
+  const updatePageSize = (newPageSize: number) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set("pageSize", newPageSize.toString());
+    params.set("page", "1"); // Reset to first page when changing page size
+    router.push(`/admin/audit-logs?${params.toString()}`);
+  };
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const current = pagination.page;
+    const total = pagination.totalPages;
+    const delta = 2; // Show 2 pages before and after current
+    
+    const pages: (number | string)[] = [];
+    
+    // Always show first page
+    if (total <= 1) return pages;
+    
+    pages.push(1);
+    
+    // Add ellipsis after first page if needed
+    if (current - delta > 2) {
+      pages.push('...');
+    }
+    
+    // Add pages around current
+    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+      pages.push(i);
+    }
+    
+    // Add ellipsis before last page if needed
+    if (current + delta < total - 1) {
+      pages.push('...');
+    }
+    
+    // Always show last page
+    if (total > 1) {
+      pages.push(total);
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
-        <p className="text-muted-foreground">
-          Monitor system activities and user actions
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
+          <p className="text-muted-foreground">
+            Monitor system activities and user actions
+          </p>
+        </div>
+        {pagination.total > 0 && (
+          <div className="text-sm text-muted-foreground">
+            Showing {pagination.startIndex + 1}-{pagination.endIndex} of {pagination.total} logs
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -118,60 +236,142 @@ export default function AuditLogsPage() {
             <div className="text-center py-4 text-muted-foreground">
               Loading audit logs...
             </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <div className="text-red-500 text-sm mb-4">{error}</div>
+              <Button
+                onClick={fetchAuditLogs}
+                variant="outline"
+                size="sm"
+              >
+                Retry
+              </Button>
+            </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {auditLogs.length > 0 ? (
-                  auditLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {formatActionName(log.action)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatUserDisplay(log)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <Badge variant="secondary" className="text-xs">
-                            {log.userRole || "User"}
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Action</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead>Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditLogs.length > 0 ? (
+                    auditLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {formatActionName(log.action)}
                           </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm text-muted-foreground max-w-xs">
-                          {renderActionDetails(log.action, log.metadata)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-xs text-muted-foreground">
-                          {formatTimeAgo(new Date(log.createdAt))}
-                        </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{formatUserDisplay(log)}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <Badge variant="secondary" className="text-xs">
+                              {log.userRole || "User"}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-muted-foreground max-w-xs">
+                            {renderActionDetails(log.action, log.metadata)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-xs text-muted-foreground">
+                            {formatTimeAgo(new Date(log.createdAt))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
+                        No audit logs found for the selected time range
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center text-muted-foreground"
+                  )}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Items per page:</span>
+                    <select
+                      title="Items per page"
+                      value={pageSize}
+                      onChange={(e) => updatePageSize(parseInt(e.target.value, 10))}
+                      className="h-8 w-[70px] rounded border border-input bg-background text-sm"
                     >
-                      No audit logs found for the selected time range
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                      <option value="10">10</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </div>
+                  
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (pagination.hasPreviousPage) {
+                              updatePage(pagination.page - 1);
+                            }
+                          }}
+                          className={!pagination.hasPreviousPage ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      
+                      {generatePageNumbers().map((pageNum, index) => (
+                        <PaginationItem key={index}>
+                          {pageNum === "..." ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                updatePage(pageNum as number);
+                              }}
+                              isActive={pageNum === pagination.page}
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (pagination.hasNextPage) {
+                              updatePage(pagination.page + 1);
+                            }
+                          }}
+                          className={!pagination.hasNextPage ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

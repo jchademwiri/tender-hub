@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils";
 import { toggleBookmark } from "@/server/publisher";
 
 export async function POST(
@@ -12,7 +12,7 @@ export async function POST(
     console.log("Request URL:", request.url);
     console.log("Request method:", request.method);
 
-    const user = await getCurrentUser();
+    const user = await requireAuth();
     console.log("Current user:", user);
 
     if (!user) {
@@ -64,11 +64,11 @@ export async function POST(
 
     console.log(
       "Calling toggleBookmark with userId:",
-      user.id,
+      user.user.id,
       "publisherId:",
       publisherId,
     );
-    const result = await toggleBookmark(user.id, publisherId);
+    const result = await toggleBookmark(user.user.id, publisherId);
     console.log("Toggle bookmark result:", result);
 
     return NextResponse.json(result);

@@ -46,6 +46,7 @@ export async function createInvitation({
         invitedAt: user.invitedAt,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        password: user.password,
       })
       .from(user)
       .where(eq(user.id, invitedBy))

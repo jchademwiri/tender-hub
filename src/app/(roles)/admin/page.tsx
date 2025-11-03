@@ -201,6 +201,9 @@ export default async function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button className="w-full justify-start" variant="outline" asChild>
+              <Link href="/admin/monitoring">System Monitoring</Link>
+            </Button>
+            <Button className="w-full justify-start" variant="outline" asChild>
               <Link href="/admin/invitations">Invite New User</Link>
             </Button>
             <Button className="w-full justify-start" variant="outline" asChild>

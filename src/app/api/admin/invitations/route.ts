@@ -2,7 +2,7 @@ import { and, desc, eq, like, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { invitation } from "@/db/schema";
-import { requireAdminForAPI } from "@/lib/auth-utils";
+import { requireAdmin } from "@/lib/auth-utils";
 import { invitationQuerySchema } from "@/lib/validations/invitations";
 
 export async function POST(request: NextRequest) {
@@ -13,12 +13,12 @@ export async function POST(request: NextRequest) {
 
     // Authenticate and authorize admin user
     console.log("🔐 Authenticating user...");
-    const currentUser = await requireAdminForAPI();
+    const currentUser = await requireAdmin();
 
-    console.log("✅ User authenticated:", currentUser?.id);
+    console.log("✅ User authenticated:", currentUser?.user?.id);
 
-    // Ensure currentUser.id exists
-    if (!currentUser?.id) {
+    // Ensure currentUser.user.id exists
+    if (!currentUser?.user?.id) {
       console.error("❌ Current user ID is missing:", currentUser);
       return NextResponse.json(
         {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       role: role || null, // role can be nullable in the database
       status: "pending" as const,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      inviterId: currentUser.id,
+      inviterId: currentUser.user.id,
     };
 
     console.log(
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Authenticate and authorize admin user
-    const _currentUser = await requireAdminForAPI();
+    const _currentUser = await requireAdmin();
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);

@@ -9,10 +9,10 @@ import { requireAuth } from "@/lib/auth-utils";
 // POST /api/admin/database/restore - Restore database from backup
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await requireAuth();
+    const session = await requireAuth();
 
     // Only admins and owners can restore database
-    if (currentUser.role !== "admin" && currentUser.role !== "owner") {
+    if (session.user.role !== "admin" && session.user.role !== "owner") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Log the restoration attempt
     await db.insert(auditLog).values({
       id: crypto.randomUUID(),
-      userId: currentUser.id,
+      userId: session.user.id,
       action: "database_restoration",
       metadata: {
         backupId,

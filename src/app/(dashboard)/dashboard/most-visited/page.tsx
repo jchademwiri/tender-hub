@@ -13,7 +13,7 @@ import { requireAuth } from "@/lib/auth-utils";
 
 export default async function MostVisitedPage() {
   // Get authenticated user
-  const user = await requireAuth();
+  const session = await requireAuth();
 
   // Get most visited publishers based on page views
   const mostVisitedPublishers = await db
@@ -27,7 +27,7 @@ export default async function MostVisitedPage() {
     .from(publishers)
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
     .leftJoin(pageViews, eq(pageViews.url, publishers.website))
-    .where(eq(pageViews.userId, user.id))
+    .where(eq(pageViews.userId, session.user.id))
     .groupBy(publishers.id, publishers.name, publishers.website, provinces.name)
     .orderBy(desc(count(pageViews.id)))
     .limit(10);

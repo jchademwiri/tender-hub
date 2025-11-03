@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // Configure App Router-related experimental options
@@ -83,7 +84,7 @@ const nextConfig: NextConfig = {
               // Allow fonts from self only
               "font-src 'self'",
               // Allow connections to self and necessary external APIs
-              "connect-src 'self' https://api.resend.com",
+              "connect-src 'self' https://api.resend.com https://*.sentry.io",
               // Prevent framing
               "frame-ancestors 'none'",
               // Allow forms to submit to self
@@ -173,4 +174,49 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 };
 
-export default nextConfig;
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
+
+  // Suppresses source map uploading logs during build
+  silent: process.env.NODE_ENV === "production",
+  
+  // Upload source maps in production only
+  hideSourceMaps: process.env.NODE_ENV === "production",
+  
+  // Disable source map upload in development
+  disableServerWebpackPlugin: process.env.NODE_ENV === "development",
+  disableClientWebpackPlugin: process.env.NODE_ENV === "development",
+  
+  // Organization and project for Sentry
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  
+  // Auth token for uploading source maps
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  
+  // Release configuration
+  release: {
+    name: process.env.APP_VERSION || "unknown",
+  },
+  
+  // Additional webpack plugin options
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  disableLogger: process.env.NODE_ENV === "production",
+  
+  // Error reporting configuration
+  errorHandler: (err: Error) => {
+    console.warn("Sentry webpack plugin error:", err.message);
+  },
+};
+
+// Export the configuration with Sentry integration
+export default process.env.NODE_ENV === "production" && 
+               process.env.SENTRY_DSN && 
+               process.env.SENTRY_ORG && 
+               process.env.SENTRY_PROJECT &&
+               process.env.SENTRY_AUTH_TOKEN
+  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+  : nextConfig;

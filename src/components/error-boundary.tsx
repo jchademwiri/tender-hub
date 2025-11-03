@@ -1,155 +1,258 @@
 "use client";
 
-import { AlertTriangle, RefreshCw } from "lucide-react";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import React from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
-}
-
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
-  errorInfo?: ErrorInfo;
+  errorInfo?: React.ErrorInfo;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ComponentType<{
+    error: Error;
+    resetError: () => void;
+  }>;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+}
+
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return {
+      hasError: true,
+      error,
+    };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({ errorInfo });
-
-    // Log error for debugging
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log error to Sentry
+    Sentry.withScope((scope) => {
+      scope.setTag("error_boundary", true);
+      scope.setContext("error_info", {
+        componentStack: errorInfo.componentStack,
+        errorBoundary: this.constructor.name,
+      });
+      Sentry.captureException(error);
+    });
 
     // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
 
-    // In a real app, you might want to send this to an error reporting service
-    // like Sentry, LogRocket, or Bugsnag
-    this.logErrorToService(error, errorInfo);
+    this.setState({
+      error,
+      errorInfo,
+    });
   }
 
-  private logErrorToService = (error: Error, _errorInfo: ErrorInfo) => {
-    // This is where you would integrate with your error reporting service
-    // For now, we'll just log to console in development
-    if (process.env.NODE_ENV === "development") {
-      console.group("🚨 Error Boundary - Detailed Error Info");
-      console.error("Error:", error);
-      console.error("Error Info:", {});
-      console.error("Component Stack:", "");
-      console.groupEnd();
-    }
-  };
-
-  private handleReset = () => {
+  resetError = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
-  };
-
-  private handleReload = () => {
-    window.location.reload();
   };
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
+      // Use custom fallback if provided
       if (this.props.fallback) {
-        return this.props.fallback;
+        const FallbackComponent = this.props.fallback;
+        return (
+          <FallbackComponent
+            error={this.state.error!}
+            resetError={this.resetError}
+          />
+        );
       }
 
       // Default error UI
-      return (
-        <div className="min-h-[400px] flex items-center justify-center p-8">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="rounded-full bg-destructive/10 p-3">
-                <AlertTriangle className="h-8 w-8 text-destructive" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-foreground">
-                Something went wrong
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                An unexpected error occurred. This has been logged and we're
-                working to fix it.
-              </p>
-            </div>
-
-            {process.env.NODE_ENV === "development" && this.state.error && (
-              <details className="text-left bg-muted/50 p-4 rounded-lg border">
-                <summary className="cursor-pointer font-medium text-sm mb-2">
-                  Error Details (Development Only)
-                </summary>
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <strong>Error:</strong> {this.state.error.message}
-                  </div>
-                  {this.state.error.stack && (
-                    <div>
-                      <strong>Stack:</strong>
-                      <pre className="whitespace-pre-wrap mt-1 text-xs">
-                        {this.state.error.stack}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              </details>
-            )}
-
-            <div className="flex gap-3 justify-center">
-              <Button
-                variant="outline"
-                onClick={this.handleReset}
-                className="gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Try Again
-              </Button>
-              <Button onClick={this.handleReload} className="gap-2">
-                Reload Page
-              </Button>
-            </div>
-          </div>
-        </div>
-      );
+      return <DefaultErrorFallback error={this.state.error!} resetError={this.resetError} />;
     }
 
     return this.props.children;
   }
 }
 
-// Functional component wrapper for easier usage with hooks
-interface ErrorBoundaryWrapperProps {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
-  resetKeys?: Array<string | number>;
-  resetOnPropsChange?: boolean;
+/**
+ * Default error fallback component
+ */
+function DefaultErrorFallback({
+  error,
+  resetError,
+}: {
+  error: Error;
+  resetError: () => void;
+}) {
+  return (
+    <div className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
+      <div className="mb-6 rounded-full bg-red-100 p-4">
+        <AlertTriangle className="h-8 w-8 text-red-600" />
+      </div>
+      
+      <h2 className="mb-2 text-2xl font-semibold text-gray-900">
+        Something went wrong
+      </h2>
+      
+      <p className="mb-6 max-w-md text-gray-600">
+        We're sorry, but something unexpected happened. The error has been
+        reported and we'll look into it.
+      </p>
+
+      {process.env.NODE_ENV === "development" && (
+        <details className="mb-6 max-w-2xl">
+          <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+            Error Details (Development Only)
+          </summary>
+          <pre className="mt-2 overflow-auto rounded bg-gray-100 p-4 text-left text-xs text-gray-800">
+            {error.message}
+            {error.stack && `\n\n${error.stack}`}
+          </pre>
+        </details>
+      )}
+
+      <div className="flex gap-4">
+        <Button onClick={resetError} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Try Again
+        </Button>
+        
+        <Button
+          onClick={() => window.location.reload()}
+          variant="default"
+        >
+          Reload Page
+        </Button>
+      </div>
+    </div>
+  );
 }
 
-export function ErrorBoundaryWrapper({
-  children,
-  fallback,
-  onError,
-  resetKeys = [],
-  resetOnPropsChange = false,
-}: ErrorBoundaryWrapperProps) {
+/**
+ * Hook for handling async errors in components
+ */
+export function useErrorHandler() {
+  return React.useCallback((error: Error, errorInfo?: any) => {
+    Sentry.withScope((scope) => {
+      scope.setTag("async_error", true);
+      if (errorInfo) {
+        scope.setContext("error_info", errorInfo);
+      }
+      Sentry.captureException(error);
+    });
+  }, []);
+}
+
+/**
+ * Higher-order component for wrapping components with error boundary
+ */
+export function withErrorBoundary<P extends object>(
+  Component: React.ComponentType<P>,
+  errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">
+) {
+  const WrappedComponent = (props: P) => (
+    <ErrorBoundary {...errorBoundaryProps}>
+      <Component {...props} />
+    </ErrorBoundary>
+  );
+
+  WrappedComponent.displayName = `withErrorBoundary(${
+    Component.displayName || Component.name
+  })`;
+
+  return WrappedComponent;
+}
+
+/**
+ * Error boundary specifically for API errors
+ */
+export function APIErrorBoundary({ children }: { children: React.ReactNode }) {
   return (
-    <ErrorBoundary fallback={fallback} onError={onError}>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        Sentry.withScope((scope) => {
+          scope.setTag("error_type", "api");
+          scope.setContext("api_error_info", {
+            componentStack: errorInfo.componentStack,
+          });
+          Sentry.captureException(error);
+        });
+      }}
+      fallback={({ error, resetError }) => (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <h3 className="ml-2 text-sm font-medium text-red-800">
+              API Error
+            </h3>
+          </div>
+          <p className="mt-2 text-sm text-red-700">
+            Failed to load data. Please try again.
+          </p>
+          <Button
+            onClick={resetError}
+            variant="outline"
+            size="sm"
+            className="mt-3"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
+      )}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+/**
+ * Error boundary for form components
+ */
+export function FormErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        Sentry.withScope((scope) => {
+          scope.setTag("error_type", "form");
+          scope.setContext("form_error_info", {
+            componentStack: errorInfo.componentStack,
+          });
+          Sentry.captureException(error);
+        });
+      }}
+      fallback={({ error, resetError }) => (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <h3 className="ml-2 text-sm font-medium text-yellow-800">
+              Form Error
+            </h3>
+          </div>
+          <p className="mt-2 text-sm text-yellow-700">
+            There was an error with the form. Please refresh and try again.
+          </p>
+          <Button
+            onClick={resetError}
+            variant="outline"
+            size="sm"
+            className="mt-3"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reset Form
+          </Button>
+        </div>
+      )}
+    >
       {children}
     </ErrorBoundary>
   );

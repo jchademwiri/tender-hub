@@ -14,12 +14,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const _router = useRouter();
+  const router = useRouter();
 
   // Check for invitation acceptance message in URL
   useEffect(() => {
@@ -56,14 +57,11 @@ export default function SignInPage() {
     try {
       console.log("🔍 DEBUG: Attempting to sign in with:", email);
 
-      // TODO: Fix when auth client is properly configured
-      // const result = await authClient.signIn.email({
-      //   email,
-      //   password,
-      // });
-      throw new Error("Authentication not configured yet");
+      const result = await authClient.signIn.email({
+        email,
+        password,
+      });
 
-      /*
       console.log("🔍 DEBUG: Sign in result:", result);
 
       if (result.error) {
@@ -81,61 +79,65 @@ export default function SignInPage() {
         let actionGuidance = "";
         console.log("🔍 DEBUG: Processing error response");
 
-        // Check if error has a message property
-        if (
-          result.error &&
-          typeof result.error === "object" &&
-          result.error.message
-        ) {
-          errorMessage = result.error.message;
-          console.log(
-            "🔍 DEBUG: Error message from result.error.message:",
-            errorMessage,
-          );
-        }
-        // Handle specific error codes if available
-        else if (
-          result.error &&
-          typeof result.error === "object" &&
-          result.error.code
-        ) {
-          console.log("🔍 DEBUG: Error code:", result.error.code);
-          switch (result.error.code) {
-            case "INVALID_EMAIL_OR_PASSWORD":
-              errorMessage = "Invalid email or password";
-              actionGuidance =
-                "Double-check your email and password. If you forgot your password, contact your administrator.";
-              break;
-            case "EMAIL_NOT_VERIFIED":
-              errorMessage = "Please verify your email before signing in";
-              actionGuidance =
-                "Check your email for a verification link. If you didn't receive it, contact your administrator.";
-              console.log(
-                "⚠️ DEBUG: User email not verified - this could be the issue!",
-              );
-              break;
-            case "USER_NOT_FOUND":
-              errorMessage = "No account found with this email";
-              actionGuidance =
-                "Make sure you're using the email address from your invitation. If you haven't accepted an invitation yet, please do so first.";
-              console.log(
-                "⚠️ DEBUG: User not found - account may not have been created properly",
-              );
-              break;
-            case "TOO_MANY_REQUESTS":
-              errorMessage =
-                "Too many sign-in attempts. Please try again later";
-              actionGuidance =
-                "Wait a few minutes before trying again, or contact your administrator if this persists.";
-              break;
-            default:
-              errorMessage = `Authentication error: ${result.error.code}`;
-              actionGuidance =
-                "If this error persists, please contact your administrator.";
+        // Handle errors from the mock implementation
+        if (result.error === null) {
+          // Mock implementation - no error
+          console.log("🔍 DEBUG: No error in mock result");
+        } else if (result.error && typeof result.error === "object") {
+          // Check if error has a message property
+          if ('message' in result.error && result.error.message) {
+            errorMessage = result.error.message;
+            console.log(
+              "🔍 DEBUG: Error message from result.error.message:",
+              errorMessage,
+            );
+          }
+          // Handle specific error codes if available
+          else if ('code' in result.error && result.error.code) {
+            console.log("🔍 DEBUG: Error code:", result.error.code);
+            switch (result.error.code) {
+              case "INVALID_EMAIL_OR_PASSWORD":
+                errorMessage = "Invalid email or password";
+                actionGuidance =
+                  "Double-check your email and password. If you forgot your password, contact your administrator.";
+                break;
+              case "EMAIL_NOT_VERIFIED":
+                errorMessage = "Please verify your email before signing in";
+                actionGuidance =
+                  "Check your email for a verification link. If you didn't receive it, contact your administrator.";
+                console.log(
+                  "⚠️ DEBUG: User email not verified - this could be the issue!",
+                );
+                break;
+              case "USER_NOT_FOUND":
+                errorMessage = "No account found with this email";
+                actionGuidance =
+                  "Make sure you're using the email address from your invitation. If you haven't accepted an invitation yet, please do so first.";
+                console.log(
+                  "⚠️ DEBUG: User not found - account may not have been created properly",
+                );
+                break;
+              case "TOO_MANY_REQUESTS":
+                errorMessage =
+                  "Too many sign-in attempts. Please try again later";
+                actionGuidance =
+                  "Wait a few minutes before trying again, or contact your administrator if this persists.";
+                break;
+              default:
+                errorMessage = `Authentication error: ${result.error.code}`;
+                actionGuidance =
+                  "If this error persists, please contact your administrator.";
+            }
+          } else {
+            console.log(
+              "🔍 DEBUG: Error structure:",
+              typeof result.error,
+              result.error,
+            );
           }
         } else {
           console.log(
-            "🔍 DEBUG: Error structure:",
+            "🔍 DEBUG: Unknown error structure:",
             typeof result.error,
             result.error,
           );
@@ -146,11 +148,11 @@ export default function SignInPage() {
         });
       } else {
         console.log("✅ DEBUG: Sign in successful");
-        // The proxy middleware will handle suspended user checking and redirection
+        
+        // Redirect to home page and let middleware handle role-based redirection
         toast.success("Welcome back!");
-        router.push("/dashboard");
+        router.push("/");
       }
-      */
     } catch (error) {
       console.error("❌ DEBUG: Sign in exception:", error);
       toast.error("Sign in failed", {
