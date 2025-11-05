@@ -11,10 +11,7 @@ import { db } from "@/db";
 import { pageViews, provinces, publishers } from "@/db/schema";
 
 export default async function MostVisitedPage() {
-  // Mock user ID for demo purposes
-  const mockUserId = "demo-user";
-
-  // Get most visited publishers based on page views
+  // Get most visited publishers based on page views (no user filtering)
   const mostVisitedPublishers = await db
     .select({
       id: publishers.id,
@@ -26,7 +23,6 @@ export default async function MostVisitedPage() {
     .from(publishers)
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
     .leftJoin(pageViews, eq(pageViews.url, publishers.website))
-    .where(eq(pageViews.userId, mockUserId))
     .groupBy(publishers.id, publishers.name, publishers.website, provinces.name)
     .orderBy(desc(count(pageViews.id)))
     .limit(10);
@@ -39,7 +35,7 @@ export default async function MostVisitedPage() {
             Most Visited Publishers
           </h1>
           <p className="text-muted-foreground">
-            Publishers you've visited most frequently
+            Publishers visited most frequently
           </p>
         </div>
 

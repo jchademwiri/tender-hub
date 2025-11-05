@@ -3,6 +3,7 @@
 import {
   Bookmark,
   BookOpen,
+  CheckCircle,
   Command,
   Database,
   FileText,
@@ -34,7 +35,7 @@ interface RoleBasedSidebarProps extends React.ComponentProps<typeof Sidebar> {
     email: string;
     avatar: string;
     role: string;
-  };
+  } | null;
 }
 
 // Role-based navigation filtering
@@ -71,11 +72,11 @@ const getNavigationItems = (userRole: string) => {
         url: "/manager/team",
         icon: Users,
       },
-      // {
-      //   title: "Approvals",
-      //   url: "/manager/approvals",
-      //   icon: CheckCircle,
-      // },
+      {
+        title: "Approvals",
+        url: "/manager/approvals",
+        icon: CheckCircle,
+      },
       {
         title: "Provinces",
         url: "/manager/provinces",
@@ -159,12 +160,13 @@ function RoleSpecificHeader({ role }: { role: string }) {
 }
 
 export function RoleBasedSidebar({ user, ...props }: RoleBasedSidebarProps) {
-  const navigationItems = getNavigationItems(user.role);
+  const userRole = user?.role || "user";
+  const navigationItems = getNavigationItems(userRole);
 
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
-        <RoleSpecificHeader role={user.role} />
+        <RoleSpecificHeader role={userRole} />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -181,7 +183,11 @@ export function RoleBasedSidebar({ user, ...props }: RoleBasedSidebarProps) {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser user={user || {
+          name: "Guest User",
+          email: "guest@example.com",
+          avatar: "https://avatar.vercel.sh/guest@example.com"
+        }} />
       </SidebarFooter>
     </Sidebar>
   );

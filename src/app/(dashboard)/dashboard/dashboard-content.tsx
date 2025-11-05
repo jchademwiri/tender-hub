@@ -31,7 +31,7 @@ interface Publisher {
 }
 
 interface DashboardContentProps {
-  user: User;
+  user: User | null;
   provinceCount: number;
   publisherCount: number;
   recentPublishers: Publisher[];
@@ -48,6 +48,8 @@ export function DashboardContent({
 
   // Check if user has completed onboarding
   useEffect(() => {
+    if (!user?.id) return;
+    
     const onboardingStatus = localStorage.getItem(
       `onboarding-completed-${user.id}`,
     );
@@ -62,21 +64,33 @@ export function DashboardContent({
       setTourCompleted(false);
       setShowTour(false);
     }
-  }, [user.id]);
+  }, [user?.id]);
 
   const handleTourComplete = () => {
-    localStorage.setItem(`onboarding-completed-${user.id}`, "true");
-    setTourCompleted(true);
-    setShowTour(false);
+    if (user) {
+      localStorage.setItem(`onboarding-completed-${user.id}`, "true");
+      setTourCompleted(true);
+      setShowTour(false);
+    }
   };
 
   const handleTourSkip = () => {
-    localStorage.setItem(`onboarding-completed-${user.id}`, "skipped");
-    setTourCompleted(false);
-    setShowTour(false);
+    if (user) {
+      localStorage.setItem(`onboarding-completed-${user.id}`, "skipped");
+      setTourCompleted(false);
+      setShowTour(false);
+    }
   };
 
   const getRoleSpecificContent = () => {
+    if (!user) {
+      return {
+        title: "Dashboard",
+        description: "Overview of provinces and publishers in the system",
+        features: [],
+      };
+    }
+
     switch (user.role) {
       case "admin":
         return {
@@ -135,7 +149,7 @@ export function DashboardContent({
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight">
-                  Welcome back, {user.name}!
+                  {user ? `Welcome back, ${user.name}!` : "Welcome to Dashboard"}
                 </h2>
                 <p className="text-muted-foreground mt-1">
                   {roleContent.description}
@@ -143,7 +157,7 @@ export function DashboardContent({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  {formatUserRole(user.role || "user")}
+                  {user ? formatUserRole(user.role || "user") : "Guest"}
                 </Badge>
                 {tourCompleted && (
                   <Badge variant="outline" className="flex items-center gap-1">
@@ -281,7 +295,7 @@ export function DashboardContent({
       </div>
 
       {/* Onboarding Tour */}
-      {showTour && (
+      {showTour && user && (
         <OnboardingTour
           userRole={user.role || "user"}
           userName={user.name}

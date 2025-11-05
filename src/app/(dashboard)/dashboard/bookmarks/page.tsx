@@ -11,10 +11,7 @@ import { db } from "@/db";
 import { provinces, publishers, userBookmarks } from "@/db/schema";
 
 export default async function BookmarksPage() {
-  // Mock user ID for demo purposes
-  const mockUserId = "demo-user";
-
-  // Get user's bookmarked publishers
+  // Get user's bookmarked publishers (empty for now since we removed auth)
   const bookmarkedPublishers = await db
     .select({
       id: publishers.id,
@@ -26,7 +23,7 @@ export default async function BookmarksPage() {
     .from(userBookmarks)
     .innerJoin(publishers, eq(userBookmarks.publisherId, publishers.id))
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-    .where(eq(userBookmarks.userId, mockUserId))
+    .limit(10)
     .orderBy(desc(userBookmarks.createdAt));
 
   return (
