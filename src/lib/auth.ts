@@ -88,18 +88,18 @@ export const auth = betterAuth({
   
   hooks: {
     user: {
-      created: async (user) => {
+      created: async (userData) => {
         // Set role based on email when user is created
-        const role = getDefaultRoleFromEmail(user.email);
+        const role = getDefaultRoleFromEmail(userData.email);
         
         // Update user with the determined role
-        await db.update(user as any).set({ 
+        await db.update(user).set({ 
           role: role,
           status: 'active',
           banned: false,
-        }).where(eq((user as any).id, user.id));
+        }).where(eq(user.id, userData.id));
         
-        return user;
+        return userData;
       },
     },
     session: {

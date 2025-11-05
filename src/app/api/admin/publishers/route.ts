@@ -6,8 +6,12 @@ import { requireAdminAPI } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("Publishers API: Starting request");
     const authResult = await requireAdminAPI();
+    console.log("Publishers API: Auth result:", { hasError: !!authResult.error, hasSession: !!authResult.session });
+    
     if (authResult.error) {
+      console.log("Publishers API: Returning auth error");
       return authResult.error;
     }
 
