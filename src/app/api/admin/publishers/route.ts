@@ -2,11 +2,22 @@ import { desc, eq, ilike } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { provinces, publishers } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdminAPI } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
   try {
-    const _user = await requireAdmin();
+    console.log("Publishers API: Starting request");
+    const authResult = await requireAdminAPI();
+    // Narrow authResult safely for logging
+    console.log("Publishers API: Auth result:", {
+      hasError: "error" in authResult,
+      hasSession: "session" in authResult && !!authResult.session,
+    });
+
+    if ("error" in authResult) {
+      console.log("Publishers API: Returning auth error");
+      return authResult.error;
+    }
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
@@ -86,7 +97,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const _user = await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
 
     const formData = await request.formData();
     const name = formData.get("name") as string;

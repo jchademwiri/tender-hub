@@ -36,25 +36,16 @@ export default function AdminTeamManagement() {
   const queryClient = useQueryClient();
 
   // Mock current user - in real app this would come from auth context
-  const currentUser = {
-    id: "admin-1",
-    name: "Admin User",
-    email: "admin@example.com",
-    emailVerified: true,
-    image: null,
-    role: "admin" as const,
-    banned: null,
-    banReason: null,
-    banExpires: null,
-    status: "active" as const,
-    invitedBy: null,
-    invitedAt: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    password: null, // Added missing password property
-  };
+  const currentUser = null; // Removed hardcoded mock user
 
-  const userPermissions = checkPermission(currentUser);
+  const userPermissions = currentUser ? checkPermission(currentUser) : {
+    canInviteUsers: () => false,
+    hasRole: (role: string) => false,
+    hasRoleOrHigher: (role: string) => false,
+    canInviteAdmin: () => false,
+    canInviteManager: () => false,
+    canDeleteUser: (user: any) => false,
+  };
 
   // Handle optimistic updates from TeamMemberTable
   const handleOptimisticUpdate = useCallback(
@@ -232,7 +223,7 @@ export default function AdminTeamManagement() {
             canInvite={userPermissions.canInviteUsers()}
             canEdit={userPermissions.hasRole("admin")}
             canSuspend={userPermissions.hasRoleOrHigher("manager")}
-            canDelete={userPermissions.canDeleteUser(currentUser)}
+            canDelete={currentUser ? userPermissions.canDeleteUser(currentUser) : false}
             showAnalytics={true}
             enablePolling={true}
             onOptimisticUpdate={handleOptimisticUpdate}

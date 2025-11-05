@@ -2,17 +2,24 @@ import { desc, eq, ilike } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { provinces } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdminAPI } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
   try {
-    const _user = await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if ("error" in authResult) {
+      console.log('[api/admin/provinces] auth error', authResult.error);
+      return authResult.error;
+    }
+  // incoming query params
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = (page - 1) * limit;
+
+  // query params: { search, page, limit, offset }
 
     let provincesList;
 
@@ -32,10 +39,11 @@ export async function GET(request: NextRequest) {
         .limit(limit)
         .offset(offset);
     }
-    const totalCount = await db.$count(provinces);
+  const totalCount = await db.$count(provinces);
 
     // TODO: Add audit logging for province viewing
 
+    // Return data and include pagination metadata
     return NextResponse.json({
       provinces: provincesList,
       pagination: {
@@ -56,7 +64,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const _user = await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if ("error" in authResult) {
+      console.log('[api/admin/provinces] auth error', authResult.error);
+      return authResult.error;
+    }
 
     const formData = await request.formData();
     const name = formData.get("name") as string;

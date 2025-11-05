@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 /**
  * TODO: Manager Dashboard Implementation Checklist
@@ -47,7 +50,22 @@ import {
  * [ ] Team member achievements
  */
 
-export default function ManagerDashboard() {
+export default async function ManagerDashboard() {
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect to sign-in if not authenticated
+  if (!session?.user) {
+    redirect('/sign-in');
+  }
+
+  // Check if user has manager or admin role
+  if (!['admin', 'manager'].includes(session.user.role || '')) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="space-y-8">
       <div>

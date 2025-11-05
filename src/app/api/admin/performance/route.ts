@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdminAPI } from "@/lib/auth-utils";
 import { performanceMonitor, getPerformanceHealth } from "@/lib/performance-monitor";
 import { getCacheHealth, cacheInvalidator } from "@/lib/cache-production";
 
@@ -15,7 +15,10 @@ import { getCacheHealth, cacheInvalidator } from "@/lib/cache-production";
 export async function GET(request: NextRequest) {
   try {
     // Require admin authentication
-    await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
 
     const { searchParams } = new URL(request.url);
     const timeRange = searchParams.get('timeRange') || '1h';
@@ -97,7 +100,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Require admin authentication
-    await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if ("error" in authResult) {
+      return authResult.error;
+    }
 
     const body = await request.json();
     const { action } = body;

@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
@@ -10,6 +12,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { auth } from "@/lib/auth";
 
 /**
  * TODO: Manager Role Implementation Checklist
@@ -53,29 +56,29 @@ export default async function ManagerLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Enable manager authentication check
-  const { requireManager } = await import("@/lib/auth-utils");
-  const session = await requireManager();
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  const userData = {
-    name: session.user.name || "Manager",
-    email: session.user.email,
-    avatar: session.user.image || `https://avatar.vercel.sh/${session.user.email}`,
-    role: session.user.role || "manager",
-  };
+  // Redirect to sign-in if not authenticated
+  if (!session?.user) {
+    redirect('/sign-in');
+  }
 
+  // Check if user has manager or admin role
+  if (!['admin', 'manager'].includes(session.user.role || '')) {
+    redirect('/dashboard');
+  }
+  
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <RoleBasedSidebar user={userData} />
+        <RoleBasedSidebar user={session.user} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              />
               <DynamicBreadcrumb />
             </div>
           </header>

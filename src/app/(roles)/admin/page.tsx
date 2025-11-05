@@ -1,5 +1,7 @@
 import { subDays } from "date-fns";
 import { count, desc, eq, gte } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/db";
 import { auditLog, invitation, user } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { auth } from "@/lib/auth";
 
 /**
  * TODO: Admin Dashboard Implementation Checklist
@@ -54,8 +56,20 @@ import { requireAuth } from "@/lib/auth-utils";
  */
 
 export default async function AdminDashboard() {
-  // Get authenticated user
-  const _currentUser = await requireAuth();
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect to sign-in if not authenticated
+  if (!session?.user) {
+    redirect('/sign-in');
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== 'admin') {
+    redirect('/dashboard');
+  }
 
   // Get real statistics from database
   const [totalUsers] = await db.select({ count: count() }).from(user);

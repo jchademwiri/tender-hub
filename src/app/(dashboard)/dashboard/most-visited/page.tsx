@@ -9,13 +9,9 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/db";
 import { pageViews, provinces, publishers } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
 
 export default async function MostVisitedPage() {
-  // Get authenticated user
-  const session = await requireAuth();
-
-  // Get most visited publishers based on page views
+  // Get most visited publishers based on page views (no user filtering)
   const mostVisitedPublishers = await db
     .select({
       id: publishers.id,
@@ -27,7 +23,6 @@ export default async function MostVisitedPage() {
     .from(publishers)
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
     .leftJoin(pageViews, eq(pageViews.url, publishers.website))
-    .where(eq(pageViews.userId, session.user.id))
     .groupBy(publishers.id, publishers.name, publishers.website, provinces.name)
     .orderBy(desc(count(pageViews.id)))
     .limit(10);
@@ -40,7 +35,7 @@ export default async function MostVisitedPage() {
             Most Visited Publishers
           </h1>
           <p className="text-muted-foreground">
-            Publishers you've visited most frequently
+            Publishers visited most frequently
           </p>
         </div>
 

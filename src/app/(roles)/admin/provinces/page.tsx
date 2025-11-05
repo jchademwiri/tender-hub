@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import ProvinceForm from "@/components/ProvinceForm";
 import {
@@ -65,6 +65,7 @@ export default function AdminProvincesPage() {
   const [editingProvince, setEditingProvince] = useState<Province | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchProvinces = async (search = "", page = 1) => {
     try {
@@ -73,7 +74,7 @@ export default function AdminProvincesPage() {
         page: page.toString(),
         limit: "50",
       });
-      if (search) params.set("search", search);
+      if (search && search.trim()) params.set("search", search);
 
       const response = await fetch(`/api/admin/provinces?${params}`);
       if (response.ok) {
@@ -81,6 +82,8 @@ export default function AdminProvincesPage() {
         setProvinces(data.provinces);
         setPagination(data.pagination);
       } else {
+        const err = await response.text().catch(() => null);
+        console.error('[page:admin/provinces] fetch response not ok', { status: response.status, body: err });
         toast.error("Failed to fetch provinces");
       }
     } catch (error) {
@@ -90,6 +93,9 @@ export default function AdminProvincesPage() {
       setIsLoading(false);
     }
   };
+
+  // debounce ref for search
+  const searchTimeout = useRef<number | null>(null);
 
   const handleCreateProvince = async (_prevState: any, formData: FormData) => {
     try {
@@ -168,86 +174,109 @@ export default function AdminProvincesPage() {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    fetchProvinces(value);
+    // clear existing timeout
+    if (searchTimeout.current) {
+      window.clearTimeout(searchTimeout.current);
+    }
+    // set new timeout
+    searchTimeout.current = window.setTimeout(() => {
+      fetchProvinces(value);
+    }, 300) as unknown as number;
   };
 
   useEffect(() => {
+    // only run on mount
     fetchProvinces();
-  }, [fetchProvinces]);
+    return () => {
+      if (searchTimeout.current) window.clearTimeout(searchTimeout.current);
+    };
+  }, []);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 p-4 pt-0">
+      <div className="flex flex-col space-y-4">
         <div>
-          <h1 className="text-3xl font-bold">Province Management</h1>
+          <h1 className="text-2xl font-semibold">Province Management</h1>
           <p className="text-muted-foreground">
             Manage provinces for the Tender Hub system
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Province
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create Province</DialogTitle>
-              <DialogDescription>
-                Add a new province to the system.
-              </DialogDescription>
-            </DialogHeader>
+        <div className="flex items-center gap-4">
+          {pagination && (
+            <p className="text-sm text-muted-foreground">
+              {pagination.total} {pagination.total === 1 ? 'province' : 'provinces'} total
+            </p>
+          )}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Province
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create Province</DialogTitle>
+                <DialogDescription>
+                  Add a new province to the system.
+                </DialogDescription>
+              </DialogHeader>
             <ProvinceForm action={handleCreateProvince} />
           </DialogContent>
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Provinces</CardTitle>
-          <CardDescription>
-            A list of all provinces in the system.
-          </CardDescription>
+      <Card className="bg-background">
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Provinces</CardTitle>
+              <CardDescription>
+                A list of all provinces in the system
+              </CardDescription>
+            </div>
+          </div>
           <div className="flex items-center space-x-2">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search provinces..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-8"
+                className="pl-8 w-full"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Loading provinces...</div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-sm text-muted-foreground animate-pulse">
+                Loading provinces...
+              </div>
             </div>
           ) : provinces.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="text-muted-foreground mb-4">
-                No provinces found
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-sm text-muted-foreground mb-4">
+                {searchTerm ? "No provinces found matching your search" : "No provinces have been added yet"}
               </div>
               <Button
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add First Province
+                {searchTerm ? "Create New Province" : "Add First Province"}
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
+                  <TableHead className="w-[200px]">Name</TableHead>
+                  <TableHead className="w-[100px]">Code</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[120px]">Created</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -257,12 +286,12 @@ export default function AdminProvincesPage() {
                       {province.name}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{province.code}</Badge>
+                      <Badge variant="outline">{province.code}</Badge>
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">
+                    <TableCell className="max-w-md truncate">
                       {province.description || "No description"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-muted-foreground">
                       {new Date(province.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
@@ -379,6 +408,7 @@ export default function AdminProvincesPage() {
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

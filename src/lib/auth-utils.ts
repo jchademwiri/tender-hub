@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -75,9 +76,64 @@ export async function requireRole(allowedRoles: string[]) {
 }
 
 export async function requireAdmin() {
-  return requireRole(["admin", "owner"]);
+  return requireRole(["admin"]);
 }
 
 export async function requireManager() {
-  return requireRole(["admin", "owner", "manager"]);
+  return requireRole(["admin", "manager"]);
+}
+
+// API-specific auth functions that return NextResponse for better error handling
+export async function requireAuthAPI() {
+  try {
+    console.log("requireAuthAPI: Starting authentication check");
+    const session = await getSessionWithRole();
+    console.log("requireAuthAPI: Session result:", { 
+      hasSession: !!session, 
+      hasUser: !!session?.user, 
+      userRole: session?.user?.role 
+    });
+    
+    if (!session) {
+      console.log("requireAuthAPI: No session found, returning 401");
+      return { error: NextResponse.json({ error: "Authentication required" }, { status: 401 }) };
+    }
+    return { session };
+  } catch (error) {
+    console.error("requireAuthAPI: Auth error:", error);
+    return { error: NextResponse.json({ error: "Authentication failed" }, { status: 401 }) };
+  }
+}
+
+export async function requireRoleAPI(allowedRoles: string[]) {
+  console.log("requireRoleAPI: Checking roles:", allowedRoles);
+  const authResult = await requireAuthAPI();
+  if (authResult.error) {
+    console.log("requireRoleAPI: Auth failed, returning error");
+    return authResult;
+  }
+  
+  const { session } = authResult;
+  console.log("requireRoleAPI: User role:", session.user.role, "Allowed:", allowedRoles);
+  
+  if (!allowedRoles.includes(session.user.role)) {
+    console.log("requireRoleAPI: Role not allowed, returning 403");
+    return { 
+      error: NextResponse.json(
+        { error: `Access denied. Required roles: ${allowedRoles.join(", ")}` }, 
+        { status: 403 }
+      ) 
+    };
+  }
+  
+  console.log("requireRoleAPI: Role check passed");
+  return { session };
+}
+
+export async function requireAdminAPI() {
+  return requireRoleAPI(["admin"]);
+}
+
+export async function requireManagerAPI() {
+  return requireRoleAPI(["admin", "manager"]);
 }

@@ -1,6 +1,23 @@
 import Link from "next/link";
 
+function getCurrentUser() {
+  if (typeof window !== 'undefined') {
+    const userData = localStorage.getItem('tender-hub-user');
+    if (userData) {
+      try {
+        return JSON.parse(userData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }
+  return null;
+}
+
 export default function Home() {
+  // Get user from localStorage (client-side only)
+  const user = getCurrentUser();
+
   return (
     <div className="space-y-16">
       {/* Hero Section */}
@@ -18,12 +35,21 @@ export default function Home() {
           >
             Browse Publishers
           </Link>
-          <Link
-            href="/sign-in"
-            className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer"
-          >
-            Sign In
-          </Link>
+          {user ? (
+            <Link
+              href={getDashboardUrl(user.role)}
+              className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </section>
 
@@ -77,4 +103,16 @@ export default function Home() {
       </section>
     </div>
   );
+}
+
+function getDashboardUrl(role: string): string {
+  switch (role) {
+    case "admin":
+      return "/admin";
+    case "manager":
+      return "/manager";
+    case "user":
+    default:
+      return "/dashboard";
+  }
 }

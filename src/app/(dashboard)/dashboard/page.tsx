@@ -1,12 +1,32 @@
 import { count, desc, eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { provinces, publishers } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { auth } from "@/lib/auth";
 import { DashboardContent } from "./dashboard-content";
 
 export default async function Dashboard() {
-  // Get authenticated user
-  const session = await requireAuth();
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect to sign-in if not authenticated
+  if (!session?.user) {
+    redirect('/sign-in');
+  }
+
+  const user = session.user;
+
+  // Role-based redirects
+  if (user.role === 'admin') {
+    redirect('/admin');
+  }
+  
+  if (user.role === 'manager') {
+    redirect('/manager');
+  }
 
   // Get dashboard data
   const [provinceCount] = await db.select({ count: count() }).from(provinces);
@@ -26,17 +46,9 @@ export default async function Dashboard() {
     .orderBy(desc(publishers.createdAt))
     .limit(5);
 
-  // Serialize user object to prevent serialization errors
-  const serializedUser = {
-    id: session.user.id,
-    name: session.user.name,
-    email: session.user.email,
-    role: session.user.role,
-  };
-
   return (
     <DashboardContent
-      user={serializedUser}
+      user={user}
       provinceCount={provinceCount.count}
       publisherCount={publisherCount.count}
       recentPublishers={recentPublishers}

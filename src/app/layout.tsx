@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { QueryProvider } from "@/components/query-provider";
+import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { VisitTrackerProvider } from "@/contexts/visit-tracker-context";
 
@@ -38,10 +39,12 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <QueryProvider>
-            <VisitTrackerProvider>
-              <main className="">{children}</main>
-              <Toaster />
-            </VisitTrackerProvider>
+            <SessionProvider>
+              <VisitTrackerProvider>
+                <main className="">{children}</main>
+                <Toaster />
+              </VisitTrackerProvider>
+            </SessionProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

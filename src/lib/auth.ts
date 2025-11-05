@@ -1,97 +1,124 @@
-// Auth configuration for better-auth v1.3.27 compatibility
-// Simplified to avoid API compatibility issues while maintaining core functionality
+import * as BetterAuthModule from "better-auth";
+// Support both named and default exports from the third-party package
+const betterAuth = (BetterAuthModule as any).betterAuth ?? (BetterAuthModule as any).default ?? BetterAuthModule;
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { db } from "@/db";
+import { user, session, account, verification } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-import { NextRequest } from "next/server";
-
-export const auth = {
-  // Mock configuration for compatibility
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  secret: process.env.BETTER_AUTH_SECRET || "dev-secret",
-  // Mock handler for API routes
-  handler: (request: NextRequest) => {
-    // Return a mock response for better-auth API endpoints
-    return new Response(JSON.stringify({ error: "Mock auth endpoint" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
-  },
-  // Mock API for compatibility
-  api: {
-    getSession: async ({ headers }: { headers: Headers }) => {
-      // Mock session - return a proper user object for testing
-      return {
-        user: {
-          id: "mock-user-id",
-          email: "mock@example.com",
-          name: "Mock User",
-          role: "admin"
-        },
-        session: {
-          id: "mock-session-id",
-          userId: "mock-user-id"
-        }
-      };
-    },
-    getUser: async ({ headers }: { headers: Headers }) => {
-      return {
-        user: {
-          id: "mock-user-id",
-          email: "mock@example.com",
-          name: "Mock User",
-          role: "admin"
-        }
-      };
-    },
-    updateUser: async ({ headers, body }: { headers: Headers; body: any }) => {
-      return {
-        user: {
-          id: "mock-user-id",
-          email: "mock@example.com",
-          name: "Mock User",
-          role: "admin"
-        },
-        error: null
-      };
-    },
-    signInEmail: async ({ headers, body }: { headers: Headers; body: any }) => {
-      return {
-        user: {
-          id: "mock-user-id",
-          email: "mock@example.com",
-          name: "Mock User",
-          role: "admin"
-        },
-        error: null
-      };
-    },
-    signUpEmail: async ({ headers, body }: { headers: Headers; body: any }) => {
-      return {
-        user: {
-          id: "mock-user-id",
-          email: "mock@example.com",
-          name: "Mock User",
-          role: "admin"
-        },
-        error: null
-      };
-    },
-    signOut: async ({ headers }: { headers: Headers }) => {
-      return { error: null };
-    }
+// Helper function to determine role from email
+function getDefaultRoleFromEmail(email: string): "owner" | "admin" | "manager" | "user" {
+  const [username] = email.split('@');
+  const lowerUsername = username.toLowerCase();
+  
+  if (lowerUsername.includes('admin')) {
+    return 'admin';
+  } else if (lowerUsername.includes('manager')) {
+    return 'manager';
   }
-};
+  return 'user';
+}
 
-// Export auth client methods with fallbacks
-export const signOut = () => Promise.resolve();
-export const signIn = () => Promise.resolve();
-export const signUp = () => Promise.resolve();
-
-// Export API methods for better-auth v1.3.27 compatibility
-export const createAuthClient = () => ({});
-export const getSession = () => ({});
-export const getUser = () => ({});
-export const updateUser = () => ({});
-export const signInEmail = () => ({});
-export const signUpEmail = () => ({});
-export const signOutAction = () => ({});
-export const getSessionAction = () => ({});
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: {
+      user,
+      session,
+      account,
+      verification,
+    },
+  }),
+  
+  emailAndPassword: {
+    enabled: true,
+    autoSignIn: true,
+  },
+  
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
+  },
+  
+  user: {
+  additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false, // Don't allow direct input
+      },
+      status: {
+        type: "string",
+        required: false,
+        defaultValue: "active",
+        input: false,
+      },
+      banned: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+      banReason: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      banExpires: {
+        type: "date",
+        required: false,
+        input: false,
+      },
+      invitedBy: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      invitedAt: {
+        type: "date",
+        required: false,
+        input: false,
+      },
+    },
+  },
+  
+    hooks: {
+    user: {
+      created: async (userData: any) => {
+        // Set role based on email when user is created
+        const role = getDefaultRoleFromEmail(userData.email);
+        
+        // Update user with the determined role
+        await db.update(user).set({ 
+          role: role,
+          status: 'active',
+          banned: false,
+        }).where(eq(user.id, userData.id));
+        
+        return userData;
+      },
+    },
+    session: {
+      created: async (session: any) => {
+        console.log("Session created:", session.session?.id);
+        return session;
+      },
+    },
+  },
+  
+  advanced: {
+    generateId: () => {
+      return `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    },
+  },
+  
+  plugins: [
+    nextCookies(), // Enable automatic cookie handling for server actions
+  ],
+});

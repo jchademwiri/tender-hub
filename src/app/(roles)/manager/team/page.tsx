@@ -33,25 +33,16 @@ export default function ManagerTeamManagement() {
   const queryClient = useQueryClient();
 
   // Mock current user - in real app this would come from auth context
-  const currentUser = {
-    id: "manager-1",
-    name: "Manager User",
-    email: "manager@example.com",
-    emailVerified: true,
-    image: null,
-    role: "manager" as const,
-    banned: null,
-    banReason: null,
-    banExpires: null,
-    status: "active" as const,
-    invitedBy: null,
-    invitedAt: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    password: null, // Added missing password property
-  };
+  const currentUser = null; // Removed hardcoded mock user
 
-  const userPermissions = checkPermission(currentUser);
+  const userPermissions = currentUser ? checkPermission(currentUser) : {
+    canInviteUsers: () => false,
+    hasRole: (role: string) => false,
+    hasRoleOrHigher: (role: string) => false,
+    canInviteAdmin: () => false,
+    canInviteManager: () => false,
+    canDeleteUser: (user: any) => false,
+  };
 
   // Handle optimistic updates from TeamMemberTable
   const handleOptimisticUpdate = useCallback(
