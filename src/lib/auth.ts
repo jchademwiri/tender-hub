@@ -1,4 +1,6 @@
-import { betterAuth } from "better-auth";
+import * as BetterAuthModule from "better-auth";
+// Support both named and default exports from the third-party package
+const betterAuth = (BetterAuthModule as any).betterAuth ?? (BetterAuthModule as any).default ?? BetterAuthModule;
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
@@ -44,7 +46,7 @@ export const auth = betterAuth({
   },
   
   user: {
-    additionalFields: {
+  additionalFields: {
       role: {
         type: "string",
         required: false,
@@ -86,9 +88,9 @@ export const auth = betterAuth({
     },
   },
   
-  hooks: {
+    hooks: {
     user: {
-      created: async (userData) => {
+      created: async (userData: any) => {
         // Set role based on email when user is created
         const role = getDefaultRoleFromEmail(userData.email);
         
@@ -103,8 +105,8 @@ export const auth = betterAuth({
       },
     },
     session: {
-      created: async (session) => {
-        console.log("Session created:", session.session.id);
+      created: async (session: any) => {
+        console.log("Session created:", session.session?.id);
         return session;
       },
     },

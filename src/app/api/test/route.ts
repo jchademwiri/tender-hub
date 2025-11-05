@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
         userId: session?.user?.id || null,
       };
     } catch (error) {
-      authTest = { error: "Auth test failed", message: error.message };
+      const message = error instanceof Error ? error.message : String(error);
+      authTest = { error: "Auth test failed", message };
     }
     
     return NextResponse.json({
@@ -31,8 +32,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Test API error:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Test API failed", message: error.message },
+      { error: "Test API failed", message },
       { status: 500 }
     );
   }

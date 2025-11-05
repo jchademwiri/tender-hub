@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import ProvinceForm from "@/components/ProvinceForm";
 import {
@@ -82,6 +82,8 @@ export default function AdminProvincesPage() {
         setProvinces(data.provinces);
         setPagination(data.pagination);
       } else {
+        const err = await response.text().catch(() => null);
+        console.error('[page:admin/provinces] fetch response not ok', { status: response.status, body: err });
         toast.error("Failed to fetch provinces");
       }
     } catch (error) {
@@ -91,6 +93,9 @@ export default function AdminProvincesPage() {
       setIsLoading(false);
     }
   };
+
+  // debounce ref for search
+  const searchTimeout = useRef<number | null>(null);
 
   const handleCreateProvince = async (_prevState: any, formData: FormData) => {
     try {
@@ -169,29 +174,37 @@ export default function AdminProvincesPage() {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    const debounceTimeout = setTimeout(() => {
+    // clear existing timeout
+    if (searchTimeout.current) {
+      window.clearTimeout(searchTimeout.current);
+    }
+    // set new timeout
+    searchTimeout.current = window.setTimeout(() => {
       fetchProvinces(value);
-    }, 300);
-    return () => clearTimeout(debounceTimeout);
+    }, 300) as unknown as number;
   };
 
   useEffect(() => {
+    // only run on mount
     fetchProvinces();
-  }, [fetchProvinces]);
+    return () => {
+      if (searchTimeout.current) window.clearTimeout(searchTimeout.current);
+    };
+  }, []);
 
   return (
-    <div className="flex-1">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex-1 space-y-4 p-4 pt-0">
+      <div className="flex flex-col space-y-4">
         <div>
           <h1 className="text-2xl font-semibold">Province Management</h1>
           <p className="text-muted-foreground">
             Manage provinces for the Tender Hub system
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {pagination && (
             <p className="text-sm text-muted-foreground">
-              Showing {provinces.length} of {pagination.total} provinces
+              {pagination.total} {pagination.total === 1 ? 'province' : 'provinces'} total
             </p>
           )}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -223,8 +236,8 @@ export default function AdminProvincesPage() {
               </CardDescription>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative max-w-sm flex-1">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search provinces..."

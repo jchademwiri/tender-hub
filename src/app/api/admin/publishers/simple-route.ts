@@ -87,8 +87,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Simple Publishers API: Error:", error);
+    const details = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to fetch publishers", details: error.message },
+      { error: "Failed to fetch publishers", details },
       { status: 500 }
     );
   }

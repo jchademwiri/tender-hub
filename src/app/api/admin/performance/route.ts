@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     // Require admin authentication
     const authResult = await requireAdminAPI();
-    if (authResult.error) {
+    if ("error" in authResult) {
       return authResult.error;
     }
 
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   try {
     // Require admin authentication
     const authResult = await requireAdminAPI();
-    if (authResult.error) {
+    if ("error" in authResult) {
       return authResult.error;
     }
 

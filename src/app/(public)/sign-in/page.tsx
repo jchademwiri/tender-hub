@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +20,20 @@ export default function SignInPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  // Get redirect URL from search params or default based on role
+  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Read callbackUrl from the browser location on the client
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      setCallbackUrl(sp.get('callbackUrl'));
+    } catch (e) {
+      setCallbackUrl(null);
+    }
+  }, []);
+
+  // Get redirect URL from provided callbackUrl state or default based on role
   const getRedirectUrl = (userRole: string) => {
-    const callbackUrl = searchParams.get('callbackUrl');
     if (callbackUrl) {
       return callbackUrl;
     }

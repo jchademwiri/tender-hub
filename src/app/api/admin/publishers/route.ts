@@ -8,9 +8,13 @@ export async function GET(request: NextRequest) {
   try {
     console.log("Publishers API: Starting request");
     const authResult = await requireAdminAPI();
-    console.log("Publishers API: Auth result:", { hasError: !!authResult.error, hasSession: !!authResult.session });
-    
-    if (authResult.error) {
+    // Narrow authResult safely for logging
+    console.log("Publishers API: Auth result:", {
+      hasError: "error" in authResult,
+      hasSession: "session" in authResult && !!authResult.session,
+    });
+
+    if ("error" in authResult) {
       console.log("Publishers API: Returning auth error");
       return authResult.error;
     }
@@ -94,7 +98,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const authResult = await requireAdminAPI();
-    if (authResult.error) {
+    if ("error" in authResult) {
       return authResult.error;
     }
 

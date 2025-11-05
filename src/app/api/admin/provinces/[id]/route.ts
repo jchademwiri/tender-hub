@@ -10,7 +10,7 @@ export async function PUT(
 ) {
   try {
     const authResult = await requireAdminAPI();
-    if (authResult.error) {
+    if ("error" in authResult) {
       return authResult.error;
     }
     const { id } = await params;
@@ -76,7 +76,7 @@ export async function DELETE(
 ) {
   try {
     const authResult = await requireAdminAPI();
-    if (authResult.error) {
+    if ("error" in authResult) {
       return authResult.error;
     }
     const { id } = await params;
