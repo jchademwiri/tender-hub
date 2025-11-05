@@ -87,6 +87,14 @@ const SA_PROVINCES: ProvinceData[] = [
     capital: "Cape Town",
     population: 7005741,
     coordinates: { latitude: -33.9258, longitude: 18.4232 }
+  },
+    {
+    name: "National Publishers",
+    code: "NP",
+    description: "The Western Cape is known for its Mediterranean climate, wine regions, and Cape Town. It's a major tourist destination with Table Mountain and beautiful coastlines.",
+    capital: "Cape Town",
+    population: 7005741,
+    coordinates: { latitude: -33.9258, longitude: 18.4232 }
   }
 ];
 

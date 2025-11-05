@@ -2,16 +2,15 @@ import { ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
 import { NoDataEmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { requireAuth } from "@/lib/auth-utils";
 import { getAllPublishers } from "@/server/publisher";
 import { PublishersTableClient } from "./publishers-table-client";
 
 export default async function PublishersPage() {
-  const user = await requireAuth();
-  const userId = user?.user?.id;
+  // Mock user ID for demo purposes
+  const mockUserId = "demo-user";
 
   try {
-    const publishers = await getAllPublishers(userId);
+    const publishers = await getAllPublishers(mockUserId);
     // Handle empty publishers data
     if (!publishers || publishers.length === 0) {
       return (

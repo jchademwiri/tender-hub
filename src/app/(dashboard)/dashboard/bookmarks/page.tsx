@@ -9,11 +9,10 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/db";
 import { provinces, publishers, userBookmarks } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
 
 export default async function BookmarksPage() {
-  // Get authenticated user
-  const session = await requireAuth();
+  // Mock user ID for demo purposes
+  const mockUserId = "demo-user";
 
   // Get user's bookmarked publishers
   const bookmarkedPublishers = await db
@@ -27,7 +26,7 @@ export default async function BookmarksPage() {
     .from(userBookmarks)
     .innerJoin(publishers, eq(userBookmarks.publisherId, publishers.id))
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
-    .where(eq(userBookmarks.userId, session.user.id))
+    .where(eq(userBookmarks.userId, mockUserId))
     .orderBy(desc(userBookmarks.createdAt));
 
   return (

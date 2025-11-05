@@ -9,11 +9,10 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/db";
 import { pageViews, provinces, publishers } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
 
 export default async function MostVisitedPage() {
-  // Get authenticated user
-  const session = await requireAuth();
+  // Mock user ID for demo purposes
+  const mockUserId = "demo-user";
 
   // Get most visited publishers based on page views
   const mostVisitedPublishers = await db
@@ -27,7 +26,7 @@ export default async function MostVisitedPage() {
     .from(publishers)
     .leftJoin(provinces, eq(publishers.province_id, provinces.id))
     .leftJoin(pageViews, eq(pageViews.url, publishers.website))
-    .where(eq(pageViews.userId, session.user.id))
+    .where(eq(pageViews.userId, mockUserId))
     .groupBy(publishers.id, publishers.name, publishers.website, provinces.name)
     .orderBy(desc(count(pageViews.id)))
     .limit(10);

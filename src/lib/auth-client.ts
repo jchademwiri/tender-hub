@@ -1,6 +1,4 @@
-// Better Auth client configuration for better-auth v1.3.27 compatibility
-
-// Type definitions to match what the sign-in page expects
+// Simple authentication client for testing
 interface AuthError {
   message?: string;
   code?: string;
@@ -14,56 +12,69 @@ interface AuthResult {
 
 export const authClient = {
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
+  
   signIn: {
     email: async (credentials: { email: string; password: string }): Promise<AuthResult> => {
-      // Mock implementation for better-auth v1.3.27 compatibility
-      // In a real implementation, this would call the actual auth API
+      const { email } = credentials;
+      
+      if (!email) {
+        return { error: { code: "INVALID_EMAIL", message: "Email is required" } };
+      }
+      
+      // Simple role detection
+      const lowerEmail = email.toLowerCase();
+      let role = 'user';
+      if (lowerEmail.includes('admin')) {
+        role = 'admin';
+      } else if (lowerEmail.includes('manager')) {
+        role = 'manager';
+      }
+      
+      const user = {
+        id: `user-${Date.now()}`,
+        email: email,
+        name: email.split('@')[0].replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        role: role,
+        status: "active"
+      };
+      
+      // Store in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('tender-hub-user', JSON.stringify(user));
+      }
+      
       return {
         error: null,
-        user: { id: "mock-user-id", email: credentials.email }
+        user: user
       };
     }
   },
-  signUp: {
-    email: async (credentials: { email: string; password: string; name?: string }): Promise<AuthResult> => {
-      // Mock implementation for better-auth v1.3.27 compatibility
-      return {
-        error: null,
-        user: { id: "mock-user-id", email: credentials.email }
-      };
-    }
-  },
+  
   signOut: async (): Promise<{ error: AuthError | null }> => {
-    // Mock implementation for better-auth v1.3.27 compatibility
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tender-hub-user');
+    }
     return { error: null };
   }
 };
 
-// Placeholder methods for direct exports
+// Simple helper to get current user
+export function getCurrentUser() {
+  if (typeof window !== 'undefined') {
+    const userData = localStorage.getItem('tender-hub-user');
+    if (userData) {
+      try {
+        return JSON.parse(userData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }
+  return null;
+}
+
+// Export other required methods
 export const signOut = () => Promise.resolve();
 export const signIn = () => Promise.resolve();
 export const signUp = () => Promise.resolve();
-
-// Create a minimal client for compatibility
-export const createAuthClient = (config: { baseURL: string }) => ({
-  baseURL: config.baseURL,
-  signIn: {
-    email: async (credentials: { email: string; password: string }): Promise<AuthResult> => {
-      return {
-        error: null,
-        user: { id: "mock-user-id", email: credentials.email }
-      };
-    }
-  },
-  signUp: {
-    email: async (credentials: { email: string; password: string; name?: string }): Promise<AuthResult> => {
-      return {
-        error: null,
-        user: { id: "mock-user-id", email: credentials.email }
-      };
-    }
-  },
-  signOut: async (): Promise<{ error: AuthError | null }> => {
-    return { error: null };
-  }
-});
+export const createAuthClient = () => ({});

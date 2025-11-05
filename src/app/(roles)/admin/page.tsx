@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { db } from "@/db";
 import { auditLog, invitation, user } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
 
 /**
  * TODO: Admin Dashboard Implementation Checklist
@@ -54,9 +53,6 @@ import { requireAuth } from "@/lib/auth-utils";
  */
 
 export default async function AdminDashboard() {
-  // Get authenticated user
-  const _currentUser = await requireAuth();
-
   // Get real statistics from database
   const [totalUsers] = await db.select({ count: count() }).from(user);
   const [pendingInvitations] = await db

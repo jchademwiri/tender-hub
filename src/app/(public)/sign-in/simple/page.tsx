@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 
-export default function SignInPage() {
+export default function SimpleSignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
