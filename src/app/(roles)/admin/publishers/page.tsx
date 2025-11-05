@@ -97,7 +97,7 @@ export default function AdminPublishersPage() {
         page: page.toString(),
         limit: "50",
       });
-      if (search) params.set("search", search);
+      if (search && search.trim()) params.set("search", search);
 
       const response = await fetch(`/api/admin/publishers?${params}`);
       if (response.ok) {
@@ -199,94 +199,110 @@ export default function AdminPublishersPage() {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    fetchPublishers(value);
+    const debounceTimeout = setTimeout(() => {
+      fetchPublishers(value);
+    }, 300);
+    return () => clearTimeout(debounceTimeout);
   };
 
   useEffect(() => {
     fetchProvinces();
     fetchPublishers();
-  }, [fetchProvinces, fetchPublishers]);
+  }, []);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+    <div className="flex-1 space-y-4 p-4 pt-0">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Publisher Management</h1>
+          <h1 className="text-2xl font-semibold">Publisher Management</h1>
           <p className="text-muted-foreground">
             Manage publishers for the Tender Hub system
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Publisher
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create Publisher</DialogTitle>
-              <DialogDescription>
-                Add a new publisher to the system.
-              </DialogDescription>
-            </DialogHeader>
-            <PublisherForm
-              provinces={provinces.map((p) => ({
-                ...p,
-                createdAt: new Date(p.createdAt),
-                description: p.description || null,
-              }))}
-              action={handleCreatePublisher}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-4">
+          {pagination && (
+            <p className="text-sm text-muted-foreground">
+              {pagination.total} {pagination.total === 1 ? 'publisher' : 'publishers'} total
+            </p>
+          )}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Publisher
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create Publisher</DialogTitle>
+                <DialogDescription>
+                  Add a new publisher to the system.
+                </DialogDescription>
+              </DialogHeader>
+              <PublisherForm
+                provinces={provinces.map((p) => ({
+                  ...p,
+                  createdAt: new Date(p.createdAt),
+                  description: p.description || null,
+                }))}
+                action={handleCreatePublisher}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Publishers</CardTitle>
-          <CardDescription>
-            A list of all publishers in the system.
-          </CardDescription>
+      <Card className="bg-background">
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Publishers</CardTitle>
+              <CardDescription>
+                A list of all publishers in the system
+              </CardDescription>
+            </div>
+          </div>
           <div className="flex items-center space-x-2">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search publishers..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-8"
+                className="pl-8 w-full"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Loading publishers...</div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-sm text-muted-foreground animate-pulse">
+                Loading publishers...
+              </div>
             </div>
           ) : publishers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="text-muted-foreground mb-4">
-                No publishers found
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-sm text-muted-foreground mb-4">
+                {searchTerm ? "No publishers found matching your search" : "No publishers have been added yet"}
               </div>
               <Button
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add First Publisher
+                {searchTerm ? "Create New Publisher" : "Add First Publisher"}
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Website</TableHead>
-                  <TableHead>Province</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead className="w-[250px]">Website</TableHead>
+                  <TableHead className="w-[150px]">Province</TableHead>
+                  <TableHead className="w-[120px]">Created</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
