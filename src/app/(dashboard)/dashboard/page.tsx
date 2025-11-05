@@ -1,10 +1,34 @@
 import { count, desc, eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { provinces, publishers } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { DashboardContent } from "./dashboard-content";
 
 export default async function Dashboard() {
-  // Get dashboard data without requiring authentication
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect to sign-in if not authenticated
+  if (!session?.user) {
+    redirect('/sign-in');
+  }
+
+  const user = session.user;
+
+  // Role-based redirects
+  if (user.role === 'admin') {
+    redirect('/admin');
+  }
+  
+  if (user.role === 'manager') {
+    redirect('/manager');
+  }
+
+  // Get dashboard data
   const [provinceCount] = await db.select({ count: count() }).from(provinces);
   const [publisherCount] = await db.select({ count: count() }).from(publishers);
 
@@ -24,7 +48,7 @@ export default async function Dashboard() {
 
   return (
     <DashboardContent
-      user={null}
+      user={user}
       provinceCount={provinceCount.count}
       publisherCount={publisherCount.count}
       recentPublishers={recentPublishers}

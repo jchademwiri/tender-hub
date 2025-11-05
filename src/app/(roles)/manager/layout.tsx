@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { RoleBasedSidebar } from "@/components/sidebar/role-based-sidebar";
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
@@ -10,6 +12,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { auth } from "@/lib/auth";
 
 /**
  * TODO: Manager Role Implementation Checklist
@@ -53,13 +56,25 @@ export default async function ManagerLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // TODO: Re-enable server-side authentication when needed
-  // For now, let users access the manager area without hardcoded dependencies
+  // Get session from Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect to sign-in if not authenticated
+  if (!session?.user) {
+    redirect('/sign-in');
+  }
+
+  // Check if user has manager or admin role
+  if (!['admin', 'manager'].includes(session.user.role || '')) {
+    redirect('/dashboard');
+  }
   
   return (
     <ErrorBoundary>
       <SidebarProvider>
-        <RoleBasedSidebar user={null} />
+        <RoleBasedSidebar user={session.user} />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2">
             <div className="flex items-center gap-2 px-4">

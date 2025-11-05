@@ -1,248 +1,122 @@
-// Auth configuration for better-auth v1.3.27 compatibility
-// Mock implementation with session persistence for development
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { db } from "@/db";
+import { user, session, account, verification } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-import { NextRequest } from "next/server";
-
-// Simple in-memory session store for mock implementation
-const sessions = new Map<string, any>();
-const users = new Map<string, any>();
-
-// Mock user data - in real app this would be in database
-const mockUsers = {
-  "admin@test.com": {
-    id: "admin-1",
-    email: "admin@test.com",
-    name: "Admin User",
-    role: "admin",
-    status: "active"
-  },
-  "admin@admin.com": {
-    id: "admin-1",
-    email: "admin@admin.com",
-    name: "Admin User",
-    role: "admin",
-    status: "active"
-  },
-  "manager@test.com": {
-    id: "manager-1",
-    email: "manager@test.com",
-    name: "Manager User",
-    role: "manager",
-    status: "active"
-  },
-  "manager@manager.com": {
-    id: "manager-1",
-    email: "manager@manager.com",
-    name: "Manager User",
-    role: "manager",
-    status: "active"
-  },
-  "user@test.com": {
-    id: "user-1",
-    email: "user@test.com",
-    name: "Regular User",
-    role: "user",
-    status: "active"
-  },
-  "user@user.com": {
-    id: "user-1",
-    email: "user@user.com",
-    name: "Regular User",
-    role: "user",
-    status: "active"
-  }
-};
-
-// Initialize users map
-Object.entries(mockUsers).forEach(([email, userData]) => {
-  users.set(email, userData);
-});
-
-function generateSessionId(): string {
-  const randomPart = Math.random().toString(36).substring(2, 11);
-  return `session_${Date.now()}_${randomPart}`;
-}
-
-function createUserFromEmail(email: string) {
-  const [username, domain] = email.split('@');
+// Helper function to determine role from email
+function getDefaultRoleFromEmail(email: string): "owner" | "admin" | "manager" | "user" {
+  const [username] = email.split('@');
   const lowerUsername = username.toLowerCase();
   
-  let role = 'user';
   if (lowerUsername.includes('admin')) {
-    role = 'admin';
+    return 'admin';
   } else if (lowerUsername.includes('manager')) {
-    role = 'manager';
+    return 'manager';
   }
-  
-  return {
-    id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    email: email,
-    name: username.charAt(0).toUpperCase() + username.slice(1).replace(/[_-]/g, ' '),
-    role: role,
-    status: "active"
-  };
+  return 'user';
 }
 
-export const auth = {
-  // Mock configuration for compatibility
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  secret: process.env.BETTER_AUTH_SECRET || "dev-secret",
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: {
+      user,
+      session,
+      account,
+      verification,
+    },
+  }),
   
-  // Mock handler for API routes
-  handler: (request: NextRequest) => {
-    return new Response(JSON.stringify({ error: "Mock auth endpoint" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+  emailAndPassword: {
+    enabled: true,
+    autoSignIn: true,
   },
   
-  // Mock API for compatibility
-  api: {
-    getSession: async ({ headers }: { headers: Headers }) => {
-      try {
-        const authHeader = headers.get("authorization")?.replace("Bearer ", "");
-        const cookieHeader = headers.get("cookie");
-        const sessionId = authHeader ||
-                         (cookieHeader ? cookieHeader.split("session=")[1]?.split(";")[0] : undefined);
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5 minutes
+    },
+  },
+  
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "user",
+        input: false, // Don't allow direct input
+      },
+      status: {
+        type: "string",
+        required: false,
+        defaultValue: "active",
+        input: false,
+      },
+      banned: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+      banReason: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      banExpires: {
+        type: "date",
+        required: false,
+        input: false,
+      },
+      invitedBy: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      invitedAt: {
+        type: "date",
+        required: false,
+        input: false,
+      },
+    },
+  },
+  
+  hooks: {
+    user: {
+      created: async (user) => {
+        // Set role based on email when user is created
+        const role = getDefaultRoleFromEmail(user.email);
         
-        if (!sessionId) {
-          return null;
-        }
+        // Update user with the determined role
+        await db.update(user as any).set({ 
+          role: role,
+          status: 'active',
+          banned: false,
+        }).where(eq((user as any).id, user.id));
         
-        const session = sessions.get(sessionId);
-        if (!session) {
-          return null;
-        }
-        
+        return user;
+      },
+    },
+    session: {
+      created: async (session) => {
+        console.log("Session created:", session.session.id);
         return session;
-      } catch (error) {
-        console.error("Error getting session:", error);
-        return null;
-      }
+      },
     },
-    
-    getUser: async ({ headers }: { headers: Headers }) => {
-      try {
-        const authHeader = headers.get("authorization")?.replace("Bearer ", "");
-        const cookieHeader = headers.get("cookie");
-        const sessionId = authHeader ||
-                         (cookieHeader ? cookieHeader.split("session=")[1]?.split(";")[0] : undefined);
-        
-        const session = sessionId ? sessions.get(sessionId) : null;
-        return session ? { user: session.user } : { user: null };
-      } catch (error) {
-        console.error("Error getting user:", error);
-        return { user: null };
-      }
+  },
+  
+  advanced: {
+    generateId: () => {
+      return `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     },
-    
-    updateUser: async ({ headers, body }: { headers: Headers; body: any }) => {
-      try {
-        const authHeader = headers.get("authorization")?.replace("Bearer ", "");
-        const cookieHeader = headers.get("cookie");
-        const sessionId = authHeader ||
-                         (cookieHeader ? cookieHeader.split("session=")[1]?.split(";")[0] : undefined);
-        
-        const session = sessionId ? sessions.get(sessionId) : null;
-        if (session && sessionId && body?.name) {
-          session.user.name = body.name;
-          sessions.set(sessionId, session);
-        }
-        
-        return {
-          user: session?.user || null,
-          error: null
-        };
-      } catch (error) {
-        console.error("Error updating user:", error);
-        return { user: null, error: { message: "Failed to update user" } };
-      }
-    },
-    
-    signInEmail: async ({ headers, body }: { headers: Headers; body: any }) => {
-      try {
-        const { email, password } = body;
-        
-        if (!email) {
-          return {
-            user: null,
-            error: { code: "INVALID_EMAIL", message: "Email is required" }
-          };
-        }
-        
-        // Try to find existing user first
-        let user = users.get(email);
-        
-        // If user doesn't exist, create a new one based on email
-        if (!user) {
-          user = createUserFromEmail(email);
-          users.set(email, user);
-        }
-        
-        const sessionId = generateSessionId();
-        const session = {
-          user,
-          session: {
-            id: sessionId,
-            userId: user.id,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-          }
-        };
-        
-        sessions.set(sessionId, session);
-
-        return {
-          user,
-          session: session.session,
-          error: null
-        };
-      } catch (error) {
-        console.error("Error signing in:", error);
-        return {
-          user: null,
-          error: { message: "Authentication failed" }
-        };
-      }
-    },
-    
-    signUpEmail: async ({ headers, body }: { headers: Headers; body: any }) => {
-      return {
-        user: null,
-        error: { message: "Sign up not implemented in mock" }
-      };
-    },
-    
-    signOut: async ({ headers }: { headers: Headers }) => {
-      try {
-        const authHeader = headers.get("authorization")?.replace("Bearer ", "");
-        const cookieHeader = headers.get("cookie");
-        const sessionId = authHeader ||
-                         (cookieHeader ? cookieHeader.split("session=")[1]?.split(";")[0] : undefined);
-        
-        if (sessionId) {
-          sessions.delete(sessionId);
-        }
-        
-        return { error: null };
-      } catch (error) {
-        console.error("Error signing out:", error);
-        return { error: { message: "Sign out failed" } };
-      }
-    }
-  }
-};
-
-// Export auth client methods with fallbacks
-export const signOut = () => Promise.resolve();
-export const signIn = () => Promise.resolve();
-export const signUp = () => Promise.resolve();
-
-// Export API methods for better-auth v1.3.27 compatibility
-export const createAuthClient = () => ({});
-export const getSession = () => ({});
-export const getUser = () => ({});
-export const updateUser = () => ({});
-export const signInEmail = () => ({});
-export const signUpEmail = () => ({});
-export const signOutAction = () => ({});
-export const getSessionAction = () => ({});
+  },
+  
+  plugins: [
+    nextCookies(), // Enable automatic cookie handling for server actions
+  ],
+});
