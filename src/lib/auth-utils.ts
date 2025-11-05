@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -75,9 +76,50 @@ export async function requireRole(allowedRoles: string[]) {
 }
 
 export async function requireAdmin() {
-  return requireRole(["admin", "owner"]);
+  return requireRole(["admin"]);
 }
 
 export async function requireManager() {
-  return requireRole(["admin", "owner", "manager"]);
+  return requireRole(["admin", "manager"]);
+}
+
+// API-specific auth functions that return NextResponse for better error handling
+export async function requireAuthAPI() {
+  try {
+    const session = await getSessionWithRole();
+    if (!session) {
+      return { error: NextResponse.json({ error: "Authentication required" }, { status: 401 }) };
+    }
+    return { session };
+  } catch (error) {
+    console.error("Auth error:", error);
+    return { error: NextResponse.json({ error: "Authentication failed" }, { status: 401 }) };
+  }
+}
+
+export async function requireRoleAPI(allowedRoles: string[]) {
+  const authResult = await requireAuthAPI();
+  if (authResult.error) {
+    return authResult;
+  }
+  
+  const { session } = authResult;
+  if (!allowedRoles.includes(session.user.role)) {
+    return { 
+      error: NextResponse.json(
+        { error: `Access denied. Required roles: ${allowedRoles.join(", ")}` }, 
+        { status: 403 }
+      ) 
+    };
+  }
+  
+  return { session };
+}
+
+export async function requireAdminAPI() {
+  return requireRoleAPI(["admin"]);
+}
+
+export async function requireManagerAPI() {
+  return requireRoleAPI(["admin", "manager"]);
 }

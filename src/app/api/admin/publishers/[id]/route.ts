@@ -2,14 +2,17 @@ import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { provinces, publishers } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdminAPI } from "@/lib/auth-utils";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const _user = await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if (authResult.error) {
+      return authResult.error;
+    }
     const { id } = await params;
 
     const formData = await request.formData();
@@ -72,7 +75,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const _user = await requireAdmin();
+    const authResult = await requireAdminAPI();
+    if (authResult.error) {
+      return authResult.error;
+    }
     const { id } = await params;
 
     const [deletedPublisher] = await db
